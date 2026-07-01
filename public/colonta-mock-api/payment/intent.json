@@ -1,0 +1,11 @@
+{
+  "data": {
+    "id": "pi_ed3b1121f4",
+    "provider": "webpay_mock",
+    "amount": 34490,
+    "currency": "CLP",
+    "client_secret": "secret_2f8c56ae719a4712",
+    "status": "requires_confirmation",
+    "return_url": "https://colonta.local/checkout/confirm"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "data": {
+    "code": "COLONTA10",
+    "type": "percent",
+    "value": 10,
+    "appliesTo": "order",
+    "valid": true,
+    "message": "10% aplicado a tu pedido"
+  }
+}

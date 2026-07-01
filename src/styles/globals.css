@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7f7;
+  --foreground: #171717;
+  --colonta-primary: #4a3b8d;
+  --colonta-accent:  #15b1a9;
+  --colonta-secundary: #247afb;
+  --colonta-Basura: #d20000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Tokens para usar como bg/text/border/ring */
+  --color-colonta-primary: var(--colonta-primary);
+  --color-colonta-accent:  var(--colonta-accent);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Montserrat", sans-serif;
+}

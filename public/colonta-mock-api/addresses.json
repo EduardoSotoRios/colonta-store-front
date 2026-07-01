@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "id": "addr_1",
+      "fullName": "Juan Pérez",
+      "phone": "+56 9 1234 5678",
+      "street1": "Av. Siempre Viva 123",
+      "street2": "Depto 45",
+      "city": "Santiago",
+      "region": "RM",
+      "country": "CL",
+      "zip": "8320000",
+      "isDefault": true
+    }
+  ]
+}

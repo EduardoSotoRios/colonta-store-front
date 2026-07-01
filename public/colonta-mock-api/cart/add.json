@@ -1,0 +1,23 @@
+{
+  "data": {
+    "id": "cart_6ce0c5b8",
+    "items": [
+      {
+        "productId": "roll-top",
+        "name": "Mochila Roll Top",
+        "sku": "RT-BLK",
+        "quantity": 1,
+        "unitPrice": 35000,
+        "currency": "CLP",
+        "imageUrl": "https://images.unsplash.com/photo-1520974735194-5f3b6d8183be?q=80&w=1400&auto=format&fit=crop"
+      }
+    ],
+    "currency": "CLP",
+    "subtotal": 35000,
+    "discounts": [],
+    "shipping": null,
+    "tax": 0,
+    "total": 35000,
+    "updatedAt": "2025-08-23T12:00:00Z"
+  }
+}
