@@ -58,8 +58,17 @@ function collectFiles(dir, base = dir) {
 
 const productoDir = path.join(PUBLIC_DIR, "Producto");
 const localFiles  = collectFiles(productoDir, PUBLIC_DIR);
-// Mapa: ruta relativa (lowercase) → ruta relativa real
-const localMap = new Map(localFiles.map(f => [f.toLowerCase(), f]));
+// Normaliza un path para comparación flexible: lowercase, espacios colapsados, paréntesis numéricos quitados
+function normPath(s) {
+  return s.toLowerCase()
+    .replace(/\(\d+\)/g, m => m.slice(1, -1))  // (2) → 2
+    .replace(/\s+\./g, '.')                      // espacio(s) antes de extensión → nada
+    .replace(/\s+/g, ' ')                        // espacios múltiples → 1 espacio
+    .trim();
+}
+
+// Mapa: ruta normalizada → ruta relativa real
+const localMap = new Map(localFiles.map(f => [normPath(f), f]));
 
 console.log(`📁 ${localFiles.length} archivos locales encontrados en public/Producto/\n`);
 
@@ -91,16 +100,30 @@ for (const img of imagenes) {
   if (!relativePath) { omitidas++; continue; }
 
   // Buscar el archivo local (case-insensitive)
-  const localRel = localMap.get(relativePath.toLowerCase());
-  if (!localRel) {
-    console.warn(`  ⚠️  No encontrado localmente: ${relativePath}`);
-    omitidas++;
-    continue;
+  let fileBuffer;
+  let ext;
+
+  const localRel = localMap.get(normPath(relativePath));
+  if (localRel) {
+    // Leer desde disco
+    fileBuffer = fs.readFileSync(path.join(PUBLIC_DIR, localRel));
+    ext = path.extname(localRel).slice(1).toLowerCase();
+  } else {
+    // Intentar fetch desde el servidor local (localhost:3000)
+    const localUrl = "http://localhost:3000" + relativePath.replace(/\\/g, "/");
+    try {
+      const res = await fetch(localUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      fileBuffer = Buffer.from(await res.arrayBuffer());
+      ext = relativePath.split(".").pop()?.toLowerCase() ?? "jpg";
+      console.log(`  🌐 Fetched via HTTP: ${relativePath}`);
+    } catch (e) {
+      console.warn(`  ⚠️  No encontrado (disco ni HTTP): ${relativePath}`);
+      omitidas++;
+      continue;
+    }
   }
 
-  const localAbsPath = path.join(PUBLIC_DIR, localRel);
-  const fileBuffer   = fs.readFileSync(localAbsPath);
-  const ext          = path.extname(localRel).slice(1).toLowerCase();
   const mimeMap      = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif" };
   const contentType  = mimeMap[ext] ?? "image/jpeg";
 
