@@ -88,7 +88,13 @@ export default function Footer() {
           >
             Instagram
           </a>
-          <a href="#" aria-label="Facebook" className="hover:text-white">
+          <a
+            href="https://www.facebook.com/Colonta/?locale=es_LA"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Facebook"
+            className="hover:text-white"
+          >
             Facebook
           </a>
           <a href="#" aria-label="TikTok" className="hover:text-white">
