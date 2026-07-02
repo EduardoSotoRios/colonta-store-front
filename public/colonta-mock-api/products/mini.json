@@ -1,0 +1,23 @@
+{
+  "data": {
+    "id": "mini",
+    "name": "Mochila Mini",
+    "price": 22000,
+    "currency": "CLP",
+    "category": "diario",
+    "imageUrl": "https://images.unsplash.com/photo-1520974735194-5f3b6d8183be?q=80&w=1400&auto=format&fit=crop",
+    "slug": "mochila-mini",
+    "variants": [
+      {
+        "sku": "MINI-RED",
+        "color": "Rojo",
+        "stock": 6
+      },
+      {
+        "sku": "MINI-BLU",
+        "color": "Azul",
+        "stock": 7
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "data": [
+    {
+      "id": "viaje",
+      "name": "Viaje"
+    },
+    {
+      "id": "urbano",
+      "name": "Urbano"
+    },
+    {
+      "id": "diario",
+      "name": "Día a día"
+    },
+    {
+      "id": "accesorios",
+      "name": "Accesorios"
+    }
+  ]
+}

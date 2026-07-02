@@ -1,0 +1,67 @@
+{
+  "data": [
+    {
+      "id": "roll-top",
+      "name": "Mochila Roll Top",
+      "price": 35000,
+      "currency": "CLP",
+      "category": "viaje",
+      "imageUrl": "https://images.unsplash.com/photo-1520974735194-5f3b6d8183be?q=80&w=1400&auto=format&fit=crop",
+      "slug": "mochila-roll-top",
+      "variants": [
+        {
+          "sku": "RT-BLK",
+          "color": "Negro",
+          "stock": 10
+        },
+        {
+          "sku": "RT-OLV",
+          "color": "Oliva",
+          "stock": 8
+        }
+      ]
+    },
+    {
+      "id": "urbana",
+      "name": "Mochila Urbana",
+      "price": 29000,
+      "currency": "CLP",
+      "category": "urbano",
+      "imageUrl": "https://images.unsplash.com/photo-1520974735194-5f3b6d8183be?q=80&w=1400&auto=format&fit=crop",
+      "slug": "mochila-urbana",
+      "variants": [
+        {
+          "sku": "URB-PUR",
+          "color": "Morado",
+          "stock": 5
+        },
+        {
+          "sku": "URB-GRN",
+          "color": "Verde",
+          "stock": 12
+        }
+      ]
+    },
+    {
+      "id": "mini",
+      "name": "Mochila Mini",
+      "price": 22000,
+      "currency": "CLP",
+      "category": "diario",
+      "imageUrl": "https://images.unsplash.com/photo-1520974735194-5f3b6d8183be?q=80&w=1400&auto=format&fit=crop",
+      "slug": "mochila-mini",
+      "variants": [
+        {
+          "sku": "MINI-RED",
+          "color": "Rojo",
+          "stock": 6
+        },
+        {
+          "sku": "MINI-BLU",
+          "color": "Azul",
+          "stock": 7
+        }
+      ]
+    }
+  ]
+}

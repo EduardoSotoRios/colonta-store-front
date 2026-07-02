@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Archivos grandes y binarios que no van al repo
+__MACOSX/
+*.zip
+*.HEIC
+*.MOV
+*.mov
+public/Producto/
+
+# Next.js
+.next/
+out/
+
+# Environment variables — NUNCA subir al repositorio
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test
+.env.test.local
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

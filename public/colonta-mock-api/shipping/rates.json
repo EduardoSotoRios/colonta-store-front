@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "id": "ship_rm",
+      "label": "Envío RM (48h)",
+      "price": 2990,
+      "currency": "CLP",
+      "eta": "2 días"
+    },
+    {
+      "id": "ship_reg",
+      "label": "Envío Regiones (3-5 días)",
+      "price": 4900,
+      "currency": "CLP",
+      "eta": "3-5 días"
+    },
+    {
+      "id": "ship_pickup",
+      "label": "Retiro en tienda",
+      "price": 0,
+      "currency": "CLP",
+      "eta": "Mismo día"
+    }
+  ]
+}
