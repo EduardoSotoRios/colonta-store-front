@@ -97,7 +97,13 @@ export default function Footer() {
           >
             Facebook
           </a>
-          <a href="#" aria-label="TikTok" className="hover:text-white">
+          <a
+            href="https://www.tiktok.com/@colonta?lang=es-419"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="TikTok"
+            className="hover:text-white"
+          >
             TikTok
           </a>
         </div>
