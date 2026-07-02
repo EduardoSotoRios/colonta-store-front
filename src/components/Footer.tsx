@@ -79,7 +79,13 @@ export default function Footer() {
           </div>
         </div>
         <div className="flex justify-center gap-4 mt-4 text-white/80">
-          <a href="#" aria-label="Instagram" className="hover:text-white">
+          <a
+            href="https://www.instagram.com/colonta/?hl=es"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className="hover:text-white"
+          >
             Instagram
           </a>
           <a href="#" aria-label="Facebook" className="hover:text-white">
