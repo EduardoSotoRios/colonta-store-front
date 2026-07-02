@@ -13,12 +13,17 @@ export default async function ProductsSection() {
 
   if (error || !data) return null;
 
+  function safeUrl(url: string | null | undefined): string | null {
+    if (!url || /^https?:\/\/localhost/i.test(url)) return null;
+    return url;
+  }
+
   const productos = data.map((p: any) => ({
     id:            p.id,
     name:          p.nombre,
     price:         p.precio ? `$${new Intl.NumberFormat("es-CL").format(Number(p.precio))}` : "",
-    imageUrl:      p.producto_imagenes?.find((i: any) => i.principal)?.url
-                   ?? p.producto_imagenes?.[0]?.url
+    imageUrl:      safeUrl(p.producto_imagenes?.find((i: any) => i.principal)?.url)
+                   ?? safeUrl(p.producto_imagenes?.[0]?.url)
                    ?? null,
     categoriaSlug: p.categoria_slug ?? "mochilas",
   }));
