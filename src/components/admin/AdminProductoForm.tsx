@@ -9,6 +9,7 @@ import {
   eliminarImagen,
   marcarImagenPrincipal,
   actualizarColoresImagen,
+  subirImagenStorage,
 } from "@/app/admin/productos/actions";
 
 type Spec      = { label: string; valor: string };
@@ -91,6 +92,7 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
   const [nuevaAlt, setNuevaAlt]             = useState("");
   const [nuevaPrincipal, setNuevaPrincipal] = useState(false);
   const [nuevosColores, setNuevosColores]   = useState(["", "", "", ""]);
+  const [subiendo, setSubiendo]             = useState(false);
 
   // Edición de colores de imagen existente
   const [editColoresId, setEditColoresId]   = useState<number | null>(null);
@@ -172,6 +174,24 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
         setImagenes(prev => prev.map(i => ({ ...i, principal: i.id === imagenId })));
       } catch (err: any) { setError(err.message); }
     });
+  }
+
+  async function handleArchivoSeleccionado(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendo(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const url = await subirImagenStorage(fd);
+      setNuevaUrl(url);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al subir imagen");
+    } finally {
+      setSubiendo(false);
+      e.target.value = "";
+    }
   }
 
   async function handleGuardarColores() {
@@ -434,9 +454,15 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
           {/* Agregar nueva imagen */}
           <div className="border-t border-slate-100 pt-4 space-y-3">
             <p className="text-sm font-semibold text-slate-600">Agregar imagen</p>
-            <input value={nuevaUrl} onChange={e => setNuevaUrl(e.target.value)}
-              placeholder="URL de la imagen"
-              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-colonta-primary" />
+            <div className="flex gap-2">
+              <input value={nuevaUrl} onChange={e => setNuevaUrl(e.target.value)}
+                placeholder="URL de la imagen (o sube un archivo →)"
+                className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-colonta-primary" />
+              <label className={`shrink-0 px-3 py-2 rounded-xl border border-slate-200 text-sm font-semibold cursor-pointer hover:bg-slate-50 ${subiendo ? "opacity-50 pointer-events-none" : ""}`}>
+                {subiendo ? "Subiendo…" : "Subir archivo"}
+                <input type="file" accept="image/*" className="hidden" onChange={handleArchivoSeleccionado} disabled={subiendo} />
+              </label>
+            </div>
             <div className="flex gap-3">
               <input value={nuevaAlt} onChange={e => setNuevaAlt(e.target.value)}
                 placeholder="Alt (opcional)"

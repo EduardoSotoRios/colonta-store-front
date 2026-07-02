@@ -406,7 +406,8 @@ export type ProductsQuery = {
 
 function normalizeImgUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  return url.replace(/^https?:\/\/localhost:\d+/, '');
+  if (/^https?:\/\/localhost/i.test(url)) return null;
+  return url;
 }
 
 type ColorEntry = { nombre: string; hex: string | null };

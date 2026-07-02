@@ -2,6 +2,7 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -223,6 +224,25 @@ export async function eliminarImagen(imagenId: number, productoId: string) {
   if (error) throw new Error(`Error eliminando imagen: ${error.message}`);
 
   revalidatePath(`/admin/productos/${productoId}`);
+}
+
+// ─── Subir imagen a Supabase Storage ──────────────────────────
+export async function subirImagenStorage(formData: FormData): Promise<string> {
+  const supabase = createSupabaseAdminClient();
+  const file = formData.get("file") as File;
+  if (!file || !file.size) throw new Error("No se seleccionó archivo");
+
+  const ext      = file.name.split(".").pop() ?? "jpg";
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("productos")
+    .upload(filename, file, { contentType: file.type, upsert: false });
+
+  if (error) throw new Error(`Error subiendo imagen: ${error.message}`);
+
+  const { data } = supabase.storage.from("productos").getPublicUrl(filename);
+  return data.publicUrl;
 }
 
 // ─── Marcar imagen como principal ─────────────────────────────
