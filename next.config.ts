@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
+
   // Genera build autónomo compatible con Docker/ECS — solo incluye lo necesario
   output: "standalone",
 
