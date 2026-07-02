@@ -9,16 +9,16 @@ const nextConfig: NextConfig = {
 
   images: {
     remotePatterns: [
-      // Supabase Storage (cuando subas las imágenes ahí)
+      // Cloudinary
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+      // Supabase Storage (legado)
       {
         protocol: "https",
         hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
-      },
-      // CloudFront (cuando configures CDN en AWS)
-      {
-        protocol: "https",
-        hostname: "*.cloudfront.net",
       },
     ],
   },

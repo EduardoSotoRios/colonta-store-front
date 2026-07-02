@@ -2,9 +2,15 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { v2 as cloudinary } from "cloudinary";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key:    process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
+});
 
 // ─── Crear producto ────────────────────────────────────────────
 export async function crearProducto(formData: FormData) {
@@ -226,23 +232,26 @@ export async function eliminarImagen(imagenId: number, productoId: string) {
   revalidatePath(`/admin/productos/${productoId}`);
 }
 
-// ─── Subir imagen a Supabase Storage ──────────────────────────
+// ─── Subir imagen a Cloudinary ────────────────────────────────
 export async function subirImagenStorage(formData: FormData): Promise<string> {
-  const supabase = createSupabaseAdminClient();
   const file = formData.get("file") as File;
   if (!file || !file.size) throw new Error("No se seleccionó archivo");
 
-  const ext      = file.name.split(".").pop() ?? "jpg";
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const buffer    = Buffer.from(await file.arrayBuffer());
+  const publicId  = `colonta/productos/${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-  const { error } = await supabase.storage
-    .from("productos")
-    .upload(filename, file, { contentType: file.type, upsert: false });
+  const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      { public_id: publicId, resource_type: "image", overwrite: false },
+      (err, res) => { if (err || !res) reject(err); else resolve(res); }
+    ).end(buffer);
+  });
 
-  if (error) throw new Error(`Error subiendo imagen: ${error.message}`);
-
-  const { data } = supabase.storage.from("productos").getPublicUrl(filename);
-  return data.publicUrl;
+  return cloudinary.url(result.public_id, {
+    fetch_format: "auto",
+    quality: "auto",
+    secure: true,
+  });
 }
 
 // ─── Marcar imagen como principal ─────────────────────────────
