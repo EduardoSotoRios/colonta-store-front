@@ -50,49 +50,52 @@ export function drawTemplateFromImage(
   }
 }
 
-const LEOPARD_TEXTURE_SRC = '/configurador/patterns/leopardo.png';
-const LEOPARD_TILE_SIZE = 110;
-let leopardImg: HTMLImageElement | null = null;
+// Image-backed "tela" patterns. Each `value` must match a COLORS entry and
+// follows the `pattern-<slug>` convention, whose texture lives at
+// `/configurador/patterns/<slug>.png` (used by both the swatch CSS and here).
+export const TEXTURE_PATTERN_VALUES = [
+  'pattern-leopardo',
+  'pattern-leopardo-rosa',
+  'pattern-corazones',
+  'pattern-girasoles',
+  'pattern-manchas',
+] as const;
 
-export function preloadLeopardTexture(): void {
-  if (!leopardImg) {
-    leopardImg = new Image();
-    leopardImg.src = LEOPARD_TEXTURE_SRC;
-  }
+const TEXTURE_TILE_SIZE = 110;
+// Placeholder color painted into the flood-fill mask before the real tiled
+// texture is composited over it — never visible once a texture is ready.
+const TEXTURE_SENTINEL: [number, number, number] = [17, 17, 17];
+
+const patternImgCache = new Map<string, HTMLImageElement>();
+
+function textureSrc(value: string): string {
+  return `/configurador/patterns/${value.replace('pattern-', '')}.png`;
 }
 
-function createProceduralLeopardPattern(ctx: CanvasRenderingContext2D): CanvasPattern {
-  const pc = document.createElement('canvas');
-  pc.width = 40; pc.height = 40;
-  const pctx = pc.getContext('2d')!;
-  pctx.fillStyle = '#C8A97E';
-  pctx.fillRect(0, 0, 40, 40);
-  const spots = [{ cx: 10, cy: 10 }, { cx: 30, cy: 22 }, { cx: 18, cy: 34 }, { cx: 28, cy: 6 }, { cx: 6, cy: 28 }];
-  spots.forEach(s => {
-    pctx.beginPath();
-    pctx.ellipse(s.cx, s.cy, 5, 3.5, 0.4, 0, Math.PI * 2);
-    pctx.strokeStyle = '#8B6914';
-    pctx.lineWidth = 2.5;
-    pctx.stroke();
-    pctx.beginPath();
-    pctx.arc(s.cx, s.cy, 2, 0, Math.PI * 2);
-    pctx.fillStyle = '#A0722A';
-    pctx.fill();
+export function preloadPatternTextures(): void {
+  TEXTURE_PATTERN_VALUES.forEach(value => {
+    if (!patternImgCache.has(value)) {
+      const img = new Image();
+      img.src = textureSrc(value);
+      patternImgCache.set(value, img);
+    }
   });
-  return ctx.createPattern(pc, 'repeat')!;
 }
 
-export function createLeopardPattern(ctx: CanvasRenderingContext2D): CanvasPattern {
-  preloadLeopardTexture();
-  const img = leopardImg!;
-  if (!img.complete || img.naturalWidth === 0) {
-    // Real texture still loading — fall back so painting never breaks
-    return createProceduralLeopardPattern(ctx);
-  }
+export function isTexturePattern(value: string): boolean {
+  return (TEXTURE_PATTERN_VALUES as readonly string[]).includes(value);
+}
+
+// Returns null while the source image is still loading — callers should
+// fall back to a plain color in that case so painting never breaks.
+export function createTexturePattern(ctx: CanvasRenderingContext2D, value: string): CanvasPattern | null {
+  preloadPatternTextures();
+  const img = patternImgCache.get(value);
+  if (!img || !img.complete || img.naturalWidth === 0) return null;
   const pc = document.createElement('canvas');
-  pc.width = LEOPARD_TILE_SIZE; pc.height = LEOPARD_TILE_SIZE;
+  pc.width = TEXTURE_TILE_SIZE; pc.height = TEXTURE_TILE_SIZE;
   const pctx = pc.getContext('2d')!;
-  pctx.drawImage(img, 0, 0, LEOPARD_TILE_SIZE, LEOPARD_TILE_SIZE);
+  pctx.drawImage(img, 0, 0, TEXTURE_TILE_SIZE, TEXTURE_TILE_SIZE);
   return ctx.createPattern(pc, 'repeat')!;
 }
 
@@ -114,13 +117,13 @@ export function createFlowerPattern(ctx: CanvasRenderingContext2D): CanvasPatter
 interface FloodFillOptions {
   colorCanvas: HTMLCanvasElement;
   templateCanvas: HTMLCanvasElement;
-  isLeopard: boolean;
-  isFlower: boolean;
+  /** A COLORS `value` like 'pattern-leopardo', or null when painting a plain color. */
+  activePattern: string | null;
   currentColor: string;
 }
 
 export function floodFill(startX: number, startY: number, opts: FloodFillOptions): void {
-  const { colorCanvas, templateCanvas, isLeopard, isFlower, currentColor } = opts;
+  const { colorCanvas, templateCanvas, activePattern, currentColor } = opts;
   const colorCtx = colorCanvas.getContext('2d')!;
   const templateCtx = templateCanvas.getContext('2d')!;
   const cw = colorCanvas.width, ch = colorCanvas.height;
@@ -134,10 +137,10 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
   const startR = data[idx], startG = data[idx + 1], startB = data[idx + 2], startA = data[idx + 3];
 
   let fillR: number, fillG: number, fillB: number;
-  if (isLeopard) {
-    fillR = 200; fillG = 169; fillB = 126;
-  } else if (isFlower) {
+  if (activePattern === 'pattern-flores') {
     fillR = 255; fillG = 182; fillB = 193;
+  } else if (activePattern) {
+    [fillR, fillG, fillB] = TEXTURE_SENTINEL;
   } else {
     const hex = currentColor.replace('#', '');
     fillR = parseInt(hex.slice(0, 2), 16);
@@ -173,7 +176,7 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
 
   colorCtx.putImageData(imgData, 0, 0);
 
-  if (isLeopard || isFlower) {
+  if (activePattern) {
     const filled = colorCtx.getImageData(0, 0, cw, ch);
     const fd = filled.data;
 
@@ -189,7 +192,10 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
     const patC = document.createElement('canvas');
     patC.width = cw; patC.height = ch;
     const pctx = patC.getContext('2d')!;
-    pctx.fillStyle = isLeopard ? createLeopardPattern(pctx) : createFlowerPattern(pctx);
+    const pattern = activePattern === 'pattern-flores'
+      ? createFlowerPattern(pctx)
+      : createTexturePattern(pctx, activePattern);
+    pctx.fillStyle = pattern ?? `rgb(${TEXTURE_SENTINEL.join(',')})`;
     pctx.fillRect(0, 0, cw, ch);
     pctx.globalCompositeOperation = 'destination-in';
     pctx.drawImage(maskC, 0, 0);

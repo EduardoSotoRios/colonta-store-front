@@ -5,9 +5,10 @@ import {
   CANVAS_W, CANVAS_H,
   drawTemplateFromImage,
   floodFill,
-  createLeopardPattern,
   createFlowerPattern,
-  preloadLeopardTexture,
+  createTexturePattern,
+  preloadPatternTextures,
+  isTexturePattern,
   getMergedDataURL,
   downloadCanvas,
 } from '@/lib/configurador/canvasUtils';
@@ -33,29 +34,27 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   const [tool, setToolState]   = useState<Tool>('pencil');
   const [brushSize, setBrushSize] = useState(8);
   const [color, setColor]      = useState('#E53935');
-  const [isLeopard, setIsLeopard] = useState(false);
-  const [isFlower, setIsFlower]   = useState(false);
+  // A COLORS `value` like 'pattern-leopardo', or null when painting a plain color.
+  const [activePattern, setActivePattern] = useState<string | null>(null);
   const [toast, setToast]      = useState('');
   const [toastVisible, setToastVisible] = useState(false);
 
   const toolRef      = useRef<Tool>('pencil');
   const colorRef     = useRef('#E53935');
-  const leopardRef   = useRef(false);
-  const flowerRef    = useRef(false);
+  const patternRef   = useRef<string | null>(null);
   const brushRef     = useRef(8);
 
   // Keep refs in sync with state (needed inside event handlers)
-  const syncRefs = useCallback((t: Tool, c: string, leo: boolean, flo: boolean, b: number) => {
+  const syncRefs = useCallback((t: Tool, c: string, pat: string | null, b: number) => {
     toolRef.current    = t;
     colorRef.current   = c;
-    leopardRef.current = leo;
-    flowerRef.current  = flo;
+    patternRef.current = pat;
     brushRef.current   = b;
   }, []);
 
-  useEffect(() => { syncRefs(tool, color, isLeopard, isFlower, brushSize); }, [tool, color, isLeopard, isFlower, brushSize, syncRefs]);
+  useEffect(() => { syncRefs(tool, color, activePattern, brushSize); }, [tool, color, activePattern, brushSize, syncRefs]);
 
-  useEffect(() => { preloadLeopardTexture(); }, []);
+  useEffect(() => { preloadPatternTextures(); }, []);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -128,8 +127,9 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     const col = colorCanvasRef.current;
     if (!col) return colorRef.current;
     const ctx = col.getContext('2d')!;
-    if (leopardRef.current) return createLeopardPattern(ctx);
-    if (flowerRef.current)  return createFlowerPattern(ctx);
+    const pattern = patternRef.current;
+    if (pattern === 'pattern-flores') return createFlowerPattern(ctx);
+    if (pattern) return createTexturePattern(ctx, pattern) ?? colorRef.current;
     return colorRef.current;
   }
 
@@ -149,8 +149,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
         floodFill(pos.x, pos.y, {
           colorCanvas: col,
           templateCanvas: tpl,
-          isLeopard: leopardRef.current,
-          isFlower: flowerRef.current,
+          activePattern: patternRef.current,
           currentColor: colorRef.current,
         });
         renderComposite();
@@ -255,12 +254,11 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   }
 
   function selectColor(value: string) {
-    if (value === 'pattern-leopardo') {
-      setIsLeopard(true); setIsFlower(false);
-    } else if (value === 'pattern-flores') {
-      setIsFlower(true); setIsLeopard(false);
+    if (value.startsWith('pattern-')) {
+      setActivePattern(value);
     } else {
-      setColor(value); setIsLeopard(false); setIsFlower(false);
+      setColor(value);
+      setActivePattern(null);
     }
   }
 
@@ -324,10 +322,9 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
           <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Color / Tela</p>
           <div className="grid grid-cols-4 gap-2">
             {COLORS.map(c => {
-              const isSelected =
-                c.value === 'pattern-leopardo' ? isLeopard :
-                c.value === 'pattern-flores'   ? isFlower  :
-                (!isLeopard && !isFlower && color === c.value);
+              const isSelected = c.value.startsWith('pattern-')
+                ? activePattern === c.value
+                : (!activePattern && color === c.value);
 
               let swatchStyle: React.CSSProperties = {};
               if (c.value === 'pattern-flores') {
@@ -336,9 +333,9 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
                   backgroundSize: '14px 14px',
                   backgroundColor: '#FFB6C1',
                 };
-              } else if (c.value === 'pattern-leopardo') {
+              } else if (isTexturePattern(c.value)) {
                 swatchStyle = {
-                  backgroundImage: `url('/configurador/patterns/leopardo.png')`,
+                  backgroundImage: `url('/configurador/patterns/${c.value.replace('pattern-', '')}.png')`,
                   backgroundSize: '200%',
                   backgroundPosition: 'center',
                 };
