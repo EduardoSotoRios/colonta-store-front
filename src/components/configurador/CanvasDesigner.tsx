@@ -7,6 +7,7 @@ import {
   floodFill,
   createLeopardPattern,
   createFlowerPattern,
+  preloadLeopardTexture,
   getMergedDataURL,
   downloadCanvas,
 } from '@/lib/configurador/canvasUtils';
@@ -53,6 +54,8 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   }, []);
 
   useEffect(() => { syncRefs(tool, color, isLeopard, isFlower, brushSize); }, [tool, color, isLeopard, isFlower, brushSize, syncRefs]);
+
+  useEffect(() => { preloadLeopardTexture(); }, []);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -334,7 +337,11 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
                   backgroundColor: '#FFB6C1',
                 };
               } else if (c.value === 'pattern-leopardo') {
-                swatchStyle = { backgroundColor: '#C8A97E' };
+                swatchStyle = {
+                  backgroundImage: `url('/configurador/patterns/leopardo.png')`,
+                  backgroundSize: '200%',
+                  backgroundPosition: 'center',
+                };
               } else {
                 swatchStyle = { backgroundColor: c.value };
               }

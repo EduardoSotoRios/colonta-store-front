@@ -50,7 +50,18 @@ export function drawTemplateFromImage(
   }
 }
 
-export function createLeopardPattern(ctx: CanvasRenderingContext2D): CanvasPattern {
+const LEOPARD_TEXTURE_SRC = '/configurador/patterns/leopardo.png';
+const LEOPARD_TILE_SIZE = 110;
+let leopardImg: HTMLImageElement | null = null;
+
+export function preloadLeopardTexture(): void {
+  if (!leopardImg) {
+    leopardImg = new Image();
+    leopardImg.src = LEOPARD_TEXTURE_SRC;
+  }
+}
+
+function createProceduralLeopardPattern(ctx: CanvasRenderingContext2D): CanvasPattern {
   const pc = document.createElement('canvas');
   pc.width = 40; pc.height = 40;
   const pctx = pc.getContext('2d')!;
@@ -68,6 +79,20 @@ export function createLeopardPattern(ctx: CanvasRenderingContext2D): CanvasPatte
     pctx.fillStyle = '#A0722A';
     pctx.fill();
   });
+  return ctx.createPattern(pc, 'repeat')!;
+}
+
+export function createLeopardPattern(ctx: CanvasRenderingContext2D): CanvasPattern {
+  preloadLeopardTexture();
+  const img = leopardImg!;
+  if (!img.complete || img.naturalWidth === 0) {
+    // Real texture still loading — fall back so painting never breaks
+    return createProceduralLeopardPattern(ctx);
+  }
+  const pc = document.createElement('canvas');
+  pc.width = LEOPARD_TILE_SIZE; pc.height = LEOPARD_TILE_SIZE;
+  const pctx = pc.getContext('2d')!;
+  pctx.drawImage(img, 0, 0, LEOPARD_TILE_SIZE, LEOPARD_TILE_SIZE);
   return ctx.createPattern(pc, 'repeat')!;
 }
 
