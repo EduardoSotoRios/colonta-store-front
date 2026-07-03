@@ -340,14 +340,23 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
               }
 
               return (
-                <button
-                  key={c.name}
-                  title={c.name}
-                  onClick={() => selectColor(c.value)}
-                  style={swatchStyle}
-                  className={`w-full aspect-square rounded-xl border-[3px] transition-transform hover:scale-110
-                    ${isSelected ? 'border-[#5B2D8E] scale-110' : 'border-transparent'}`}
-                />
+                <div key={c.name} className="relative group">
+                  <button
+                    title={c.name}
+                    onClick={() => selectColor(c.value)}
+                    style={swatchStyle}
+                    className={`w-full aspect-square rounded-xl border-[3px] transition-transform hover:scale-110
+                      ${isSelected ? 'border-[#5B2D8E] scale-110' : 'border-transparent'}`}
+                  />
+                  <span
+                    role="tooltip"
+                    className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap
+                      rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg
+                      transition-opacity duration-150 group-hover:opacity-100 z-10"
+                  >
+                    {c.name}
+                  </span>
+                </div>
               );
             })}
           </div>
