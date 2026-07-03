@@ -66,6 +66,7 @@ export const COLORS = [
   { name: 'Naranja',        value: '#E65100' },
   { name: 'Gris',           value: '#78909C' },
   { name: 'Rosa',           value: '#E91E8C' },
+  { name: 'Morado',         value: '#7B2CBF' },
   { name: 'Flores',         value: 'pattern-flores' },
   { name: 'Leopardo',       value: 'pattern-leopardo' },
 ] as const;
