@@ -17,6 +17,9 @@ import { PRODUCT_IMAGES, COLORS, type ProductId } from '@/lib/configurador/produ
 
 type Tool = 'pencil' | 'fill' | 'eraser';
 
+const SOLID_COLORS = COLORS.filter(c => !c.value.startsWith('pattern-'));
+const TELA_COLORS  = COLORS.filter(c => c.value.startsWith('pattern-'));
+
 interface CanvasDesignerProps {
   product: ProductId;
   productName: string;
@@ -273,6 +276,49 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     setToolState(t);
   }
 
+  function renderSwatch(c: { name: string; value: string }) {
+    const isSelected = c.value.startsWith('pattern-')
+      ? activePattern === c.value
+      : (!activePattern && color === c.value);
+
+    let swatchStyle: React.CSSProperties = {};
+    if (c.value === 'pattern-flores') {
+      swatchStyle = {
+        backgroundImage: 'radial-gradient(circle at 25% 25%, #FF69B4 3px, transparent 3px), radial-gradient(circle at 75% 75%, #FF69B4 3px, transparent 3px)',
+        backgroundSize: '14px 14px',
+        backgroundColor: '#FFB6C1',
+      };
+    } else if (isTexturePattern(c.value)) {
+      swatchStyle = {
+        backgroundImage: `url('/configurador/patterns/${c.value.replace('pattern-', '')}.png')`,
+        backgroundSize: '200%',
+        backgroundPosition: 'center',
+      };
+    } else {
+      swatchStyle = { backgroundColor: c.value };
+    }
+
+    return (
+      <div key={c.name} className="relative group">
+        <button
+          title={c.name}
+          onClick={() => selectColor(c.value)}
+          style={swatchStyle}
+          className={`w-full aspect-square rounded-xl border-[3px] transition-transform hover:scale-110
+            ${isSelected ? 'border-[#5B2D8E] scale-110' : 'border-transparent'}`}
+        />
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap
+            rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg
+            transition-opacity duration-150 group-hover:opacity-100 z-10"
+        >
+          {c.name}
+        </span>
+      </div>
+    );
+  }
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="max-w-5xl mx-auto p-4 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4 items-start">
@@ -325,51 +371,18 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
         </div>
 
         {/* Palette */}
-        <div>
-          <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Color / Tela</p>
-          <div className="grid grid-cols-4 gap-2">
-            {COLORS.map(c => {
-              const isSelected = c.value.startsWith('pattern-')
-                ? activePattern === c.value
-                : (!activePattern && color === c.value);
-
-              let swatchStyle: React.CSSProperties = {};
-              if (c.value === 'pattern-flores') {
-                swatchStyle = {
-                  backgroundImage: 'radial-gradient(circle at 25% 25%, #FF69B4 3px, transparent 3px), radial-gradient(circle at 75% 75%, #FF69B4 3px, transparent 3px)',
-                  backgroundSize: '14px 14px',
-                  backgroundColor: '#FFB6C1',
-                };
-              } else if (isTexturePattern(c.value)) {
-                swatchStyle = {
-                  backgroundImage: `url('/configurador/patterns/${c.value.replace('pattern-', '')}.png')`,
-                  backgroundSize: '200%',
-                  backgroundPosition: 'center',
-                };
-              } else {
-                swatchStyle = { backgroundColor: c.value };
-              }
-
-              return (
-                <div key={c.name} className="relative group">
-                  <button
-                    title={c.name}
-                    onClick={() => selectColor(c.value)}
-                    style={swatchStyle}
-                    className={`w-full aspect-square rounded-xl border-[3px] transition-transform hover:scale-110
-                      ${isSelected ? 'border-[#5B2D8E] scale-110' : 'border-transparent'}`}
-                  />
-                  <span
-                    role="tooltip"
-                    className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap
-                      rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg
-                      transition-opacity duration-150 group-hover:opacity-100 z-10"
-                  >
-                    {c.name}
-                  </span>
-                </div>
-              );
-            })}
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Colores</p>
+            <div className="grid grid-cols-4 gap-2">
+              {SOLID_COLORS.map(c => renderSwatch(c))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Telas</p>
+            <div className="grid grid-cols-4 gap-2">
+              {TELA_COLORS.map(c => renderSwatch(c))}
+            </div>
           </div>
         </div>
 
