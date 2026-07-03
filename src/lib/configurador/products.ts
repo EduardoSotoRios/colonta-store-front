@@ -72,7 +72,6 @@ export const COLORS = [
   { name: 'Amarillo',       value: '#FFD600' },
   { name: 'Turquesa',       value: '#1CD3C4' },
   { name: 'Burdeo',         value: '#6E1423' },
-  { name: 'Flores',         value: 'pattern-flores' },
   { name: 'Leopardo',       value: 'pattern-leopardo' },
   { name: 'Leopardo Rosa',  value: 'pattern-leopardo-rosa' },
   { name: 'Corazones',      value: 'pattern-corazones' },

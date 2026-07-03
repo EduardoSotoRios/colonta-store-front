@@ -99,21 +99,6 @@ export function createTexturePattern(ctx: CanvasRenderingContext2D, value: strin
   return ctx.createPattern(pc, 'repeat')!;
 }
 
-export function createFlowerPattern(ctx: CanvasRenderingContext2D): CanvasPattern {
-  const pc = document.createElement('canvas');
-  pc.width = 30; pc.height = 30;
-  const pctx = pc.getContext('2d')!;
-  pctx.fillStyle = '#FFB6C1';
-  pctx.fillRect(0, 0, 30, 30);
-  ([[15, 10], [10, 20], [20, 20], [8, 13], [22, 13]] as [number, number][]).forEach(([px, py], i) => {
-    pctx.beginPath();
-    pctx.arc(px, py, 3.5, 0, Math.PI * 2);
-    pctx.fillStyle = i === 0 ? '#FFD700' : '#FF69B4';
-    pctx.fill();
-  });
-  return ctx.createPattern(pc, 'repeat')!;
-}
-
 // Each flood-fill claims the pixels it paints under a fresh numeric "zone" id
 // (0 = never painted). A later fill can only spread across pixels that share
 // its start pixel's zone — this is what actually decides "same region", not
@@ -151,9 +136,7 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
   const startZone = zoneMap[startPos];
 
   let fillR: number, fillG: number, fillB: number;
-  if (activePattern === 'pattern-flores') {
-    fillR = 255; fillG = 182; fillB = 193;
-  } else if (activePattern) {
+  if (activePattern) {
     [fillR, fillG, fillB] = TEXTURE_SENTINEL;
   } else {
     const hex = currentColor.replace('#', '');
@@ -211,9 +194,7 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
     const patC = document.createElement('canvas');
     patC.width = cw; patC.height = ch;
     const pctx = patC.getContext('2d')!;
-    const pattern = activePattern === 'pattern-flores'
-      ? createFlowerPattern(pctx)
-      : createTexturePattern(pctx, activePattern);
+    const pattern = createTexturePattern(pctx, activePattern);
     pctx.fillStyle = pattern ?? `rgb(${TEXTURE_SENTINEL.join(',')})`;
     pctx.fillRect(0, 0, cw, ch);
     pctx.globalCompositeOperation = 'destination-in';

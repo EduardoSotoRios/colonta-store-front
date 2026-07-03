@@ -5,7 +5,6 @@ import {
   CANVAS_W, CANVAS_H,
   drawTemplateFromImage,
   floodFill,
-  createFlowerPattern,
   createTexturePattern,
   preloadPatternTextures,
   isTexturePattern,
@@ -135,7 +134,6 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     if (!col) return colorRef.current;
     const ctx = col.getContext('2d')!;
     const pattern = patternRef.current;
-    if (pattern === 'pattern-flores') return createFlowerPattern(ctx);
     if (pattern) return createTexturePattern(ctx, pattern) ?? colorRef.current;
     return colorRef.current;
   }
@@ -282,13 +280,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
       : (!activePattern && color === c.value);
 
     let swatchStyle: React.CSSProperties = {};
-    if (c.value === 'pattern-flores') {
-      swatchStyle = {
-        backgroundImage: 'radial-gradient(circle at 25% 25%, #FF69B4 3px, transparent 3px), radial-gradient(circle at 75% 75%, #FF69B4 3px, transparent 3px)',
-        backgroundSize: '14px 14px',
-        backgroundColor: '#FFB6C1',
-      };
-    } else if (isTexturePattern(c.value)) {
+    if (isTexturePattern(c.value)) {
       swatchStyle = {
         backgroundImage: `url('/configurador/patterns/${c.value.replace('pattern-', '')}.png')`,
         backgroundSize: '200%',
