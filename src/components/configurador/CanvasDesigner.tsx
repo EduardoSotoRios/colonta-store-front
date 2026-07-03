@@ -9,6 +9,7 @@ import {
   createTexturePattern,
   preloadPatternTextures,
   isTexturePattern,
+  createZoneMap,
   getMergedDataURL,
   downloadCanvas,
 } from '@/lib/configurador/canvasUtils';
@@ -27,6 +28,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   const mainCanvasRef    = useRef<HTMLCanvasElement>(null);
   const colorCanvasRef   = useRef<HTMLCanvasElement | null>(null);
   const templateCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const zoneMapRef       = useRef<Int32Array | null>(null);
   const historyRef       = useRef<ImageData[]>([]);
   const isDrawingRef     = useRef(false);
   const lastPosRef       = useRef({ x: 0, y: 0 });
@@ -96,6 +98,8 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     templateCanvas.height   = CANVAS_H;
     templateCanvasRef.current = templateCanvas;
 
+    zoneMapRef.current = createZoneMap(CANVAS_W, CANVAS_H);
+
     const colorCtx = colorCanvas.getContext('2d')!;
     colorCtx.fillStyle = '#FFFFFF';
     colorCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
@@ -142,7 +146,8 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
       e.preventDefault();
       const col = colorCanvasRef.current;
       const tpl = templateCanvasRef.current;
-      if (!col || !tpl) return;
+      const zones = zoneMapRef.current;
+      if (!col || !tpl || !zones) return;
       const pos = getPos(e);
 
       if (toolRef.current === 'fill') {
@@ -151,6 +156,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
           templateCanvas: tpl,
           activePattern: patternRef.current,
           currentColor: colorRef.current,
+          zoneMap: zones,
         });
         renderComposite();
         saveHistory();
@@ -232,6 +238,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     const ctx = col.getContext('2d')!;
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    zoneMapRef.current = createZoneMap(CANVAS_W, CANVAS_H);
     renderComposite();
     historyRef.current = [];
     saveHistory();

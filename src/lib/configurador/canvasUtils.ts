@@ -114,16 +114,30 @@ export function createFlowerPattern(ctx: CanvasRenderingContext2D): CanvasPatter
   return ctx.createPattern(pc, 'repeat')!;
 }
 
+// Each flood-fill claims the pixels it paints under a fresh numeric "zone" id
+// (0 = never painted). A later fill can only spread across pixels that share
+// its start pixel's zone — this is what actually decides "same region", not
+// pixel color. Without it, a high-contrast texture (e.g. black spots on white,
+// like "Manchas") gets its light pixels silently swallowed by an unrelated
+// fill in a neighboring area, because those light pixels look color-similar
+// to plain unpainted canvas even though they belong to a different pattern.
+let zoneCounter = 1;
+
+export function createZoneMap(width: number, height: number): Int32Array {
+  return new Int32Array(width * height);
+}
+
 interface FloodFillOptions {
   colorCanvas: HTMLCanvasElement;
   templateCanvas: HTMLCanvasElement;
   /** A COLORS `value` like 'pattern-leopardo', or null when painting a plain color. */
   activePattern: string | null;
   currentColor: string;
+  zoneMap: Int32Array;
 }
 
 export function floodFill(startX: number, startY: number, opts: FloodFillOptions): void {
-  const { colorCanvas, templateCanvas, activePattern, currentColor } = opts;
+  const { colorCanvas, templateCanvas, activePattern, currentColor, zoneMap } = opts;
   const colorCtx = colorCanvas.getContext('2d')!;
   const templateCtx = templateCanvas.getContext('2d')!;
   const cw = colorCanvas.width, ch = colorCanvas.height;
@@ -133,8 +147,8 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
 
   const imgData = colorCtx.getImageData(0, 0, cw, ch);
   const data = imgData.data;
-  const idx = (startY * cw + startX) * 4;
-  const startR = data[idx], startG = data[idx + 1], startB = data[idx + 2], startA = data[idx + 3];
+  const startPos = startY * cw + startX;
+  const startZone = zoneMap[startPos];
 
   let fillR: number, fillG: number, fillB: number;
   if (activePattern === 'pattern-flores') {
@@ -148,44 +162,49 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
     fillB = parseInt(hex.slice(4, 6), 16);
   }
 
-  if (startR === fillR && startG === fillG && startB === fillB) return;
-
   const templateData = templateCtx.getImageData(0, 0, cw, ch).data;
   const isDarkOutline = (i: number) => templateData[i + 3] > 80;
-  const colorMatch = (i: number) =>
-    !isDarkOutline(i) &&
-    Math.abs(data[i] - startR) < 50 &&
-    Math.abs(data[i + 1] - startG) < 50 &&
-    Math.abs(data[i + 2] - startB) < 50 &&
-    Math.abs(data[i + 3] - startA) < 50;
 
-  const queue = [startX + startY * cw];
+  // Which pixels belong to "this" fill is decided purely by zoneMap equality
+  // (plus the template outline). We deliberately do NOT also require the pixel
+  // color to be close to the start pixel: once zone-gated, that extra check
+  // only hurts — re-filling an existing textured region (whose pixels can be
+  // any color, e.g. the black spots of "Manchas") must grab the whole region,
+  // not just the sub-pixels that happen to resemble the exact spot clicked.
+  const queue = [startPos];
   const visited = new Uint8Array(cw * ch);
+  const newZone = zoneCounter++;
+  let filledAny = false;
 
   while (queue.length) {
     const pos = queue.pop()!;
     const x = pos % cw, y = Math.floor(pos / cw);
     if (x < 0 || x >= cw || y < 0 || y >= ch) continue;
     if (visited[pos]) continue;
+    if (zoneMap[pos] !== startZone) continue;
     const i = pos * 4;
-    if (!colorMatch(i)) continue;
+    if (isDarkOutline(i)) continue;
     visited[pos] = 1;
+    zoneMap[pos] = newZone;
     data[i] = fillR; data[i + 1] = fillG; data[i + 2] = fillB; data[i + 3] = 255;
+    filledAny = true;
     queue.push(pos + 1, pos - 1, pos + cw, pos - cw);
   }
+
+  if (!filledAny) return;
 
   colorCtx.putImageData(imgData, 0, 0);
 
   if (activePattern) {
-    const filled = colorCtx.getImageData(0, 0, cw, ch);
-    const fd = filled.data;
-
+    // Mask is built from zoneMap (authoritative, unambiguous) rather than from
+    // pixel color: a fixed sentinel color can coincidentally match real,
+    // anti-aliased texture pixels from an earlier fill elsewhere on the
+    // canvas, which would otherwise leak that unrelated area into this mask.
     const maskC = document.createElement('canvas');
     maskC.width = cw; maskC.height = ch;
     const maskImg = new ImageData(cw, ch);
-    for (let k = 0; k < fd.length; k += 4) {
-      const hit = fd[k] === fillR && fd[k + 1] === fillG && fd[k + 2] === fillB && fd[k + 3] === 255;
-      maskImg.data[k + 3] = hit ? 255 : 0;
+    for (let pos = 0; pos < cw * ch; pos++) {
+      maskImg.data[pos * 4 + 3] = zoneMap[pos] === newZone ? 255 : 0;
     }
     maskC.getContext('2d')!.putImageData(maskImg, 0, 0);
 
