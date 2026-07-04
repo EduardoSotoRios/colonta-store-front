@@ -314,6 +314,9 @@ export default function CheckoutPage() {
                           <li key={idx} className="flex justify-between">
                             <span>
                               {product.name} × {item.quantity}
+                              {item.colorScheme?.name && (
+                                <span className="text-slate-500"> — {item.colorScheme.name}</span>
+                              )}
                               {selectedExtras.length > 0 && (
                                 <span className="text-slate-500"> ({selectedExtras.map((e) => e.name).join(", ")})</span>
                               )}

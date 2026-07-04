@@ -197,7 +197,11 @@ export default function CartPage() {
                       <div className="flex-1 min-w-0 w-full sm:w-auto">
                         <p className="font-semibold truncate">{product.name}</p>
                         <p className="text-xs text-slate-500">
-                          {item.colorSchemeId ? `Esquema: ${item.colorSchemeId}` : "Color personalizado"}
+                          {item.colorScheme?.name
+                            ? item.colorScheme.name
+                            : item.colorSchemeId
+                            ? `Esquema: ${item.colorSchemeId}`
+                            : "Color personalizado"}
                         </p>
                         {selectedExtras.length > 0 && (
                           <p className="text-xs text-slate-500 truncate">
@@ -396,7 +400,11 @@ export default function CartPage() {
                   <div className="flex-1 min-w-0 w-full sm:w-auto">
                     <p className="font-semibold truncate">{product.name}</p>
                     <p className="text-xs text-slate-500">
-                      {item.colorSchemeId ? `Esquema: ${item.colorSchemeId}` : "Color personalizado"}
+                      {item.colorScheme?.name
+                        ? item.colorScheme.name
+                        : item.colorSchemeId
+                        ? `Esquema: ${item.colorSchemeId}`
+                        : "Color personalizado"}
                     </p>
                     {selectedExtras.length > 0 && (
                       <p className="text-xs text-slate-500 truncate">
