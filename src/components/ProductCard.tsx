@@ -1,3 +1,7 @@
+"use client";
+
+import FavoriteButton from "./FavoriteButton";
+
 type Props = {
   id: string;
   name: string;
@@ -25,12 +29,7 @@ export default function ProductCard({ id, name, price, imageUrl, href = "#", onB
         >
           Comprar
         </button>
-        <button
-          className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-semibold border hover:bg-slate-50"
-          aria-label="Añadir a favoritos"
-        >
-          ❤
-        </button>
+        <FavoriteButton productId={id} />
       </div>
     </div>
   );

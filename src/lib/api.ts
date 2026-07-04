@@ -650,6 +650,13 @@ export const api = {
   categoriesIndex: () => Promise.resolve([]), // Deprecated: usar getCategoriasFromProducts
   getCategorias: () => Promise.resolve([]), // Deprecated: extraer de productos directamente
 
+  /* Favoritos - Backend: /api/favorites (los favoritos están en el JWT) */
+  getFavorites: () => get<{ favorites: string[] }>("/favorites").then(r => r.favorites ?? []),
+  addFavorite: (productModelId: string) =>
+    post<{ favorites: string[] }>(`/favorites/${productModelId}`).then(r => r.favorites ?? []),
+  removeFavorite: (productModelId: string) =>
+    del<{ favorites: string[] }>(`/favorites/${productModelId}`).then(r => r.favorites ?? []),
+
   /* Carrito - Backend: /api/cart (el carrito está en el JWT) */
   getCart: () => get<{ cart: CartItem[] }>("/cart").then(res => res.cart || []),
   addToCart: (item: CartItem) =>

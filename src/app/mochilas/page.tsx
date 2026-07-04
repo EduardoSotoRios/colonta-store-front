@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { api, type ProductModel } from "@/lib/api";
 import AddToCartInlineButton from "@/components/AddToCartInlineButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import PriceFilter from "@/components/PriceFilter";
 
 export const dynamic = "force-dynamic";
@@ -158,7 +159,10 @@ function ProductGrid({ products }: { products: ProductModel[] }) {
                 <p className="mt-1 font-extrabold">${priceCL}</p>
               )}
 
-              <AddToCartInlineButton productId={p.id} />
+              <div className="flex gap-2">
+                <AddToCartInlineButton productId={p.id} />
+                <FavoriteButton productId={p.id} />
+              </div>
             </div>
           </li>
         );
