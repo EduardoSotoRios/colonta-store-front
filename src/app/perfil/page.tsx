@@ -333,7 +333,8 @@ export default function PerfilPage() {
               <div className="space-y-3">
                 {orders.map((order) => (
                   <div key={order.id} className="rounded-xl border p-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start justify-between gap-3">
+                    {/* Cabecera de la orden */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
                         <p className="text-sm font-semibold text-slate-900">
                           Orden #{order.id.slice(0, 8)}
@@ -342,10 +343,6 @@ export default function PerfilPage() {
                           {new Date(order.createdAt).toLocaleDateString("es-CL", {
                             day: "numeric", month: "long", year: "numeric",
                           })}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {order.deliveryAddress.street} {order.deliveryAddress.number},{" "}
-                          {order.deliveryAddress.comuna}
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
@@ -362,6 +359,51 @@ export default function PerfilPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Productos de la orden */}
+                    <ul className="space-y-2">
+                      {order.items.map((item, idx) => {
+                        const imgSrc = item.customDesignImageUrl || item.productImageUrl;
+                        const isCustom = Boolean(item.customDesignImageUrl);
+                        const colorName = item.chosenColorScheme?.name;
+                        const colors = item.chosenColorScheme?.colors ?? [];
+                        return (
+                          <li key={idx} className="flex items-center gap-3">
+                            {imgSrc ? (
+                              <img
+                                src={imgSrc}
+                                alt={item.productName}
+                                className="w-12 h-12 rounded-lg object-cover border border-slate-200 flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-lg bg-slate-100 flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {isCustom ? "🎨 " : ""}{item.productName}
+                                {item.quantity > 1 && <span className="text-slate-400 font-normal"> × {item.quantity}</span>}
+                              </p>
+                              {(colorName || colors.length > 0) && (
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  {colors.map((c, i) => (
+                                    <span
+                                      key={i}
+                                      className="inline-block w-3 h-3 rounded-full border border-black/10"
+                                      style={{ backgroundColor: c.startsWith('#') ? c : undefined }}
+                                      title={c}
+                                    />
+                                  ))}
+                                  {colorName && <span className="text-xs text-slate-500">{colorName}</span>}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-semibold text-slate-600 flex-shrink-0">
+                              ${fmt(Number(item.unitPrice) * item.quantity)}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 ))}
               </div>

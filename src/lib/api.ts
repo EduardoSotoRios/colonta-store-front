@@ -132,6 +132,10 @@ function cleanCartItem(item: CartItem): Record<string, any> {
     cleaned.customDesignImageUrl = String(item.customDesignImageUrl);
   }
 
+  if (item.productImageUrl) {
+    cleaned.productImageUrl = String(item.productImageUrl);
+  }
+
   // IMPORTANTE: No enviar ambos colorSchemeId y colorScheme
   // Priorizar colorSchemeId si ambos están presentes (aunque no debería pasar)
   if (item.colorSchemeId) {
@@ -318,6 +322,7 @@ export type CartItem = {
   };
   extras: string[];            // IDs de extras (siempre presente, puede ser array vacío)
   customDesignImageUrl?: string; // Diseño del configurador (Cloudinary) — se envía al backend
+  productImageUrl?: string;    // URL de la imagen del producto seleccionada — se guarda en la orden
   unitPrice?: number;           // Precio a mostrar para items personalizados (solo frontend, no se envía al backend)
 };
 
@@ -377,6 +382,7 @@ export type OrderItem = {
   chosenExtras: Array<{ id: string; name: string; price: number }>;
   unitPrice: number;
   customDesignImageUrl: string | null;
+  productImageUrl: string | null;
 };
 
 export type Order = {

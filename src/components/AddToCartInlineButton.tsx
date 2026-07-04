@@ -8,11 +8,13 @@ import type { CartItem } from "@/lib/api";
 
 export default function AddToCartInlineButton({
   productId,
+  imageUrl,
   colorSchemeId,
   colorScheme,
   extras = [],
 }: {
   productId: string;
+  imageUrl?: string;
   colorSchemeId?: string;
   colorScheme?: { type: 'custom'; colors: string[] };
   extras?: string[];
@@ -25,6 +27,7 @@ export default function AddToCartInlineButton({
       productModelId: productId,
       quantity: 1,
       extras: extras || [],
+      ...(imageUrl ? { productImageUrl: imageUrl } : {}),
     };
 
     if (colorSchemeId) {

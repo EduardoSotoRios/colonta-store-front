@@ -73,6 +73,7 @@ export default function AddToCartButton({
 
     if (hasImageSelected) {
       item.imageId = selectedImage.id;
+      item.productImageUrl = selectedImage.url;
       if (hasImageColors) {
         item.colorScheme = {
           type: 'custom',
