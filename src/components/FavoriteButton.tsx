@@ -3,6 +3,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function FavoriteButton({
   productId,
@@ -13,9 +14,10 @@ export default function FavoriteButton({
 }) {
   const { user } = useAuth();
   const { hydrate, toggle, isFavorite } = useFavorites();
+  const router = useRouter();
 
   useEffect(() => {
-    hydrate(!!user);
+    if (user) hydrate(true);
   }, [user, hydrate]);
 
   const fav = isFavorite(productId);
@@ -25,7 +27,8 @@ export default function FavoriteButton({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggle(productId, !!user);
+        if (!user) { router.push("/login"); return; }
+        toggle(productId, true);
       }}
       aria-label={fav ? "Quitar de favoritos" : "Añadir a favoritos"}
       className={`inline-flex items-center justify-center rounded-xl border px-3 py-2 transition-colors ${
