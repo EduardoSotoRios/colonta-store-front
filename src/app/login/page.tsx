@@ -7,9 +7,10 @@ import { useAuth } from "@/hooks/useAuth";
 export default function LoginPage() {
   const router = useRouter();
   const { login, loading, error } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [success, setSuccess]     = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -17,10 +18,31 @@ export default function LoginPage() {
 
     try {
       await login(email.trim(), password);
-      router.push("/mochilas"); // redirige a tienda principal
+      setSuccess(true);
+      await new Promise(r => setTimeout(r, 1500));
+      router.push("/mochilas");
     } catch (err: any) {
       setLocalError(err?.message ?? "Error al iniciar sesión");
     }
+  }
+
+  if (success) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+            <svg className="w-7 h-7 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <p className="text-lg font-bold text-slate-800">¡Bienvenido de vuelta!</p>
+          <p className="text-sm text-slate-500">Redirigiendo...</p>
+          <div className="w-full bg-slate-100 rounded-full h-1 overflow-hidden">
+            <div className="h-1 bg-colonta-primary rounded-full animate-[progress_1.4s_ease-in-out_forwards]" />
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (

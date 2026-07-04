@@ -36,3 +36,5 @@ body {
   color: var(--foreground);
   font-family: "Montserrat", sans-serif;
 }
+
+@keyframes progress { from { width: 0% } to { width: 100% } }
