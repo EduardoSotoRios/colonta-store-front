@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { REGIONES, COMUNAS_POR_REGION } from "@/lib/chile-geo";
 import { api } from "@/lib/api";
-import type { Address, Order } from "@/lib/api";
+import type { Address, Order, ProductModel } from "@/lib/api";
 import Link from "next/link";
+import FavoriteButton from "@/components/FavoriteButton";
+import { useFavorites } from "@/hooks/useFavorites";
 
 type EditForm = {
   nombre: string;
@@ -32,6 +34,10 @@ export default function PerfilPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
 
+  const { favoriteIds, hydrate: hydrateFavs, hydrated: favsHydrated } = useFavorites();
+  const [favProducts, setFavProducts] = useState<ProductModel[]>([]);
+  const [favsLoading, setFavsLoading] = useState(false);
+
   useEffect(() => {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
@@ -45,8 +51,18 @@ export default function PerfilPage() {
         .then(setOrders)
         .catch(() => {})
         .finally(() => setOrdersLoading(false));
+      hydrateFavs(true);
     }
-  }, [user, hydrated, router]);
+  }, [user, hydrated, router, hydrateFavs]);
+
+  useEffect(() => {
+    if (!favsHydrated) return;
+    if (favoriteIds.length === 0) { setFavProducts([]); return; }
+    setFavsLoading(true);
+    Promise.all(favoriteIds.map(id => api.productById(id).catch(() => null)))
+      .then(results => setFavProducts(results.filter((p): p is ProductModel => p !== null)))
+      .finally(() => setFavsLoading(false));
+  }, [favoriteIds, favsHydrated]);
 
   function startEdit() {
     if (!user) return;
@@ -349,6 +365,50 @@ export default function PerfilPage() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+
+          {/* Favoritos */}
+          <div className="rounded-2xl ring-1 ring-black/5 p-6 bg-white">
+            <h2 className="font-extrabold text-lg text-slate-900 mb-5">Mis Favoritos</h2>
+
+            {favsLoading ? (
+              <p className="text-sm text-slate-500">Cargando favoritos…</p>
+            ) : favProducts.length === 0 ? (
+              <div className="text-center py-8 text-slate-500">
+                <p className="text-sm">Todavía no tienes productos favoritos.</p>
+                <Link href="/mochilas" className="mt-3 inline-block text-sm text-colonta-primary font-semibold underline">
+                  Explorar productos
+                </Link>
+              </div>
+            ) : (
+              <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {favProducts.map(p => {
+                  const priceCL = new Intl.NumberFormat("es-CL").format(Number(p.basePrice));
+                  return (
+                    <li key={p.id} className="rounded-xl border bg-slate-50 overflow-hidden flex flex-col">
+                      <Link href={`/mochilas/${p.id}`} className="block">
+                        <div className="aspect-[4/5] bg-slate-200">
+                          <img
+                            src={p.imageUrl || "/mochila1.png"}
+                            alt={p.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </Link>
+                      <div className="p-3 flex flex-col gap-2">
+                        <Link href={`/mochilas/${p.id}`}>
+                          <p className="text-sm font-semibold leading-snug">{p.name}</p>
+                          {Number(p.basePrice) > 0 && (
+                            <p className="text-sm font-extrabold mt-0.5">${priceCL}</p>
+                          )}
+                        </Link>
+                        <FavoriteButton productId={p.id} className="w-full justify-center text-xs py-1.5" />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
 
