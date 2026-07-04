@@ -10,6 +10,8 @@ export interface BlueExpressPoint {
   city: string;
   region: string;
   hours: string;
+  lat: number;
+  lng: number;
 }
 
 export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
@@ -22,6 +24,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.4489,
+    lng: -70.6693,
   },
   {
     id: "RM-002",
@@ -31,6 +35,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.4267,
+    lng: -70.6153,
   },
   {
     id: "RM-003",
@@ -40,6 +46,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.4152,
+    lng: -70.5795,
   },
   {
     id: "RM-004",
@@ -49,6 +57,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.5103,
+    lng: -70.7663,
   },
   {
     id: "RM-005",
@@ -58,6 +68,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.5115,
+    lng: -70.5956,
   },
   {
     id: "RM-006",
@@ -67,6 +79,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.6108,
+    lng: -70.5756,
   },
   {
     id: "RM-007",
@@ -76,6 +90,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.5921,
+    lng: -70.6981,
   },
   {
     id: "RM-008",
@@ -85,6 +101,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.3594,
+    lng: -70.7371,
   },
   {
     id: "RM-009",
@@ -94,6 +112,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.4567,
+    lng: -70.5991,
   },
   {
     id: "RM-010",
@@ -103,6 +123,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Santiago",
     region: "Región Metropolitana",
     hours: "Lun-Vie 9:00-19:00 / Sáb 9:00-14:00",
+    lat: -33.4843,
+    lng: -70.5498,
   },
   // --- Valparaíso ---
   {
@@ -113,6 +135,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Valparaíso",
     region: "Región de Valparaíso",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -33.0472,
+    lng: -71.6127,
   },
   {
     id: "V-002",
@@ -122,6 +146,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Viña del Mar",
     region: "Región de Valparaíso",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -33.0245,
+    lng: -71.5516,
   },
   {
     id: "V-003",
@@ -131,6 +157,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "San Antonio",
     region: "Región de Valparaíso",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -33.5933,
+    lng: -71.6215,
   },
   // --- O'Higgins ---
   {
@@ -141,6 +169,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Rancagua",
     region: "Región del Libertador Gral. Bernardo O'Higgins",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -34.1703,
+    lng: -70.7444,
   },
   // --- Maule ---
   {
@@ -151,6 +181,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Talca",
     region: "Región del Maule",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -35.4264,
+    lng: -71.6554,
   },
   {
     id: "ML-002",
@@ -160,6 +192,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Curicó",
     region: "Región del Maule",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -34.9856,
+    lng: -71.2389,
   },
   // --- Ñuble ---
   {
@@ -170,6 +204,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Chillán",
     region: "Región de Ñuble",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -36.6063,
+    lng: -72.1030,
   },
   // --- Biobío ---
   {
@@ -180,6 +216,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Concepción",
     region: "Región del Biobío",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -36.8270,
+    lng: -73.0503,
   },
   {
     id: "BB-002",
@@ -189,6 +227,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Concepción",
     region: "Región del Biobío",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -36.7239,
+    lng: -73.1174,
   },
   {
     id: "BB-003",
@@ -198,6 +238,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Los Ángeles",
     region: "Región del Biobío",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -37.4694,
+    lng: -72.3538,
   },
   // --- La Araucanía ---
   {
@@ -208,6 +250,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Temuco",
     region: "Región de La Araucanía",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -38.7359,
+    lng: -72.5904,
   },
   // --- Los Ríos ---
   {
@@ -218,6 +262,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Valdivia",
     region: "Región de Los Ríos",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -39.8196,
+    lng: -73.2452,
   },
   // --- Los Lagos ---
   {
@@ -228,6 +274,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Puerto Montt",
     region: "Región de Los Lagos",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -41.4693,
+    lng: -72.9424,
   },
   {
     id: "LL-002",
@@ -237,6 +285,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Osorno",
     region: "Región de Los Lagos",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -40.5733,
+    lng: -73.1323,
   },
   // --- Coquimbo ---
   {
@@ -247,6 +297,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "La Serena",
     region: "Región de Coquimbo",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -29.9027,
+    lng: -71.2519,
   },
   {
     id: "CQ-002",
@@ -256,6 +308,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Coquimbo",
     region: "Región de Coquimbo",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -29.9533,
+    lng: -71.3435,
   },
   // --- Antofagasta ---
   {
@@ -266,6 +320,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Antofagasta",
     region: "Región de Antofagasta",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -23.6509,
+    lng: -70.3975,
   },
   {
     id: "AN-002",
@@ -275,6 +331,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Calama",
     region: "Región de Antofagasta",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -22.4562,
+    lng: -68.9177,
   },
   // --- Atacama ---
   {
@@ -285,6 +343,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Copiapó",
     region: "Región de Atacama",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -27.3668,
+    lng: -70.3323,
   },
   // --- Tarapacá ---
   {
@@ -295,6 +355,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Iquique",
     region: "Región de Tarapacá",
     hours: "Lun-Vie 9:00-18:30 / Sáb 9:00-13:00",
+    lat: -20.2141,
+    lng: -70.1522,
   },
   // --- Arica y Parinacota ---
   {
@@ -305,6 +367,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Arica",
     region: "Región de Arica y Parinacota",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -18.4783,
+    lng: -70.3126,
   },
   // --- Magallanes ---
   {
@@ -315,6 +379,8 @@ export const BLUE_EXPRESS_POINTS: BlueExpressPoint[] = [
     city: "Punta Arenas",
     region: "Región de Magallanes",
     hours: "Lun-Vie 9:00-18:00 / Sáb 9:00-13:00",
+    lat: -53.1638,
+    lng: -70.9171,
   },
 ];
 

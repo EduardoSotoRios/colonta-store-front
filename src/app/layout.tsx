@@ -1,6 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import "@/styles/globals.css";
+import "leaflet/dist/leaflet.css";
 import { Montserrat } from "next/font/google";
 import Header from "@/components/Header";
 import CartSidebar from "@/components/CartSidebar";
