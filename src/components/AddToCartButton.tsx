@@ -247,7 +247,9 @@ export default function AddToCartButton({
         >
           Agregar al carrito
         </button>
-        <FavoriteButton productId={productModel.id} />
+        <FavoriteButton
+          productId={hasImageSelected ? `${productModel.id}:${selectedImage.id}` : productModel.id}
+        />
       </div>
     </div>
   );

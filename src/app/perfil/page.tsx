@@ -18,6 +18,22 @@ type EditForm = {
   direccion: Address;
 };
 
+type FavoriteItem = {
+  key: string; // id guardado en favoritos: "productId" o "productId:imageId"
+  product: ProductModel;
+  imageUrl: string;
+  colores: Array<{ nombre: string; hex: string | null }>;
+};
+
+// El corazon en la ficha de producto guarda "productId:imageId" para recordar
+// el recolor exacto elegido, no solo el producto generico.
+function parseFavoriteKey(key: string): { productId: string; imageId?: number } {
+  const sep = key.indexOf(":");
+  if (sep === -1) return { productId: key };
+  const imageId = Number(key.slice(sep + 1));
+  return { productId: key.slice(0, sep), imageId: Number.isFinite(imageId) ? imageId : undefined };
+}
+
 export default function PerfilPage() {
   const { user, hydrate, hydrated, updateProfile, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -35,7 +51,7 @@ export default function PerfilPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
 
   const { favoriteIds, hydrate: hydrateFavs, hydrated: favsHydrated } = useFavorites();
-  const [favProducts, setFavProducts] = useState<ProductModel[]>([]);
+  const [favItems, setFavItems] = useState<FavoriteItem[]>([]);
   const [favsLoading, setFavsLoading] = useState(false);
 
   useEffect(() => {
@@ -57,10 +73,26 @@ export default function PerfilPage() {
 
   useEffect(() => {
     if (!favsHydrated) return;
-    if (favoriteIds.length === 0) { setFavProducts([]); return; }
+    if (favoriteIds.length === 0) { setFavItems([]); return; }
     setFavsLoading(true);
-    Promise.all(favoriteIds.map(id => api.getProductoById(id).catch(() => null)))
-      .then(results => setFavProducts(results.filter((p): p is ProductModel => p !== null)))
+    Promise.all(favoriteIds.map(async (key): Promise<FavoriteItem | null> => {
+      const { productId, imageId } = parseFavoriteKey(key);
+      try {
+        const product = await api.getProductoById(productId);
+        const variante = imageId != null
+          ? product.imagenes?.find(img => img.id === imageId)
+          : undefined;
+        return {
+          key,
+          product,
+          imageUrl: variante?.url || product.imageUrl || "",
+          colores: variante?.colores ?? [],
+        };
+      } catch {
+        return null;
+      }
+    }))
+      .then(results => setFavItems(results.filter((f): f is FavoriteItem => f !== null)))
       .finally(() => setFavsLoading(false));
   }, [favoriteIds, favsHydrated]);
 
@@ -442,7 +474,7 @@ export default function PerfilPage() {
 
             {favsLoading ? (
               <p className="text-sm text-slate-500">Cargando favoritos…</p>
-            ) : favProducts.length === 0 ? (
+            ) : favItems.length === 0 ? (
               <div className="text-center py-8 text-slate-500">
                 <p className="text-sm">Todavía no tienes productos favoritos.</p>
                 <Link href="/mochilas" className="mt-3 inline-block text-sm text-colonta-primary font-semibold underline">
@@ -451,14 +483,15 @@ export default function PerfilPage() {
               </div>
             ) : (
               <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {favProducts.map(p => {
+                {favItems.map(item => {
+                  const { product: p, colores } = item;
                   const priceCL = new Intl.NumberFormat("es-CL").format(Number(p.basePrice));
                   return (
-                    <li key={p.id} className="rounded-xl border bg-slate-50 overflow-hidden flex flex-col">
+                    <li key={item.key} className="rounded-xl border bg-slate-50 overflow-hidden flex flex-col">
                       <Link href={`/mochilas/${p.id}`} className="block">
                         <div className="aspect-[4/5] bg-slate-200">
                           <img
-                            src={p.imageUrl || "/mochila1.png"}
+                            src={item.imageUrl || "/mochila1.png"}
                             alt={p.name}
                             className="w-full h-full object-cover"
                           />
@@ -467,11 +500,16 @@ export default function PerfilPage() {
                       <div className="p-3 flex flex-col gap-2">
                         <Link href={`/mochilas/${p.id}`}>
                           <p className="text-sm font-semibold leading-snug">{p.name}</p>
+                          {colores.length > 0 && (
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              {colores.map(c => c.nombre).join(" / ")}
+                            </p>
+                          )}
                           {Number(p.basePrice) > 0 && (
                             <p className="text-sm font-extrabold mt-0.5">${priceCL}</p>
                           )}
                         </Link>
-                        <FavoriteButton productId={p.id} className="w-full justify-center text-xs py-1.5" />
+                        <FavoriteButton productId={item.key} className="w-full justify-center text-xs py-1.5" />
                       </div>
                     </li>
                   );
