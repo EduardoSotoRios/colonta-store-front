@@ -60,7 +60,7 @@ type Actions = {
   mergeLocalCart: () => Promise<void>; // Fusionar carrito local con servidor
 
   applyCoupon: (code: string) => Promise<void>;
-  createOrder: (deliveryAddress: Address, discountCode?: string) => Promise<Order>;
+  createOrder: (deliveryAddress: Address, discountCode?: string, shippingCost?: number) => Promise<Order>;
   getOrders: () => Promise<Order[]>;
   getOrderById: (id: string) => Promise<Order | null>;
 
@@ -348,7 +348,7 @@ export const useCart = create<State & Actions>((set, get) => ({
     }
   },
 
-  async createOrder(deliveryAddress, discountCode) {
+  async createOrder(deliveryAddress, discountCode, shippingCost) {
     try {
       const cart = get().cart;
       if (cart.length === 0) {
@@ -358,6 +358,7 @@ export const useCart = create<State & Actions>((set, get) => ({
         items: cart,
         deliveryAddress,
         discountCode,
+        shippingCost,
       });
       set({ order, error: null });
       // Limpiar carrito después de crear la orden

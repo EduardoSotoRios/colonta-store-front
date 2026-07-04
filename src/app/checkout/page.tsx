@@ -176,7 +176,7 @@ export default function CheckoutPage() {
     setBusy("order");
     setUiError(null);
     try {
-      const order = await createOrder(deliveryAddress, coupon?.code);
+      const order = await createOrder(deliveryAddress, coupon?.code, shippingCost);
       setPendingOrderId(order.id);
       setStep(4);
     } catch (e: any) {

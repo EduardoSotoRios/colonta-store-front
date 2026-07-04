@@ -672,6 +672,7 @@ export const api = {
     items: CartItem[];
     deliveryAddress: Address;
     discountCode?: string;
+    shippingCost?: number;
   }) => post<Order>("/orders", undefined, data),
   getOrders: () => get<Order[]>("/orders"),
   getOrderById: (id: string) => get<Order>(`/orders/${id}`),
