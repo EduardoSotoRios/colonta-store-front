@@ -712,6 +712,8 @@ export const api = {
   getOrders: () => get<Order[]>("/orders"),
   getOrderById: (id: string) => get<Order>(`/orders/${id}`),
   getAllOrdersAdmin: () => get<Order[]>("/orders/admin"),
+  updateOrderStatus: (id: string, estado: Order["estado"]) =>
+    patch<Order>(`/orders/${id}/status`, undefined, { estado }),
 
   /* Pagos - Backend: /api/payments */
   startWebpay: (orderId: string) =>
