@@ -70,6 +70,8 @@ export default function AddToCartButton({
       productModelId: productModel.id,
       quantity: Math.max(1, qty),
       extras: selectedExtras || [],
+      productName: productModel.name,
+      unitPrice: Number(productModel.basePrice),
     };
 
     if (hasImageSelected) {
