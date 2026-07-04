@@ -127,13 +127,19 @@ function cleanCartItem(item: CartItem): Record<string, any> {
   };
 
   // Diseño personalizado del configurador (URL de Cloudinary) — se envía al backend.
-  // NOTA: unitPrice es solo para mostrar en el carrito local, nunca se envía (igual que imageId).
+  // NOTA: unitPrice es solo para mostrar en el carrito local, nunca se envía.
   if (item.customDesignImageUrl) {
     cleaned.customDesignImageUrl = String(item.customDesignImageUrl);
   }
 
   if (item.productImageUrl) {
     cleaned.productImageUrl = String(item.productImageUrl);
+  }
+
+  // ID de la imagen/recolor elegido — sin esto, al recargar el carrito logueado
+  // se pierde qué variante exacta se agrego y se cae de vuelta a la imagen principal.
+  if (item.imageId !== undefined && item.imageId !== null) {
+    cleaned.imageId = Number(item.imageId);
   }
 
   // Fallback para productos Supabase: enviar nombre y precio al backend
@@ -154,6 +160,7 @@ function cleanCartItem(item: CartItem): Record<string, any> {
     if (Array.isArray(item.colorScheme.colors)) {
       cleaned.colorScheme = {
         type: 'custom',
+        name: item.colorScheme.name ? String(item.colorScheme.name) : undefined,
         colors: item.colorScheme.colors.filter(c => typeof c === 'string'),
       };
     }
