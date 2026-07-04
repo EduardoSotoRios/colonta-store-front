@@ -160,7 +160,12 @@ function ProductGrid({ products }: { products: ProductModel[] }) {
               )}
 
               <div className="flex gap-2">
-                <AddToCartInlineButton productId={p.id} imageUrl={p.imageUrl ?? undefined} />
+                <AddToCartInlineButton
+                  productId={p.id}
+                  productName={p.name}
+                  unitPrice={Number(p.basePrice)}
+                  imageUrl={p.imageUrl ?? undefined}
+                />
                 <FavoriteButton productId={p.id} />
               </div>
             </div>

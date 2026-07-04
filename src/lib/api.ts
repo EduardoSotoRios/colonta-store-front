@@ -136,6 +136,14 @@ function cleanCartItem(item: CartItem): Record<string, any> {
     cleaned.productImageUrl = String(item.productImageUrl);
   }
 
+  // Fallback para productos Supabase: enviar nombre y precio al backend
+  if (item.productName) {
+    cleaned.productName = String(item.productName);
+  }
+  if (item.unitPrice !== undefined && item.unitPrice !== null) {
+    cleaned.unitPrice = Math.round(Number(item.unitPrice));
+  }
+
   // IMPORTANTE: No enviar ambos colorSchemeId y colorScheme
   // Priorizar colorSchemeId si ambos están presentes (aunque no debería pasar)
   if (item.colorSchemeId) {
@@ -323,7 +331,8 @@ export type CartItem = {
   extras: string[];            // IDs de extras (siempre presente, puede ser array vacío)
   customDesignImageUrl?: string; // Diseño del configurador (Cloudinary) — se envía al backend
   productImageUrl?: string;    // URL de la imagen del producto seleccionada — se guarda en la orden
-  unitPrice?: number;           // Precio a mostrar para items personalizados (solo frontend, no se envía al backend)
+  unitPrice?: number;          // Precio del producto — se envía al backend como fallback para productos Supabase
+  productName?: string;        // Nombre del producto — se envía al backend como fallback para productos Supabase
 };
 
 export type Address = {
