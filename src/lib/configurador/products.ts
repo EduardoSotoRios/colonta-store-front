@@ -77,6 +77,7 @@ export const COLORS = [
   { name: 'Corazones',      value: 'pattern-corazones' },
   { name: 'Girasoles',      value: 'pattern-girasoles' },
   { name: 'Manchas',        value: 'pattern-manchas' },
+  { name: 'Círculos Retro', value: 'pattern-circulos-retro' },
 ] as const;
 
 export type ColorValue = typeof COLORS[number]['value'];
