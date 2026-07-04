@@ -2,11 +2,21 @@
 // src/components/BlueExpressSelector.tsx
 
 import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import {
   BLUE_EXPRESS_POINTS,
   REGIONS_ORDER,
   type BlueExpressPoint,
 } from "@/lib/blue-express-points";
+
+const BlueExpressMap = dynamic(() => import("@/components/BlueExpressMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[300px] rounded-xl bg-slate-100 animate-pulse border border-slate-200 flex items-center justify-center">
+      <span className="text-sm text-slate-400">Cargando mapa…</span>
+    </div>
+  ),
+});
 
 interface Props {
   selected: BlueExpressPoint | null;
@@ -20,17 +30,12 @@ export default function BlueExpressSelector({ selected, onChange }: Props) {
   const [search, setSearch] = useState("");
 
   const regions = useMemo(
-    () =>
-      REGIONS_ORDER.filter((r) =>
-        BLUE_EXPRESS_POINTS.some((p) => p.region === r)
-      ),
+    () => REGIONS_ORDER.filter((r) => BLUE_EXPRESS_POINTS.some((p) => p.region === r)),
     []
   );
 
   const filtered = useMemo(() => {
-    const byRegion = BLUE_EXPRESS_POINTS.filter(
-      (p) => p.region === regionFilter
-    );
+    const byRegion = BLUE_EXPRESS_POINTS.filter((p) => p.region === regionFilter);
     if (!search.trim()) return byRegion;
     const q = search.toLowerCase();
     return byRegion.filter(
@@ -41,8 +46,34 @@ export default function BlueExpressSelector({ selected, onChange }: Props) {
     );
   }, [regionFilter, search]);
 
+  function handleRegionChange(region: string) {
+    setRegionFilter(region);
+    setSearch("");
+  }
+
   return (
     <div className="space-y-4">
+      {/* Selector de región */}
+      <div>
+        <label className="text-sm font-semibold block mb-1">Región</label>
+        <select
+          value={regionFilter}
+          onChange={(e) => handleRegionChange(e.target.value)}
+          className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
+        >
+          {regions.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Mapa */}
+      <BlueExpressMap
+        points={filtered}
+        selected={selected}
+        onSelect={onChange}
+      />
+
       {/* Buscador */}
       <div className="relative">
         <svg
@@ -63,22 +94,8 @@ export default function BlueExpressSelector({ selected, onChange }: Props) {
         />
       </div>
 
-      {/* Selector de región */}
-      <div>
-        <label className="text-sm font-semibold block mb-1">Región</label>
-        <select
-          value={regionFilter}
-          onChange={(e) => { setRegionFilter(e.target.value); setSearch(""); }}
-          className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
-        >
-          {regions.map((r) => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </select>
-      </div>
-
       {/* Lista de puntos */}
-      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+      <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
         {filtered.length === 0 && (
           <p className="text-sm text-slate-500 text-center py-4">
             No hay puntos disponibles para esta búsqueda.
@@ -129,9 +146,7 @@ export default function BlueExpressSelector({ selected, onChange }: Props) {
           </svg>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-green-800">{selected.name}</p>
-            <p className="text-xs text-green-700">
-              {selected.address}, {selected.comuna}
-            </p>
+            <p className="text-xs text-green-700">{selected.address}, {selected.comuna}</p>
             <p className="text-xs text-green-600">{selected.hours}</p>
           </div>
         </div>
