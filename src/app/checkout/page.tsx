@@ -7,7 +7,8 @@ import { useCart, useCart as useCartStore } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { getCartItemUnitPrice } from "@/lib/cartPricing";
-import type { Address } from "@/lib/api";
+import BlueExpressSelector from "@/components/BlueExpressSelector";
+import type { BlueExpressPoint } from "@/lib/blue-express-points";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -30,15 +31,9 @@ export default function CheckoutPage() {
   const [busy, setBusy] = useState<null | "coupon" | "order" | "pay">(null);
   const [uiError, setUiError] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
-  const [deliveryAddress, setDeliveryAddress] = useState<Address>({
-    street: "",
-    number: "",
-    comuna: "",
-    region: "",
-    postalCode: "",
-  });
+  const [selectedPoint, setSelectedPoint] = useState<BlueExpressPoint | null>(null);
 
-  // Leer error de Webpay en la URL (redirigido desde el backend tras pago fallido)
+  // Leer error de Webpay en la URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const webpayError = params.get("error");
@@ -47,106 +42,44 @@ export default function CheckoutPage() {
     else if (webpayError === "error") setUiError("Ocurrió un error en Webpay. Por favor intenta nuevamente.");
   }, []);
 
-  // Hidratar usuario si no está hidratado
   useEffect(() => {
-    if (!hydrated) {
-      hydrate();
-    }
+    if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
-  // Prellenar dirección cuando el usuario esté disponible
   useEffect(() => {
     loadCart(user);
-    // Prellenar dirección si el usuario tiene una guardada
-    if (user?.direccion) {
-      setDeliveryAddress({
-        street: user.direccion.street || "",
-        number: user.direccion.number || "",
-        comuna: user.direccion.comuna || "",
-        region: user.direccion.region || "",
-        postalCode: user.direccion.postalCode || "",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Calcular subtotal
-  const subtotal = useMemo(() => {
-    return cart.reduce((sum, item) => sum + getCartItemUnitPrice(item, products) * item.quantity, 0);
-  }, [cart, products]);
+  const subtotal = useMemo(
+    () => cart.reduce((sum, item) => sum + getCartItemUnitPrice(item, products) * item.quantity, 0),
+    [cart, products]
+  );
 
   // Calcular descuento
   const discount = useMemo(() => {
-    console.log("[checkout] Calculating discount:", { coupon, subtotal });
-    
-    if (!coupon || !coupon.valid) {
-      console.log("[checkout] No valid coupon");
-      return 0;
-    }
-    
-    if (coupon.value === undefined || coupon.value === null || coupon.value === 0) {
-      console.log("[checkout] Coupon value is invalid:", coupon.value);
-      return 0;
-    }
-    
-    // Si es porcentaje: value es el porcentaje (ej: 50 = 50%)
-    if (coupon.type === 'percent') {
-      const calculated = subtotal * (coupon.value / 100);
-      const rounded = Math.round(calculated);
-      console.log("[checkout] Percent discount calculated:", { subtotal, percent: coupon.value, calculated, rounded });
-      return rounded;
-    }
-    
-    // Si no es porcentaje: value son pesos chilenos directamente (ej: 4000 = $4000)
-    const rounded = Math.round(coupon.value);
-    console.log("[checkout] Fixed discount:", rounded);
-    return rounded;
+    if (!coupon?.valid || !coupon.value) return 0;
+    if (coupon.type === "percent") return Math.round(subtotal * (coupon.value / 100));
+    return Math.round(coupon.value);
   }, [coupon, subtotal]);
 
-  // Calcular costo de envío basado en la región
+  // Costo de envío según región del punto Blue Express
   const shippingCost = useMemo(() => {
-    if (!deliveryAddress.region) return 0;
-    
-    // Si es Región Metropolitana o contiene "Metropolitana", usar tarifa RM
-    const isRM = deliveryAddress.region.toLowerCase().includes("metropolitana") || 
-                 deliveryAddress.region.toLowerCase().includes("santiago");
-    
-    // Si hay comuna y es retiro en tienda (por ahora asumimos que no, pero se puede agregar)
-    // Por defecto, si es RM: $2.990, si no: $4.900
+    if (!selectedPoint) return 0;
+    const isRM = selectedPoint.region.toLowerCase().includes("metropolitana");
     return isRM ? 2990 : 4900;
-  }, [deliveryAddress.region]);
+  }, [selectedPoint]);
 
-  // Calcular total: subtotal - descuento + envío
-  const total = useMemo(() => {
-    const calculatedTotal = subtotal - discount + shippingCost;
-    return Math.max(0, calculatedTotal); // Asegurar que el total nunca sea negativo
-  }, [subtotal, discount, shippingCost]);
+  const total = useMemo(
+    () => Math.max(0, subtotal - discount + shippingCost),
+    [subtotal, discount, shippingCost]
+  );
 
   const fmt = (n: number) => new Intl.NumberFormat("es-CL").format(n);
-  const subtotalCL = useMemo(() => fmt(subtotal), [subtotal]);
-  const discountCL = useMemo(() => fmt(discount), [discount]);
-  const shippingCL = useMemo(() => fmt(shippingCost), [shippingCost]);
-  const totalCL = useMemo(() => fmt(total), [total]);
 
-  // Debug: mostrar información del cupón y cálculos
-  useEffect(() => {
-    console.log("[checkout] Cálculos:", {
-      subtotal,
-      discount,
-      shippingCost,
-      total,
-      coupon: coupon ? {
-        valid: coupon.valid,
-        code: coupon.code,
-        type: coupon.type,
-        value: coupon.value,
-      } : null,
-    });
-  }, [coupon, discount, subtotal, shippingCost, total]);
-
-  async function goStep2() {
-    if (!deliveryAddress.street || !deliveryAddress.number || !deliveryAddress.comuna || !deliveryAddress.region || !deliveryAddress.postalCode) {
-      setUiError("Completa todos los campos de la dirección para continuar.");
+  function goStep2() {
+    if (!selectedPoint) {
+      setUiError("Selecciona un punto de retiro Blue Express para continuar.");
       return;
     }
     setUiError(null);
@@ -159,8 +92,6 @@ export default function CheckoutPage() {
     setUiError(null);
     try {
       await applyCoupon(couponCode.trim());
-      // Limpiar el input después de aplicar el cupón
-      // El estado se actualizará automáticamente a través del hook
     } catch (e: any) {
       setUiError(e?.message ?? "No se pudo aplicar el cupón");
     } finally {
@@ -169,14 +100,22 @@ export default function CheckoutPage() {
   }
 
   async function onPlaceOrder() {
-    if (cart.length === 0) {
-      setUiError("El carrito está vacío");
-      return;
-    }
+    if (cart.length === 0) { setUiError("El carrito está vacío"); return; }
+    if (!selectedPoint) { setUiError("Selecciona un punto de retiro"); return; }
     setBusy("order");
     setUiError(null);
     try {
-      const order = await createOrder(deliveryAddress, coupon?.code, shippingCost);
+      const deliveryAddress = {
+        type: "blue_express" as const,
+        pointId: selectedPoint.id,
+        name: selectedPoint.name,
+        address: selectedPoint.address,
+        comuna: selectedPoint.comuna,
+        city: selectedPoint.city,
+        region: selectedPoint.region,
+        hours: selectedPoint.hours,
+      };
+      const order = await createOrder(deliveryAddress as any, coupon?.code, shippingCost);
       setPendingOrderId(order.id);
       setStep(4);
     } catch (e: any) {
@@ -220,9 +159,7 @@ export default function CheckoutPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="rounded-xl border p-6 bg-white">
               <p className="font-semibold mb-2">Debes iniciar sesión para continuar</p>
-              <a href="/login" className="text-colonta-primary underline">
-                Iniciar sesión
-              </a>
+              <a href="/login" className="text-colonta-primary underline">Iniciar sesión</a>
             </div>
           </div>
         </section>
@@ -257,9 +194,7 @@ export default function CheckoutPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="rounded-xl border p-6 bg-white">
               <p className="font-semibold">Tu carrito está vacío</p>
-              <a href="/mochilas" className="text-colonta-primary underline">
-                Volver a la tienda
-              </a>
+              <a href="/mochilas" className="text-colonta-primary underline">Volver a la tienda</a>
             </div>
           </div>
         </section>
@@ -282,7 +217,7 @@ export default function CheckoutPage() {
           {/* Pasos */}
           <div className="lg:col-span-8 space-y-6 order-2 lg:order-1">
             <ol className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm overflow-x-auto pb-2">
-              <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 1 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>1. Dirección</li>
+              <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 1 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>1. Punto retiro</li>
               <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 2 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>2. Resumen</li>
               <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 3 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>3. Confirmar</li>
               <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 4 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>4. Pagar</li>
@@ -291,74 +226,33 @@ export default function CheckoutPage() {
             {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
             {uiError && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{uiError}</div>}
 
-            {/* STEP 1 - Dirección */}
+            {/* STEP 1 - Punto Blue Express */}
             {step === 1 && (
               <div className="rounded-2xl ring-1 ring-black/5 p-5 bg-white">
-                <h2 className="font-extrabold text-lg mb-4">Dirección de envío</h2>
-                <div className="space-y-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-[#0056A2] flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0L6.343 16.657a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
                   <div>
-                    <label className="text-sm font-semibold block mb-1">Calle *</label>
-                    <input
-                      type="text"
-                      required
-                      className="w-full border rounded-xl px-3 py-2 text-sm"
-                      value={deliveryAddress.street}
-                      onChange={(e) => setDeliveryAddress({ ...deliveryAddress, street: e.target.value })}
-                      placeholder="Av. Providencia"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-semibold block mb-1">Número *</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full border rounded-xl px-3 py-2 text-sm"
-                        value={deliveryAddress.number}
-                        onChange={(e) => setDeliveryAddress({ ...deliveryAddress, number: e.target.value })}
-                        placeholder="123"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-semibold block mb-1">Comuna *</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full border rounded-xl px-3 py-2 text-sm"
-                        value={deliveryAddress.comuna}
-                        onChange={(e) => setDeliveryAddress({ ...deliveryAddress, comuna: e.target.value })}
-                        placeholder="Providencia"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-semibold block mb-1">Región *</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full border rounded-xl px-3 py-2 text-sm"
-                        value={deliveryAddress.region}
-                        onChange={(e) => setDeliveryAddress({ ...deliveryAddress, region: e.target.value })}
-                        placeholder="Región Metropolitana"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-semibold block mb-1">Código postal *</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full border rounded-xl px-3 py-2 text-sm"
-                        value={deliveryAddress.postalCode}
-                        onChange={(e) => setDeliveryAddress({ ...deliveryAddress, postalCode: e.target.value })}
-                        placeholder="7500000"
-                      />
-                    </div>
+                    <h2 className="font-extrabold text-lg leading-tight">Punto de retiro Blue Express</h2>
+                    <p className="text-xs text-slate-500">Elige la sucursal donde retirarás tu pedido</p>
                   </div>
                 </div>
 
+                <BlueExpressSelector
+                  selected={selectedPoint}
+                  onChange={setSelectedPoint}
+                />
+
                 <div className="mt-6 flex justify-end">
-                  <button onClick={goStep2} className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold">
+                  <button
+                    onClick={goStep2}
+                    disabled={!selectedPoint}
+                    className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold disabled:opacity-50"
+                  >
                     Continuar
                   </button>
                 </div>
@@ -391,9 +285,9 @@ export default function CheckoutPage() {
                   {coupon && !coupon.valid && (
                     <p className="text-xs text-red-600">{coupon.message || "Cupón inválido"}</p>
                   )}
-                  {coupon && coupon.valid && (
+                  {coupon?.valid && (
                     <p className="text-xs text-green-600 font-semibold">
-                      ✓ Cupón aplicado: {coupon.code} - {discount > 0 ? `$${discountCL} de descuento` : (coupon.type === 'percent' ? `${coupon.value || 0}%` : `$${fmt(coupon.value || 0)}`) + ' de descuento'}
+                      ✓ Cupón aplicado: {coupon.code} — {discount > 0 ? `$${fmt(discount)} de descuento` : `${coupon.value}% de descuento`}
                     </p>
                   )}
                 </div>
@@ -404,28 +298,24 @@ export default function CheckoutPage() {
                     <ul className="space-y-2 text-sm">
                       {cart.map((item, idx) => {
                         if (item.customDesignImageUrl) {
-                          const unitPrice = item.unitPrice ?? 0;
                           return (
                             <li key={idx} className="flex justify-between">
                               <span>🎨 Producto personalizado × {item.quantity}</span>
-                              <span className="font-medium">${fmt(unitPrice * item.quantity)}</span>
+                              <span className="font-medium">${fmt((item.unitPrice ?? 0) * item.quantity)}</span>
                             </li>
                           );
                         }
-
                         const product = products[item.productModelId];
                         if (!product) return null;
                         let itemPrice = Number(product.basePrice);
-                        const selectedExtras = (product.extras || []).filter(e => item.extras.includes(e.id));
-                        selectedExtras.forEach(extra => {
-                          itemPrice += Number(extra.price) || 0;
-                        });
+                        const selectedExtras = (product.extras || []).filter((e) => item.extras.includes(e.id));
+                        selectedExtras.forEach((extra) => { itemPrice += Number(extra.price) || 0; });
                         return (
                           <li key={idx} className="flex justify-between">
                             <span>
                               {product.name} × {item.quantity}
                               {selectedExtras.length > 0 && (
-                                <span className="text-slate-500"> ({selectedExtras.map(e => e.name).join(", ")})</span>
+                                <span className="text-slate-500"> ({selectedExtras.map((e) => e.name).join(", ")})</span>
                               )}
                             </span>
                             <span className="font-medium">${fmt(itemPrice * item.quantity)}</span>
@@ -434,97 +324,82 @@ export default function CheckoutPage() {
                       })}
                     </ul>
                   </div>
-                  
+
                   <div className="border-t pt-3 space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-slate-600">Subtotal productos</span>
-                      <span className="font-medium">${subtotalCL}</span>
+                      <span className="font-medium">${fmt(subtotal)}</span>
                     </div>
-                    
-                    {coupon && coupon.valid && discount > 0 && (
+                    {coupon?.valid && discount > 0 && (
                       <div className="flex justify-between text-green-600">
-                        <span>Descuento {coupon.code ? `(${coupon.code})` : ''}</span>
-                        <span className="font-medium">-${discountCL}</span>
+                        <span>Descuento ({coupon.code})</span>
+                        <span className="font-medium">-${fmt(discount)}</span>
                       </div>
                     )}
-                    
                     <div className="flex justify-between">
                       <span className="text-slate-600">
-                        Envío {deliveryAddress.region ? 
-                          (deliveryAddress.region.toLowerCase().includes("metropolitana") || deliveryAddress.region.toLowerCase().includes("santiago") 
-                            ? "(RM - 48h)" 
-                            : "(Regiones - 3-5 días)") 
-                          : ""}
+                        Envío Blue Express{" "}
+                        {selectedPoint?.region.includes("Metropolitana") ? "(RM - 48h)" : "(Regiones - 3-5 días)"}
                       </span>
-                      <span className="font-medium">
-                        {shippingCost > 0 ? `$${shippingCL}` : "Gratis"}
-                      </span>
+                      <span className="font-medium">${fmt(shippingCost)}</span>
                     </div>
-                    
                     <div className="flex justify-between font-extrabold text-base border-t pt-2">
                       <span>Total</span>
-                      <span>${totalCL}</span>
+                      <span>${fmt(total)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-4 flex flex-col sm:flex-row justify-between gap-2">
                   <button onClick={() => setStep(1)} className="px-5 py-3 rounded-xl border font-semibold hover:bg-slate-50 order-2 sm:order-1">Volver</button>
-                  <button
-                    onClick={() => setStep(3)}
-                    className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold order-1 sm:order-2"
-                  >
-                    Continuar
-                  </button>
+                  <button onClick={() => setStep(3)} className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold order-1 sm:order-2">Continuar</button>
                 </div>
               </div>
             )}
 
-            {/* STEP 3 - Confirmar y pagar */}
+            {/* STEP 3 - Confirmar */}
             {step === 3 && (
               <div className="rounded-2xl ring-1 ring-black/5 p-5 bg-white space-y-4">
                 <h2 className="font-extrabold text-lg">Confirmar pedido</h2>
 
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <h3 className="font-bold mb-2">Dirección de envío</h3>
-                  <p className="text-sm">
-                    {deliveryAddress.street} {deliveryAddress.number}<br />
-                    {deliveryAddress.comuna}, {deliveryAddress.region}<br />
-                    {deliveryAddress.postalCode}
-                  </p>
-                </div>
+                {/* Punto seleccionado */}
+                {selectedPoint && (
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <h3 className="font-bold mb-2 flex items-center gap-2">
+                      <span className="inline-block w-4 h-4 rounded bg-[#0056A2]" />
+                      Punto de retiro Blue Express
+                    </h3>
+                    <p className="text-sm font-semibold">{selectedPoint.name}</p>
+                    <p className="text-sm text-slate-600">
+                      {selectedPoint.address}, {selectedPoint.comuna}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">{selectedPoint.hours}</p>
+                  </div>
+                )}
 
                 <div className="rounded-xl bg-slate-50 p-4">
                   <h3 className="font-bold mb-3">Resumen de compra</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-slate-600">Subtotal productos</span>
-                      <span className="font-medium">${subtotalCL}</span>
+                      <span className="font-medium">${fmt(subtotal)}</span>
                     </div>
-                    
-                    {coupon && coupon.valid && discount > 0 && (
+                    {coupon?.valid && discount > 0 && (
                       <div className="flex justify-between text-green-600">
-                        <span>Descuento {coupon.code ? `(${coupon.code})` : ''}</span>
-                        <span className="font-medium">-${discountCL}</span>
+                        <span>Descuento ({coupon.code})</span>
+                        <span className="font-medium">-${fmt(discount)}</span>
                       </div>
                     )}
-                    
                     <div className="flex justify-between">
                       <span className="text-slate-600">
-                        Envío {deliveryAddress.region ? 
-                          (deliveryAddress.region.toLowerCase().includes("metropolitana") || deliveryAddress.region.toLowerCase().includes("santiago") 
-                            ? "(RM - 48h)" 
-                            : "(Regiones - 3-5 días)") 
-                          : ""}
+                        Envío Blue Express{" "}
+                        {selectedPoint?.region.includes("Metropolitana") ? "(RM - 48h)" : "(Regiones - 3-5 días)"}
                       </span>
-                      <span className="font-medium">
-                        {shippingCost > 0 ? `$${shippingCL}` : "Gratis"}
-                      </span>
+                      <span className="font-medium">${fmt(shippingCost)}</span>
                     </div>
-                    
                     <div className="flex justify-between font-extrabold text-base border-t pt-2 mt-2">
                       <span>Total a pagar</span>
-                      <span>${totalCL}</span>
+                      <span>${fmt(total)}</span>
                     </div>
                   </div>
                 </div>
@@ -560,33 +435,29 @@ export default function CheckoutPage() {
                 <div className="rounded-xl bg-slate-50 p-4 space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-slate-600">Subtotal</span>
-                    <span className="font-medium">${subtotalCL}</span>
+                    <span className="font-medium">${fmt(subtotal)}</span>
                   </div>
                   {coupon?.valid && discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Descuento ({coupon.code})</span>
-                      <span>-${discountCL}</span>
+                      <span>-${fmt(discount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Envío</span>
-                    <span className="font-medium">{shippingCost > 0 ? `$${shippingCL}` : "Gratis"}</span>
+                    <span className="text-slate-600">Envío Blue Express</span>
+                    <span className="font-medium">${fmt(shippingCost)}</span>
                   </div>
                   <div className="flex justify-between font-extrabold text-base border-t pt-2 mt-1">
                     <span>Total a pagar</span>
-                    <span>${totalCL}</span>
+                    <span>${fmt(total)}</span>
                   </div>
                 </div>
 
                 <div className="rounded-xl border-2 border-slate-200 p-5 text-center space-y-4">
                   <p className="text-sm text-slate-500 font-medium uppercase tracking-wide">Pago seguro con</p>
                   <div className="flex items-center justify-center gap-2">
-                    <div className="bg-[#E31B23] text-white font-black text-lg px-3 py-1 rounded">
-                      Web
-                    </div>
-                    <div className="bg-[#1A1A2E] text-white font-black text-lg px-3 py-1 rounded">
-                      pay
-                    </div>
+                    <div className="bg-[#E31B23] text-white font-black text-lg px-3 py-1 rounded">Web</div>
+                    <div className="bg-[#1A1A2E] text-white font-black text-lg px-3 py-1 rounded">pay</div>
                   </div>
                   <p className="text-xs text-slate-400">
                     Serás redirigido al portal seguro de Transbank para completar tu pago.
@@ -599,8 +470,8 @@ export default function CheckoutPage() {
                     {busy === "pay" ? (
                       <>
                         <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                         </svg>
                         Conectando con Webpay…
                       </>
@@ -609,7 +480,7 @@ export default function CheckoutPage() {
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
-                        Pagar ${totalCL} con Webpay
+                        Pagar ${fmt(total)} con Webpay
                       </>
                     )}
                   </button>
@@ -626,43 +497,49 @@ export default function CheckoutPage() {
           <aside className="lg:col-span-4 order-1 lg:order-2">
             <div className="rounded-2xl ring-1 ring-black/5 p-5 bg-white space-y-4 lg:sticky lg:top-4">
               <h3 className="font-extrabold text-lg">Resumen de compra</h3>
-              
+
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-600">Subtotal productos</span>
-                  <span className="font-medium">${subtotalCL}</span>
+                  <span className="font-medium">${fmt(subtotal)}</span>
                 </div>
-                
-                {coupon && coupon.valid && discount > 0 && (
+                {coupon?.valid && discount > 0 && (
                   <div className="flex justify-between text-green-600">
-                    <span>Descuento {coupon.code ? `(${coupon.code})` : ''}</span>
-                    <span className="font-medium">-${discountCL}</span>
+                    <span>Descuento ({coupon.code})</span>
+                    <span className="font-medium">-${fmt(discount)}</span>
                   </div>
                 )}
-                
                 <div className="flex justify-between">
                   <span className="text-slate-600">
-                    Envío {deliveryAddress.region ? 
-                      (deliveryAddress.region.toLowerCase().includes("metropolitana") || deliveryAddress.region.toLowerCase().includes("santiago") 
-                        ? "(RM - 48h)" 
-                        : "(Regiones - 3-5 días)") 
+                    Envío Blue Express{" "}
+                    {selectedPoint
+                      ? selectedPoint.region.includes("Metropolitana")
+                        ? "(RM)"
+                        : "(Regiones)"
                       : ""}
                   </span>
                   <span className="font-medium">
-                    {shippingCost > 0 ? `$${shippingCL}` : "Gratis"}
+                    {selectedPoint ? `$${fmt(shippingCost)}` : "—"}
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex justify-between font-extrabold text-lg border-t pt-3">
                 <span>Total</span>
-                <span>${totalCL}</span>
+                <span>${fmt(total)}</span>
               </div>
-              
-              {!deliveryAddress.region && (
+
+              {!selectedPoint && (
                 <p className="text-xs text-slate-500">
-                  Completa la dirección para calcular el envío
+                  Selecciona un punto Blue Express para ver el costo de envío
                 </p>
+              )}
+
+              {selectedPoint && (
+                <div className="rounded-lg bg-slate-50 p-3 text-xs">
+                  <p className="font-semibold text-slate-700">{selectedPoint.name}</p>
+                  <p className="text-slate-500">{selectedPoint.address}, {selectedPoint.comuna}</p>
+                </div>
               )}
             </div>
           </aside>
