@@ -334,6 +334,19 @@ export type Address = {
   postalCode: string;
 };
 
+export type BlueExpressDelivery = {
+  type: 'blue_express';
+  pointId: string;
+  name: string;
+  address: string;
+  comuna: string;
+  city: string;
+  region: string;
+  hours: string;
+};
+
+export type DeliveryAddress = Address | BlueExpressDelivery;
+
 export type ProductModel = {
   id: string;
   name: string;
@@ -388,7 +401,7 @@ export type OrderItem = {
 export type Order = {
   id: string;
   userId: string;
-  deliveryAddress: Address;
+  deliveryAddress: DeliveryAddress;
   total: number;
   estado: 'pendiente' | 'pagado' | 'cancelado';
   createdAt: string;
@@ -676,7 +689,7 @@ export const api = {
   /* Órdenes - Backend: /api/orders */
   createOrder: (data: {
     items: CartItem[];
-    deliveryAddress: Address;
+    deliveryAddress: DeliveryAddress;
     discountCode?: string;
     shippingCost?: number;
   }) => post<Order>("/orders", undefined, data),

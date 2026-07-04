@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/hooks/useCart";
-import type { Order } from "@/lib/api";
+import type { Order, BlueExpressDelivery } from "@/lib/api";
 
 function ItemImage({ item }: { item: Order["items"][number] }) {
   const src = item.customDesignImageUrl || item.productImageUrl;
@@ -31,6 +31,41 @@ function ColorDots({ colors }: { colors: string[] }) {
         />
       ))}
     </span>
+  );
+}
+
+function DeliveryInfo({ delivery }: { delivery: Order["deliveryAddress"] }) {
+  if ((delivery as BlueExpressDelivery).type === "blue_express") {
+    const p = delivery as BlueExpressDelivery;
+    return (
+      <div>
+        <h2 className="font-bold mb-2 flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-[#0056A2]">
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0L6.343 16.657a8 8 0 1111.314 0z" />
+            </svg>
+          </span>
+          Punto de retiro Blue Express
+        </h2>
+        <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm">
+          <p className="font-semibold text-blue-900">{p.name}</p>
+          <p className="text-blue-700 mt-0.5">{p.address}, {p.comuna}</p>
+          {p.city && p.city !== p.comuna && <p className="text-blue-600 text-xs">{p.city}</p>}
+          <p className="text-blue-500 text-xs mt-1">{p.hours}</p>
+        </div>
+      </div>
+    );
+  }
+  const a = delivery as any;
+  return (
+    <div>
+      <h2 className="font-bold mb-2">Dirección de envío</h2>
+      <p className="text-sm text-slate-700">
+        {a.street} {a.number}<br />
+        {a.comuna}, {a.region}<br />
+        {a.postalCode}
+      </p>
+    </div>
   );
 }
 
@@ -158,15 +193,8 @@ export default function OrderSuccessClient() {
           </div>
         </dl>
 
-        {/* Dirección */}
-        <div>
-          <h2 className="font-bold mb-2">Dirección de envío</h2>
-          <p className="text-sm text-slate-700">
-            {order.deliveryAddress.street} {order.deliveryAddress.number}<br />
-            {order.deliveryAddress.comuna}, {order.deliveryAddress.region}<br />
-            {order.deliveryAddress.postalCode}
-          </p>
-        </div>
+        {/* Punto de retiro / Dirección */}
+        <DeliveryInfo delivery={order.deliveryAddress} />
 
         <div className="flex gap-3 pt-2">
           <Link href="/mochilas" className="px-5 py-3 rounded-xl border font-semibold hover:bg-slate-50">
