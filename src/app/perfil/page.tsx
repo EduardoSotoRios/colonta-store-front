@@ -59,7 +59,7 @@ export default function PerfilPage() {
     if (!favsHydrated) return;
     if (favoriteIds.length === 0) { setFavProducts([]); return; }
     setFavsLoading(true);
-    Promise.all(favoriteIds.map(id => api.productById(id).catch(() => null)))
+    Promise.all(favoriteIds.map(id => api.getProductoById(id).catch(() => null)))
       .then(results => setFavProducts(results.filter((p): p is ProductModel => p !== null)))
       .finally(() => setFavsLoading(false));
   }, [favoriteIds, favsHydrated]);
