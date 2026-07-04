@@ -6,6 +6,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useCartUI } from "@/hooks/useCartUI";
 import { getColorEmoji } from "@/lib/colores-map";
+import { getCartItemUnitPrice } from "@/lib/cartPricing";
 import Link from "next/link";
 import type { ProductModel } from "@/lib/api";
 
@@ -31,19 +32,7 @@ export default function CartSidebar() {
 
   // Calcular subtotal
   const subtotal = useMemo(() => {
-    return cart.reduce((sum, item) => {
-      const product = products[item.productModelId];
-      if (!product) return sum;
-      let itemPrice = Number(product.basePrice);
-      if (item.extras && item.extras.length > 0) {
-        const productExtras = product.extras || [];
-        item.extras.forEach(extraId => {
-          const extra = productExtras.find(e => e.id === extraId);
-          if (extra) itemPrice += Number(extra.price);
-        });
-      }
-      return sum + (itemPrice * item.quantity);
-    }, 0);
+    return cart.reduce((sum, item) => sum + getCartItemUnitPrice(item, products) * item.quantity, 0);
   }, [cart, products]);
 
   const subtotalCL = useMemo(() => new Intl.NumberFormat("es-CL").format(subtotal), [subtotal]);
@@ -72,6 +61,50 @@ export default function CartSidebar() {
           )}
 
           {cart.map((item, index) => {
+            if (item.customDesignImageUrl) {
+              const unitPrice = item.unitPrice ?? 0;
+              return (
+                <div key={index} className="flex gap-3 p-3 rounded-xl ring-1 ring-black/5 bg-white">
+                  <div className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                    <img src={item.customDesignImageUrl} alt="Diseño personalizado" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold leading-tight">🎨 Producto personalizado</p>
+                    <div className="mt-2 inline-flex items-center rounded-lg border">
+                      <button
+                        className="px-3 py-1.5"
+                        onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)}
+                      >
+                        –
+                      </button>
+                      <input
+                        className="w-12 text-center py-1.5 outline-none"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) }, user)}
+                      />
+                      <button
+                        className="px-3 py-1.5"
+                        onClick={() => updateItem(index, { quantity: item.quantity + 1 }, user)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">
+                      ${new Intl.NumberFormat("es-CL").format(unitPrice * item.quantity)}
+                    </p>
+                    <button
+                      onClick={() => removeItem(index, user)}
+                      className="text-xs text-slate-500 hover:text-slate-700 mt-1"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
             const product = products[item.productModelId];
             if (!product) return null;
 

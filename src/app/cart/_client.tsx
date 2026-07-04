@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
+import { getCartItemUnitPrice } from "@/lib/cartPricing";
 import Link from "next/link";
 import type { ProductModel } from "@/lib/api";
 
@@ -34,20 +35,7 @@ export default function CartPage() {
 
   // Calcular subtotal desde los items del carrito
   const subtotal = useMemo(() => {
-    return cart.reduce((sum, item) => {
-      const product = products[item.productModelId];
-      if (!product) return sum;
-      let itemPrice = Number(product.basePrice);
-      // Sumar extras si hay
-      if (item.extras && item.extras.length > 0) {
-        const productExtras = product.extras || [];
-        item.extras.forEach(extraId => {
-          const extra = productExtras.find(e => e.id === extraId);
-          if (extra) itemPrice += Number(extra.price) || 0;
-        });
-      }
-      return sum + (itemPrice * item.quantity);
-    }, 0);
+    return cart.reduce((sum, item) => sum + getCartItemUnitPrice(item, products) * item.quantity, 0);
   }, [cart, products]);
 
   const subtotalCL = useMemo(() => new Intl.NumberFormat("es-CL").format(subtotal), [subtotal]);
@@ -144,6 +132,50 @@ export default function CartPage() {
             <div className="grid lg:grid-cols-12 gap-6 lg:gap-8">
               <div className="lg:col-span-8 space-y-4 order-2 lg:order-1">
                 {cart.map((item, index) => {
+                  if (item.customDesignImageUrl) {
+                    const unitPrice = item.unitPrice ?? 0;
+                    return (
+                      <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl ring-1 ring-black/5 p-4 bg-white">
+                        <div className="w-full sm:w-20 h-48 sm:h-20 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
+                          <img src={item.customDesignImageUrl} alt="Diseño personalizado" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0 w-full sm:w-auto">
+                          <p className="font-semibold truncate">🎨 Producto personalizado</p>
+                          <div className="mt-2 inline-flex items-center rounded-xl border">
+                            <button
+                              onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)}
+                              className="px-3 py-2"
+                            >
+                              –
+                            </button>
+                            <input
+                              className="w-12 text-center py-2 outline-none"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) }, user)}
+                            />
+                            <button
+                              onClick={() => updateItem(index, { quantity: item.quantity + 1 }, user)}
+                              className="px-3 py-2"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        <div className="text-left sm:text-right w-full sm:w-auto flex justify-between sm:block items-center sm:items-start">
+                          <p className="font-semibold">
+                            ${new Intl.NumberFormat("es-CL").format(unitPrice * item.quantity)}
+                          </p>
+                          <button
+                            onClick={() => removeItem(index, user)}
+                            className="text-sm text-slate-500 hover:text-slate-700 mt-1"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   const product = products[item.productModelId];
                   if (!product) return null;
 
@@ -299,6 +331,50 @@ export default function CartPage() {
             )}
 
             {cart.map((item, index) => {
+              if (item.customDesignImageUrl) {
+                const unitPrice = item.unitPrice ?? 0;
+                return (
+                  <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl ring-1 ring-black/5 p-4 bg-white">
+                    <div className="w-full sm:w-20 h-48 sm:h-20 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
+                      <img src={item.customDesignImageUrl} alt="Diseño personalizado" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0 w-full sm:w-auto">
+                      <p className="font-semibold truncate">🎨 Producto personalizado</p>
+                      <div className="mt-2 inline-flex items-center rounded-xl border">
+                        <button
+                          onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)}
+                          className="px-3 py-2"
+                        >
+                          –
+                        </button>
+                        <input
+                          className="w-12 text-center py-2 outline-none"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) }, user)}
+                        />
+                        <button
+                          onClick={() => updateItem(index, { quantity: item.quantity + 1 }, user)}
+                          className="px-3 py-2"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-left sm:text-right w-full sm:w-auto flex justify-between sm:block items-center sm:items-start">
+                      <p className="font-semibold">
+                        ${new Intl.NumberFormat("es-CL").format(unitPrice * item.quantity)}
+                      </p>
+                      <button
+                        onClick={() => removeItem(index, user)}
+                        className="text-sm text-slate-500 hover:text-slate-700 mt-1"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
               const product = products[item.productModelId];
               if (!product) return null;
 
@@ -328,8 +404,8 @@ export default function CartPage() {
                       </p>
                     )}
                     <div className="mt-2 inline-flex items-center rounded-xl border">
-                      <button 
-                        onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)} 
+                      <button
+                        onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)}
                         className="px-3 py-2"
                       >
                         –
@@ -339,8 +415,8 @@ export default function CartPage() {
                         value={item.quantity}
                         onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) }, user)}
                       />
-                      <button 
-                        onClick={() => updateItem(index, { quantity: item.quantity + 1 }, user)} 
+                      <button
+                        onClick={() => updateItem(index, { quantity: item.quantity + 1 }, user)}
                         className="px-3 py-2"
                       >
                         +
@@ -351,8 +427,8 @@ export default function CartPage() {
                     <p className="font-semibold">
                       ${new Intl.NumberFormat("es-CL").format(itemPrice * item.quantity)}
                     </p>
-                    <button 
-                      onClick={() => removeItem(index, user)} 
+                    <button
+                      onClick={() => removeItem(index, user)}
                       className="text-sm text-slate-500 hover:text-slate-700 mt-1"
                     >
                       Eliminar

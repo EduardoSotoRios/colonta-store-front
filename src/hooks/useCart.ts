@@ -83,9 +83,11 @@ export const useCart = create<State & Actions>((set, get) => ({
       const localCart = getLocalCart();
       set({ cart: localCart, loading: false });
       
-      // Cargar información de productos si hay items
-      if (localCart.length > 0) {
-        const productIds = [...new Set(localCart.map(item => item.productModelId))];
+      // Cargar información de productos si hay items (los diseños personalizados
+      // no existen en Supabase, no tiene sentido buscarlos ahí)
+      const localCartCatalog = localCart.filter(item => !item.customDesignImageUrl);
+      if (localCartCatalog.length > 0) {
+        const productIds = [...new Set(localCartCatalog.map(item => item.productModelId))];
         const productPromises = productIds.map(id => 
           api.getProductoById(id).catch(() => null)
         );
@@ -108,9 +110,10 @@ export const useCart = create<State & Actions>((set, get) => ({
       const cart = await api.getCart();
       const cartArray = Array.isArray(cart) ? cart : [];
       set({ cart: cartArray, loading: false });
-      
-      if (cartArray.length > 0) {
-        const productIds = [...new Set(cartArray.map(item => item.productModelId))];
+
+      const cartArrayCatalog = cartArray.filter(item => !item.customDesignImageUrl);
+      if (cartArrayCatalog.length > 0) {
+        const productIds = [...new Set(cartArrayCatalog.map(item => item.productModelId))];
         const productPromises = productIds.map(id => 
           api.getProductoById(id).catch(() => null)
         );
@@ -172,8 +175,9 @@ export const useCart = create<State & Actions>((set, get) => ({
       set({ cart: finalCartArray });
       
       // Cargar información de productos
-      if (finalCartArray.length > 0) {
-        const productIds = [...new Set(finalCartArray.map(item => item.productModelId))];
+      const finalCartArrayCatalog = finalCartArray.filter(item => !item.customDesignImageUrl);
+      if (finalCartArrayCatalog.length > 0) {
+        const productIds = [...new Set(finalCartArrayCatalog.map(item => item.productModelId))];
         const productPromises = productIds.map(id => 
           api.getProductoById(id).catch(() => null)
         );
@@ -201,8 +205,9 @@ export const useCart = create<State & Actions>((set, get) => ({
         set({ cart: newCart, error: null });
         saveLocalCart(newCart);
         
-        // Cargar info de producto si es necesario
-        if (!get().products[item.productModelId]) {
+        // Cargar info de producto si es necesario (los diseños personalizados
+        // no existen en Supabase, no tiene sentido buscarlos ahí)
+        if (!item.customDesignImageUrl && !get().products[item.productModelId]) {
           try {
             const product = await api.getProductoById(item.productModelId);
             set({ products: { ...get().products, [item.productModelId]: product } });
@@ -222,8 +227,9 @@ export const useCart = create<State & Actions>((set, get) => ({
       const response = await api.addToCart(item);
       const cart = Array.isArray(response.cart) ? response.cart : [];
       set({ cart, error: null });
-      // Recargar info de mochila si es necesario
-      if (!get().products[item.productModelId]) {
+      // Recargar info de mochila si es necesario (los diseños personalizados
+      // no existen en Supabase, no tiene sentido buscarlos ahí)
+      if (!item.customDesignImageUrl && !get().products[item.productModelId]) {
         try {
           const product = await api.getProductoById(item.productModelId);
           set({ products: { ...get().products, [item.productModelId]: product } });

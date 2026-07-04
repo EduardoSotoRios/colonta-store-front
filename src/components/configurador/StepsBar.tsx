@@ -5,7 +5,7 @@ interface StepsBarProps {
 const STEPS = [
   { label: 'Elige producto' },
   { label: 'Diseña' },
-  { label: 'Envía' },
+  { label: 'Carrito' },
   { label: 'Listo' },
 ];
 

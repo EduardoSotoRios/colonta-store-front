@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart, useCart as useCartStore } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import { getCartItemUnitPrice } from "@/lib/cartPricing";
 import type { Address } from "@/lib/api";
 
 type Step = 1 | 2 | 3 | 4;
@@ -71,19 +72,7 @@ export default function CheckoutPage() {
 
   // Calcular subtotal
   const subtotal = useMemo(() => {
-    return cart.reduce((sum, item) => {
-      const product = products[item.productModelId];
-      if (!product) return sum;
-      let itemPrice = Number(product.basePrice);
-      if (item.extras && item.extras.length > 0) {
-        const productExtras = product.extras || [];
-        item.extras.forEach(extraId => {
-          const extra = productExtras.find(e => e.id === extraId);
-          if (extra) itemPrice += Number(extra.price) || 0;
-        });
-      }
-      return sum + (itemPrice * item.quantity);
-    }, 0);
+    return cart.reduce((sum, item) => sum + getCartItemUnitPrice(item, products) * item.quantity, 0);
   }, [cart, products]);
 
   // Calcular descuento
@@ -414,6 +403,16 @@ export default function CheckoutPage() {
                     <h3 className="font-bold mb-2">Detalle de artículos</h3>
                     <ul className="space-y-2 text-sm">
                       {cart.map((item, idx) => {
+                        if (item.customDesignImageUrl) {
+                          const unitPrice = item.unitPrice ?? 0;
+                          return (
+                            <li key={idx} className="flex justify-between">
+                              <span>🎨 Producto personalizado × {item.quantity}</span>
+                              <span className="font-medium">${fmt(unitPrice * item.quantity)}</span>
+                            </li>
+                          );
+                        }
+
                         const product = products[item.productModelId];
                         if (!product) return null;
                         let itemPrice = Number(product.basePrice);

@@ -125,7 +125,13 @@ function cleanCartItem(item: CartItem): Record<string, any> {
     quantity: Number(item.quantity),
     extras: Array.isArray(item.extras) ? item.extras.map(String) : [], // Asegurar que extras sea array de strings
   };
-  
+
+  // Diseño personalizado del configurador (URL de Cloudinary) — se envía al backend.
+  // NOTA: unitPrice es solo para mostrar en el carrito local, nunca se envía (igual que imageId).
+  if (item.customDesignImageUrl) {
+    cleaned.customDesignImageUrl = String(item.customDesignImageUrl);
+  }
+
   // IMPORTANTE: No enviar ambos colorSchemeId y colorScheme
   // Priorizar colorSchemeId si ambos están presentes (aunque no debería pasar)
   if (item.colorSchemeId) {
@@ -311,6 +317,8 @@ export type CartItem = {
     colors: string[];
   };
   extras: string[];            // IDs de extras (siempre presente, puede ser array vacío)
+  customDesignImageUrl?: string; // Diseño del configurador (Cloudinary) — se envía al backend
+  unitPrice?: number;           // Precio a mostrar para items personalizados (solo frontend, no se envía al backend)
 };
 
 export type Address = {
@@ -368,6 +376,7 @@ export type OrderItem = {
   chosenColorScheme: ColorScheme;
   chosenExtras: Array<{ id: string; name: string; price: number }>;
   unitPrice: number;
+  customDesignImageUrl: string | null;
 };
 
 export type Order = {
@@ -378,6 +387,7 @@ export type Order = {
   estado: 'pendiente' | 'pagado' | 'cancelado';
   createdAt: string;
   items: OrderItem[];
+  user?: { id: string; nombre: string; email: string; rol: string };
 };
 
 export type DiscountCode = {
@@ -658,6 +668,7 @@ export const api = {
   }) => post<Order>("/orders", undefined, data),
   getOrders: () => get<Order[]>("/orders"),
   getOrderById: (id: string) => get<Order>(`/orders/${id}`),
+  getAllOrdersAdmin: () => get<Order[]>("/orders/admin"),
 
   /* Pagos - Backend: /api/payments */
   startWebpay: (orderId: string) =>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import StepsBar       from './StepsBar';
 import ProductSelector from './ProductSelector';
 import CanvasDesigner  from './CanvasDesigner';
-import SendDesign      from './SendDesign';
+import AddToCartStep   from './AddToCartStep';
 import SuccessScreen   from './SuccessScreen';
 import { type ProductId } from '@/lib/configurador/products';
 
@@ -29,7 +29,7 @@ export default function ConfiguradorClient() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function handleSent() {
+  function handleAdded() {
     setStep(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -61,11 +61,12 @@ export default function ConfiguradorClient() {
         </div>
       )}
 
-      {step === 3 && (
-        <SendDesign
+      {step === 3 && productId && (
+        <AddToCartStep
+          productId={productId}
           productName={productName}
           designDataURL={designDataURL}
-          onSent={handleSent}
+          onAdded={handleAdded}
           onBack={() => setStep(2)}
         />
       )}
