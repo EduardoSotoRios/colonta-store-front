@@ -2,7 +2,6 @@
 // src/components/ProductsCarousel.tsx
 
 import { useRef, useState } from "react";
-import { FiInfo } from "react-icons/fi";
 import Link from "next/link";
 import AddToCartInlineButton from "@/components/AddToCartInlineButton";
 
@@ -17,7 +16,6 @@ type Product = {
 export default function ProductsCarousel({ products }: { products: Product[] }) {
   const listRef              = useRef<HTMLUListElement | null>(null);
   const [offset, setOffset]  = useState(0);
-  const [favorites, setFavorites] = useState<string[]>([]);
 
   const step = () => {
     const list = listRef.current;
@@ -77,34 +75,9 @@ export default function ProductsCarousel({ products }: { products: Product[] }) 
                 <h3 className="mt-4 font-semibold">{p.name}</h3>
                 {p.price && <p className="text-sm text-slate-600">{p.price}</p>}
 
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4">
                   {/* Carrito — usa el mismo componente que la tienda */}
-                  <div className="flex-1">
-                    <AddToCartInlineButton productId={p.id} />
-                  </div>
-
-                  {/* Ver detalle — ruta dinámica según categoría */}
-                  <Link
-                    href={`/mochilas/${p.id}`}
-                    className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-semibold border hover:bg-slate-50"
-                  >
-                    <FiInfo size={18} />
-                  </Link>
-
-                  {/* Favorito */}
-                  <button
-                    onClick={() =>
-                      setFavorites(prev =>
-                        prev.includes(p.id)
-                          ? prev.filter(id => id !== p.id)
-                          : [...prev, p.id]
-                      )
-                    }
-                    className={`inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-semibold border transition
-                      ${favorites.includes(p.id) ? "bg-red-500 text-white border-red-500" : "hover:bg-slate-50"}`}
-                  >
-                    ❤
-                  </button>
+                  <AddToCartInlineButton productId={p.id} />
                 </div>
               </li>
             ))}
