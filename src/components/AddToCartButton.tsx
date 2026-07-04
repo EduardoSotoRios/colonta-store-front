@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { getColorEmoji } from "@/lib/colores-map";
+import FavoriteButton from "@/components/FavoriteButton";
 import type { ProductModel, CartItem } from "@/lib/api";
 
 type ImagenColor = { nombre: string; hex: string | null };
@@ -239,12 +240,15 @@ export default function AddToCartButton({
         </div>
       </div>
 
-      <button
-        onClick={handleAdd}
-        className="w-full inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-white bg-colonta-primary hover:opacity-90"
-      >
-        Agregar al carrito
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={handleAdd}
+          className="flex-1 inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-white bg-colonta-primary hover:opacity-90"
+        >
+          Agregar al carrito
+        </button>
+        <FavoriteButton productId={productModel.id} />
+      </div>
     </div>
   );
 }
