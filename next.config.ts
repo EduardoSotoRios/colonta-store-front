@@ -1,11 +1,21 @@
 import type { NextConfig } from "next";
 
+const RAILWAY_API = process.env.RAILWAY_API_URL ?? "https://colonta-api-production.up.railway.app";
+
 const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
-  // Genera build autónomo compatible con Docker/ECS — solo incluye lo necesario
   output: "standalone",
+
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${RAILWAY_API}/api/:path*`,
+      },
+    ];
+  },
 
   images: {
     remotePatterns: [
