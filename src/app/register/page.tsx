@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import type { Address } from "@/lib/api";
 import { REGIONES, COMUNAS_POR_REGION } from "@/lib/chile-geo";
+import { PHONE_COUNTRIES, getPhoneCountry } from "@/lib/phone-countries";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,15 +33,9 @@ function isValidRut(rut: string): boolean {
   return dv === expected;
 }
 
-function formatPhoneInput(raw: string): string {
-  const withoutCode = raw.replace(/^\+?56\s*/, "");
-  const digits = withoutCode.replace(/\D/g, "").slice(0, 9);
-  if (!digits) return "";
-  // 1 dígito de área: 9 (móvil) y 2 (Santiago); resto son 2 dígitos
-  const areaLen = digits[0] === "9" || digits[0] === "2" ? 1 : 2;
-  const area = digits.slice(0, areaLen);
-  const number = digits.slice(areaLen);
-  return number ? `+56 ${area} ${number}` : `+56 ${area}`;
+function formatPhoneNumberInput(raw: string): string {
+  // Formato libre: solo dígitos y espacios, hasta 15 caracteres (suficiente para cualquier número E.164)
+  return raw.replace(/[^0-9\s]/g, "").slice(0, 15);
 }
 
 function getPasswordStrength(pwd: string) {
@@ -82,6 +77,7 @@ export default function RegisterPage() {
   const [sinNumero, setSinNumero]     = useState(false);
   const [localError, setLocalError]   = useState<string | null>(null);
   const [rutTouched, setRutTouched]   = useState(false);
+  const [paisTelefono, setPaisTelefono] = useState("CL");
 
   const comunasDisponibles = formData.direccion.region
     ? COMUNAS_POR_REGION[formData.direccion.region] ?? []
@@ -89,6 +85,7 @@ export default function RegisterPage() {
 
   const rutValido  = isValidRut(formData.rut);
   const pwdStrength = getPasswordStrength(formData.password);
+  const telefonoCompleto = `${getPhoneCountry(paisTelefono).dial} ${formData.telefono}`.trim();
 
   function handleRutChange(e: React.ChangeEvent<HTMLInputElement>) {
     const formatted = formatRutInput(e.target.value);
@@ -96,7 +93,7 @@ export default function RegisterPage() {
   }
 
   function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const formatted = formatPhoneInput(e.target.value);
+    const formatted = formatPhoneNumberInput(e.target.value);
     setFormData({ ...formData, telefono: formatted });
   }
 
@@ -131,6 +128,10 @@ export default function RegisterPage() {
       setLocalError("La contraseña debe tener al menos 6 caracteres");
       return;
     }
+    if (formData.telefono.replace(/\s/g, "").length < 6) {
+      setLocalError("Ingresa un número de teléfono válido");
+      return;
+    }
 
     try {
       await register({
@@ -138,7 +139,7 @@ export default function RegisterPage() {
         email:    formData.email,
         password: formData.password,
         rut:      formData.rut,
-        telefono: formData.telefono,
+        telefono: telefonoCompleto,
         direccion: formData.direccion,
       });
       router.push("/mochilas");
@@ -204,22 +205,35 @@ export default function RegisterPage() {
               <p className="text-xs text-slate-400 mt-1">Con puntos y guión, ej: 11.111.111-1</p>
             </div>
 
-            {/* Teléfono con prefijo +56 fijo */}
+            {/* Teléfono con selector de país internacional */}
             <div>
               <label className="text-sm font-semibold block mb-1">Teléfono *</label>
               <div className="flex items-center border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-colonta-primary">
-                <span className="px-3 py-2 bg-slate-100 text-slate-600 text-sm border-r select-none">+56</span>
+                <select
+                  className="px-2 py-2 bg-slate-100 text-slate-600 text-sm border-r outline-none max-w-[7.5rem]"
+                  value={paisTelefono}
+                  onChange={(e) => setPaisTelefono(e.target.value)}
+                  aria-label="Código de país"
+                >
+                  {PHONE_COUNTRIES.map((c) => (
+                    <option key={c.iso} value={c.iso}>
+                      {c.name} {c.dial}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="tel"
                   required
-                  className="flex-1 px-3 py-2 text-sm outline-none"
-                  value={formData.telefono.replace(/^\+56\s*/, "")}
+                  className="flex-1 min-w-0 px-3 py-2 text-sm outline-none"
+                  value={formData.telefono}
                   onChange={handlePhoneChange}
                   placeholder="9 12345678"
-                  maxLength={10}
                 />
               </div>
-              <p className="text-xs text-slate-400 mt-1">Móvil: 9 XXXXXXXX · Fijo: 2 XXXXXXXX (Santiago) · 32 XXXXXX (regiones)</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Selecciona tu país y escribe tu número.
+                {formData.telefono && ` Se guardará como ${telefonoCompleto}`}
+              </p>
             </div>
 
             {/* Contraseña con indicador de fortaleza */}
