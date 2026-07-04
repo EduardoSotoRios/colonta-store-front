@@ -354,8 +354,23 @@ export const useCart = create<State & Actions>((set, get) => ({
       if (cart.length === 0) {
         throw new Error("El carrito está vacío");
       }
+
+      // Enriquecer items con productName y unitPrice desde la caché Supabase,
+      // necesario para productos que no existen en Railway PostgreSQL
+      const cachedProducts = get().products;
+      const enrichedCart = cart.map(item => {
+        if (item.productName && item.unitPrice !== undefined) return item;
+        const p = cachedProducts[item.productModelId];
+        if (!p) return item;
+        return {
+          ...item,
+          productName: item.productName ?? p.name,
+          unitPrice: item.unitPrice ?? Number(p.basePrice),
+        };
+      });
+
       const order = await api.createOrder({
-        items: cart,
+        items: enrichedCart,
         deliveryAddress,
         discountCode,
         shippingCost,
