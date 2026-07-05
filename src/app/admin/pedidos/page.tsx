@@ -5,10 +5,39 @@ import { useAuth } from "@/hooks/useAuth";
 import { api, type Order, type BlueExpressDelivery } from "@/lib/api";
 import Link from "next/link";
 
-const ESTADO_STYLES: Record<Order["estado"], string> = {
-  pendiente: "bg-amber-100 text-amber-700",
-  pagado:    "bg-green-100 text-green-700",
-  cancelado: "bg-red-100 text-red-700",
+type EstadoKey = Order["estado"];
+
+const ESTADO_LABEL: Record<EstadoKey, string> = {
+  pendiente:   "Pendiente",
+  pagado:      "Pagado",
+  manufactura: "En manufactura",
+  enviado:     "Enviado",
+  entregado:   "Entregado",
+  cancelado:   "Cancelado",
+};
+
+const ESTADO_STYLES: Record<EstadoKey, string> = {
+  pendiente:   "bg-amber-100 text-amber-700",
+  pagado:      "bg-sky-100 text-sky-700",
+  manufactura: "bg-purple-100 text-purple-700",
+  enviado:     "bg-indigo-100 text-indigo-700",
+  entregado:   "bg-green-100 text-green-700",
+  cancelado:   "bg-red-100 text-red-700",
+};
+
+// Botón siguiente en el flujo natural del pedido
+const NEXT_ESTADO: Partial<Record<EstadoKey, EstadoKey>> = {
+  pendiente:   "pagado",
+  pagado:      "manufactura",
+  manufactura: "enviado",
+  enviado:     "entregado",
+};
+
+const NEXT_LABEL: Partial<Record<EstadoKey, string>> = {
+  pendiente:   "Marcar pagado",
+  pagado:      "Iniciar manufactura",
+  manufactura: "Marcar enviado",
+  enviado:     "Marcar entregado",
 };
 
 const fmt     = (n: number) => new Intl.NumberFormat("es-CL").format(n);
@@ -41,11 +70,11 @@ function ImageModal({ src, onClose }: { src: string; onClose: () => void }) {
 // ── Fila de item dentro de un pedido ─────────────────────────────────────────
 function OrderItemRow({ item }: { item: Order["items"][number] }) {
   const [expanded, setExpanded] = useState(false);
-  const isCustom = Boolean(item.customDesignImageUrl);
-  const imgSrc   = item.customDesignImageUrl || item.productImageUrl;
-  const colors   = item.chosenColorScheme?.colors ?? [];
+  const isCustom  = Boolean(item.customDesignImageUrl);
+  const imgSrc    = item.customDesignImageUrl || item.productImageUrl;
+  const colors    = item.chosenColorScheme?.colors ?? [];
   const colorName = item.chosenColorScheme?.name;
-  const extras   = item.chosenExtras ?? [];
+  const extras    = item.chosenExtras ?? [];
 
   return (
     <>
@@ -53,8 +82,8 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
         <ImageModal src={item.customDesignImageUrl} onClose={() => setExpanded(false)} />
       )}
 
-      <li className="px-5 py-4 flex gap-4 items-start">
-        {/* Imagen */}
+      <li className="px-5 py-5 flex gap-5 items-start">
+        {/* Imagen — más grande para ver colores con claridad */}
         <div className="shrink-0">
           {imgSrc ? (
             <button
@@ -66,17 +95,17 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
               <img
                 src={imgSrc}
                 alt={item.productName}
-                className="w-20 h-20 rounded-xl object-cover border border-slate-200"
+                className="w-32 h-32 rounded-xl object-cover border border-slate-200 shadow-sm"
               />
               {isCustom && (
-                <span className="absolute bottom-1 right-1 bg-purple-600 text-white text-[10px] px-1 rounded font-bold leading-tight">
+                <span className="absolute bottom-1.5 right-1.5 bg-purple-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold leading-tight">
                   DISEÑO
                 </span>
               )}
             </button>
           ) : (
-            <div className="w-20 h-20 rounded-xl bg-slate-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="w-32 h-32 rounded-xl bg-slate-100 flex items-center justify-center">
+              <svg className="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5M3 3.75h18M21 3.75v14.25" />
               </svg>
             </div>
@@ -88,7 +117,7 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-semibold text-slate-900 truncate">{item.productName}</p>
+                <p className="font-semibold text-slate-900">{item.productName}</p>
                 {isCustom && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-100 text-purple-700 shrink-0">
                     Personalizado
@@ -102,25 +131,25 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
 
           {/* Colores */}
           {(colors.length > 0 || colorName) && (
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className="text-xs text-slate-500">Color:</span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {colors.map((c, i) => (
                   <span
                     key={i}
-                    className="inline-block w-4 h-4 rounded-full border border-black/10 shrink-0"
+                    className="inline-block w-5 h-5 rounded-full border border-black/10 shrink-0 shadow-sm"
                     style={{ backgroundColor: c.startsWith("#") ? c : undefined }}
                     title={c}
                   />
                 ))}
               </div>
-              {colorName && <span className="text-xs text-slate-600">{colorName}</span>}
+              {colorName && <span className="text-xs font-medium text-slate-700">{colorName}</span>}
             </div>
           )}
 
           {/* Extras */}
           {extras.length > 0 && (
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1.5">
               Extras: {extras.map((e) => e.name).join(", ")}
             </p>
           )}
@@ -146,15 +175,18 @@ function OrderCard({
   onStatusChange,
 }: {
   pedido: Order;
-  onStatusChange: (id: string, estado: Order["estado"]) => Promise<void>;
+  onStatusChange: (id: string, estado: EstadoKey) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
   const isBlueExpress =
     (pedido.deliveryAddress as BlueExpressDelivery).type === "blue_express";
-  const bep = isBlueExpress ? (pedido.deliveryAddress as BlueExpressDelivery) : null;
+  const bep  = isBlueExpress ? (pedido.deliveryAddress as BlueExpressDelivery) : null;
   const addr = !isBlueExpress ? (pedido.deliveryAddress as any) : null;
 
-  async function handleStatus(estado: Order["estado"]) {
+  const nextEstado = NEXT_ESTADO[pedido.estado];
+  const nextLabel  = NEXT_LABEL[pedido.estado];
+
+  async function handleStatus(estado: EstadoKey) {
     setBusy(true);
     await onStatusChange(pedido.id, estado).catch(() => {});
     setBusy(false);
@@ -175,7 +207,7 @@ function OrderCard({
         <div className="flex items-center gap-3 shrink-0">
           <span className="font-bold text-lg">${fmt(Number(pedido.total))}</span>
           <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${ESTADO_STYLES[pedido.estado]}`}>
-            {pedido.estado.charAt(0).toUpperCase() + pedido.estado.slice(1)}
+            {ESTADO_LABEL[pedido.estado]}
           </span>
         </div>
       </div>
@@ -212,33 +244,33 @@ function OrderCard({
           ) : null}
         </div>
 
-        {/* Botones de estado */}
+        {/* Botones de estado — flujo lineal */}
         <div className="flex items-center gap-2 flex-wrap">
-          {pedido.estado !== "pagado" && (
+          {nextEstado && nextLabel && (
             <button
               disabled={busy}
-              onClick={() => handleStatus("pagado")}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+              onClick={() => handleStatus(nextEstado)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-colonta-primary text-white hover:opacity-90 disabled:opacity-50"
             >
-              Marcar pagado
+              {nextLabel}
             </button>
           )}
-          {pedido.estado !== "pendiente" && (
-            <button
-              disabled={busy}
-              onClick={() => handleStatus("pendiente")}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50"
-            >
-              Marcar pendiente
-            </button>
-          )}
-          {pedido.estado !== "cancelado" && (
+          {pedido.estado !== "cancelado" && pedido.estado !== "entregado" && (
             <button
               disabled={busy}
               onClick={() => handleStatus("cancelado")}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50"
             >
-              Cancelar
+              Cancelar pedido
+            </button>
+          )}
+          {pedido.estado === "cancelado" && (
+            <button
+              disabled={busy}
+              onClick={() => handleStatus("pendiente")}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200 disabled:opacity-50"
+            >
+              Reactivar
             </button>
           )}
         </div>
@@ -253,7 +285,7 @@ export default function PedidosAdminPage() {
   const [loading, setLoading]   = useState(true);
   const [pedidos, setPedidos]   = useState<Order[]>([]);
   const [error, setError]       = useState<string | null>(null);
-  const [filtro, setFiltro]     = useState<"todos" | Order["estado"]>("todos");
+  const [filtro, setFiltro]     = useState<"todos" | EstadoKey>("todos");
 
   useEffect(() => { loadPedidos(); }, []);
 
@@ -261,7 +293,6 @@ export default function PedidosAdminPage() {
     try {
       setLoading(true);
       const data = await api.getAllOrdersAdmin();
-      // Más recientes primero
       setPedidos(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       setError(null);
     } catch (e: any) {
@@ -271,18 +302,21 @@ export default function PedidosAdminPage() {
     }
   }
 
-  async function handleStatusChange(id: string, estado: Order["estado"]) {
+  async function handleStatusChange(id: string, estado: EstadoKey) {
     await api.updateOrderStatus(id, estado);
     setPedidos((prev) => prev.map((p) => p.id === id ? { ...p, estado } : p));
   }
 
   const visible = filtro === "todos" ? pedidos : pedidos.filter((p) => p.estado === filtro);
 
-  const counts = {
-    todos:     pedidos.length,
-    pendiente: pedidos.filter((p) => p.estado === "pendiente").length,
-    pagado:    pedidos.filter((p) => p.estado === "pagado").length,
-    cancelado: pedidos.filter((p) => p.estado === "cancelado").length,
+  const counts: Record<"todos" | EstadoKey, number> = {
+    todos:       pedidos.length,
+    pendiente:   pedidos.filter((p) => p.estado === "pendiente").length,
+    pagado:      pedidos.filter((p) => p.estado === "pagado").length,
+    manufactura: pedidos.filter((p) => p.estado === "manufactura").length,
+    enviado:     pedidos.filter((p) => p.estado === "enviado").length,
+    entregado:   pedidos.filter((p) => p.estado === "entregado").length,
+    cancelado:   pedidos.filter((p) => p.estado === "cancelado").length,
   };
 
   if (loading || !user || user.rol !== "admin") {
@@ -323,17 +357,17 @@ export default function PedidosAdminPage() {
 
           {/* Filtros */}
           <div className="flex flex-wrap gap-2">
-            {(["todos", "pendiente", "pagado", "cancelado"] as const).map((f) => (
+            {(["todos", "pendiente", "pagado", "manufactura", "enviado", "entregado", "cancelado"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFiltro(f)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   filtro === f
                     ? "bg-colonta-primary text-white"
                     : "bg-white ring-1 ring-black/10 text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                {f.charAt(0).toUpperCase() + f.slice(1)}{" "}
+                {f === "todos" ? "Todos" : ESTADO_LABEL[f]}{" "}
                 <span className="opacity-70">({counts[f]})</span>
               </button>
             ))}
