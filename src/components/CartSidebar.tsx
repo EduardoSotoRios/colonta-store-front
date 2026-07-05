@@ -66,10 +66,10 @@ export default function CartSidebar() {
               return (
                 <div key={index} className="flex gap-3 p-3 rounded-xl ring-1 ring-black/5 bg-white">
                   <div className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
-                    <img src={item.customDesignImageUrl} alt="Diseño personalizado" className="w-full h-full object-cover" />
+                    <img src={item.customDesignImageUrl} alt="Producto diseñado" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold leading-tight">🎨 Producto personalizado</p>
+                    <p className="font-semibold leading-tight">🎨 Producto diseñado</p>
                     <div className="mt-2 inline-flex items-center rounded-lg border">
                       <button
                         className="px-3 py-1.5"

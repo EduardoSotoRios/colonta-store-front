@@ -137,10 +137,10 @@ export default function CartPage() {
                     return (
                       <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl ring-1 ring-black/5 p-4 bg-white">
                         <div className="w-full sm:w-20 h-48 sm:h-20 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
-                          <img src={item.customDesignImageUrl} alt="Diseño personalizado" className="w-full h-full object-cover" />
+                          <img src={item.customDesignImageUrl} alt="Producto diseñado" className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1 min-w-0 w-full sm:w-auto">
-                          <p className="font-semibold truncate">🎨 Producto personalizado</p>
+                          <p className="font-semibold truncate">🎨 Producto diseñado</p>
                           <div className="mt-2 inline-flex items-center rounded-xl border">
                             <button
                               onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)}
@@ -340,10 +340,10 @@ export default function CartPage() {
                 return (
                   <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl ring-1 ring-black/5 p-4 bg-white">
                     <div className="w-full sm:w-20 h-48 sm:h-20 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
-                      <img src={item.customDesignImageUrl} alt="Diseño personalizado" className="w-full h-full object-cover" />
+                      <img src={item.customDesignImageUrl} alt="Producto diseñado" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0 w-full sm:w-auto">
-                      <p className="font-semibold truncate">🎨 Producto personalizado</p>
+                      <p className="font-semibold truncate">🎨 Producto diseñado</p>
                       <div className="mt-2 inline-flex items-center rounded-xl border">
                         <button
                           onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)}

@@ -300,7 +300,7 @@ export default function CheckoutPage() {
                         if (item.customDesignImageUrl) {
                           return (
                             <li key={idx} className="flex justify-between">
-                              <span>🎨 Producto personalizado × {item.quantity}</span>
+                              <span>🎨 Producto diseñado × {item.quantity}</span>
                               <span className="font-medium">${fmt((item.unitPrice ?? 0) * item.quantity)}</span>
                             </li>
                           );

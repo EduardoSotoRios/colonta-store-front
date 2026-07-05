@@ -67,7 +67,7 @@ export default function AddToCartStep({ productId, productName, designDataURL, o
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-semibold text-gray-800">{productName} (Personalizado)</p>
+            <p className="font-semibold text-gray-800">{productName} (Diseñado)</p>
             <p className="text-sm text-gray-500">${priceCL} c/u</p>
           </div>
           <div className="inline-flex items-center rounded-xl border">

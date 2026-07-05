@@ -31,13 +31,13 @@ export const CUSTOM_ORDER_PRICES: Record<ProductId, number> = {
 };
 
 export const CUSTOM_ORDER_PRODUCT_NAMES: Record<ProductId, string> = {
-  mochila_normal: 'Mochila Normal (Personalizada)',
-  mochila_ligera: 'Mochila Ligera (Personalizada)',
-  banano: 'Banano (Personalizado)',
-  billetera: 'Billetera (Personalizada)',
-  bolso: 'Bolso Tote (Personalizado)',
-  tabaquera: 'Tabaquera (Personalizada)',
-  banano_simple: 'Banano Simple (Personalizado)',
-  banano_muslera: 'Banano Muslera (Personalizado)',
-  porta_matt: 'Porta Matt (Personalizado)',
+  mochila_normal: 'Mochila Normal (Diseñada)',
+  mochila_ligera: 'Mochila Ligera (Diseñada)',
+  banano: 'Banano (Diseñado)',
+  billetera: 'Billetera (Diseñada)',
+  bolso: 'Bolso Tote (Diseñado)',
+  tabaquera: 'Tabaquera (Diseñada)',
+  banano_simple: 'Banano Simple (Diseñado)',
+  banano_muslera: 'Banano Muslera (Diseñado)',
+  porta_matt: 'Porta Matt (Diseñado)',
 };

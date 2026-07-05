@@ -32,7 +32,7 @@ function ImageModal({ src, onClose }: { src: string; onClose: () => void }) {
         >
           Cerrar ✕
         </button>
-        <img src={src} alt="Diseño personalizado" className="w-full rounded-xl shadow-2xl" />
+        <img src={src} alt="Producto diseñado" className="w-full rounded-xl shadow-2xl" />
       </div>
     </div>
   );
@@ -91,7 +91,7 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
                 <p className="font-semibold text-slate-900 truncate">{item.productName}</p>
                 {isCustom && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-100 text-purple-700 shrink-0">
-                    Personalizado
+                    Diseñado
                   </span>
                 )}
               </div>
@@ -310,7 +310,7 @@ export default function PedidosAdminPage() {
             ← Volver al panel
           </Link>
           <h1 className="text-3xl md:text-4xl font-extrabold">Pedidos</h1>
-          <p className="text-white/85 mt-1">Todos los pedidos — imágenes, colores, diseños personalizados y punto de retiro</p>
+          <p className="text-white/85 mt-1">Todos los pedidos — imágenes, colores, productos diseñados y punto de retiro</p>
         </div>
       </section>
 
