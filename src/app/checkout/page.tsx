@@ -182,7 +182,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (cart.length === 0) {
+  if (cart.length === 0 && !pendingOrderId) {
     return (
       <main className="min-h-screen">
         <section className="bg-colonta-primary text-white">
