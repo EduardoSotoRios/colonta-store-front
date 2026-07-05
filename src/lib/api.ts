@@ -419,7 +419,7 @@ export type Order = {
   userId: string;
   deliveryAddress: DeliveryAddress;
   total: number;
-  estado: 'pendiente' | 'pagado' | 'cancelado';
+  estado: 'pendiente' | 'pagado' | 'manufactura' | 'enviado' | 'entregado' | 'cancelado';
   createdAt: string;
   items: OrderItem[];
   user?: { id: string; nombre: string; email: string; rol: string };
