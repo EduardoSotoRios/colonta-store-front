@@ -70,7 +70,7 @@ function DeliveryInfo({ delivery }: { delivery: Order["deliveryAddress"] }) {
 }
 
 export default function OrderSuccessClient() {
-  const { getOrderById } = useCart();
+  const { getOrderById, clearCart } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [paidAmount, setPaidAmount] = useState<number | null>(null);
@@ -85,12 +85,16 @@ export default function OrderSuccessClient() {
 
     if (orderId) {
       getOrderById(orderId)
-        .then((o) => { setOrder(o); setLoading(false); })
+        .then((o) => {
+          setOrder(o);
+          setLoading(false);
+          clearCart();
+        })
         .catch(() => { setLoading(false); });
     } else {
       setLoading(false);
     }
-  }, [getOrderById]);
+  }, [getOrderById, clearCart]);
 
   if (loading) {
     return <div className="max-w-2xl mx-auto text-center"><p className="text-slate-600">Cargando orden...</p></div>;

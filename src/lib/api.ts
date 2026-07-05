@@ -716,8 +716,13 @@ export const api = {
     patch<Order>(`/orders/${id}/status`, undefined, { estado }),
 
   /* Pagos - Backend: /api/payments */
-  startWebpay: (orderId: string) =>
-    post<{ token: string; url: string }>("/payments/create", undefined, { orderId }),
+  startWebpay: (payload: {
+    items: CartItem[];
+    deliveryAddress: Record<string, unknown>;
+    couponCode?: string;
+    shippingCost: number;
+  }) =>
+    post<{ token: string; url: string }>("/payments/create", undefined, payload),
 
   /* Cupones/Descuentos - Backend: /api/discounts */
   validateDiscountCode: async (code: string) => {

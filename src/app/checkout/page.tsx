@@ -23,11 +23,9 @@ export default function CheckoutPage() {
     coupon,
     loadCart,
     applyCoupon,
-    createOrder,
   } = useCart();
 
   const [step, setStep] = useState<Step>(1);
-  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "coupon" | "order" | "pay">(null);
   const [uiError, setUiError] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
@@ -99,10 +97,16 @@ export default function CheckoutPage() {
     }
   }
 
-  async function onPlaceOrder() {
+  function onPlaceOrder() {
     if (cart.length === 0) { setUiError("El carrito está vacío"); return; }
     if (!selectedPoint) { setUiError("Selecciona un punto de retiro"); return; }
-    setBusy("order");
+    setUiError(null);
+    setStep(4);
+  }
+
+  async function onPayWithWebpay() {
+    if (!selectedPoint) return;
+    setBusy("pay");
     setUiError(null);
     try {
       const deliveryAddress = {
@@ -115,22 +119,12 @@ export default function CheckoutPage() {
         region: selectedPoint.region,
         hours: selectedPoint.hours,
       };
-      const order = await createOrder(deliveryAddress as any, coupon?.code, shippingCost);
-      setPendingOrderId(order.id);
-      setStep(4);
-    } catch (e: any) {
-      setUiError(e?.message ?? "No se pudo crear la orden");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function onPayWithWebpay() {
-    if (!pendingOrderId) return;
-    setBusy("pay");
-    setUiError(null);
-    try {
-      const { token, url } = await api.startWebpay(pendingOrderId);
+      const { token, url } = await api.startWebpay({
+        items: cart,
+        deliveryAddress: deliveryAddress as any,
+        couponCode: coupon?.code,
+        shippingCost,
+      });
       const form = document.createElement("form");
       form.method = "POST";
       form.action = url;
@@ -182,7 +176,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (cart.length === 0 && !pendingOrderId) {
+  if (cart.length === 0 && step !== 4) {
     return (
       <main className="min-h-screen">
         <section className="bg-colonta-primary text-white">
@@ -411,10 +405,9 @@ export default function CheckoutPage() {
                   <button onClick={() => setStep(2)} className="px-5 py-3 rounded-xl border font-semibold hover:bg-slate-50 order-2 sm:order-1">Volver</button>
                   <button
                     onClick={onPlaceOrder}
-                    disabled={busy === "order"}
-                    className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold disabled:opacity-60 order-1 sm:order-2"
+                    className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold order-1 sm:order-2"
                   >
-                    {busy === "order" ? "Procesando…" : "Confirmar pedido"}
+                    Continuar al pago
                   </button>
                 </div>
               </div>
@@ -424,14 +417,14 @@ export default function CheckoutPage() {
             {step === 4 && (
               <div className="rounded-2xl ring-1 ring-black/5 p-5 bg-white space-y-6">
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-100 mb-3">
-                    <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-slate-100 mb-3">
+                    <svg className="w-7 h-7 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <h2 className="font-extrabold text-xl">¡Pedido creado!</h2>
+                  <h2 className="font-extrabold text-xl">Confirmar y pagar</h2>
                   <p className="text-slate-500 text-sm mt-1">
-                    Orden #{pendingOrderId?.slice(0, 8)} — solo falta el pago
+                    Revisa tu resumen antes de continuar al pago
                   </p>
                 </div>
 
