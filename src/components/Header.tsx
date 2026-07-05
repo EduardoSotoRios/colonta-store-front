@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, hydrated } = useAuth();
   const { cart, loadCart } = useCart();
   const { toggleCart } = useCartUI();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -110,12 +110,14 @@ export default function Header() {
           >
             <span aria-hidden className="text-base md:text-lg">🛒</span>
             <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-bold text-white bg-colonta-primary">
-              {count}
+              {hydrated ? count : 0}
             </span>
           </button>
 
           {/* Usuario / Login */}
-          {user ? (
+          {!hydrated ? (
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-slate-100 animate-pulse flex-shrink-0" />
+          ) : user ? (
             <div className="relative flex-shrink-0" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -199,7 +201,12 @@ export default function Header() {
 
             {/* Usuario / Login en móvil */}
             <div className="mt-4 border-t pt-4">
-              {user ? (
+              {!hydrated ? (
+                <div className="px-3 py-2">
+                  <div className="h-4 w-32 bg-slate-100 rounded animate-pulse mb-1" />
+                  <div className="h-3 w-24 bg-slate-100 rounded animate-pulse" />
+                </div>
+              ) : user ? (
                 <>
                   <div className="px-3 py-2 mb-2">
                     <p className="text-sm font-semibold text-slate-900">{user.nombre}</p>
