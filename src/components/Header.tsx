@@ -10,19 +10,22 @@ import { useRouter } from "next/navigation";
 
 export default function Header() {
   const { user, logout, hydrated } = useAuth();
-  const { cart, loadCart, cartLoadedForUserId } = useCart();
-  const cartReady = hydrated && cartLoadedForUserId === (user?.id ?? null);
+  const { cart, loadCart } = useCart();
   const { toggleCart } = useCartUI();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [cartLoadedForUserId, setCartLoadedForUserId] = useState<string | null | undefined>(undefined);
+  const cartReady = hydrated && cartLoadedForUserId === (user?.id ?? null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Cargar el carrito (local si no hay usuario, servidor si hay usuario)
-    loadCart(user);
+    setCartLoadedForUserId(undefined);
+    loadCart(user).then(() => {
+      setCartLoadedForUserId(user?.id ?? null);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user?.id]);
 
   // Cerrar menú de usuario al hacer click fuera
   useEffect(() => {

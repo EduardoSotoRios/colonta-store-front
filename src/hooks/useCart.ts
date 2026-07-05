@@ -44,7 +44,6 @@ function clearLocalCart(): void {
 type State = {
   cart: CartItem[];
   loading: boolean;
-  cartLoadedForUserId: string | null | undefined; // undefined=nunca; null=invitado; string=userId
   error: string | null;
   products: Record<string, ProductModel>; // Cache de productos para mostrar info
 
@@ -71,7 +70,6 @@ type Actions = {
 export const useCart = create<State & Actions>((set, get) => ({
   cart: [],
   loading: false,
-  cartLoadedForUserId: undefined,
   error: null,
   products: {},
   coupon: null,
@@ -83,7 +81,7 @@ export const useCart = create<State & Actions>((set, get) => ({
     // Si no hay usuario, cargar desde localStorage
     if (!user) {
       const localCart = getLocalCart();
-      set({ cart: localCart, loading: false, cartLoadedForUserId: null });
+      set({ cart: localCart, loading: false });
 
       // Cargar información de productos si hay items (los diseños personalizados
       // no existen en Supabase, no tiene sentido buscarlos ahí)
@@ -111,7 +109,7 @@ export const useCart = create<State & Actions>((set, get) => ({
     try {
       const cart = await api.getCart();
       const cartArray = Array.isArray(cart) ? cart : [];
-      set({ cart: cartArray, loading: false, cartLoadedForUserId: user.id });
+      set({ cart: cartArray, loading: false });
 
       const cartArrayCatalog = cartArray.filter(item => !item.customDesignImageUrl);
       if (cartArrayCatalog.length > 0) {
@@ -136,10 +134,10 @@ export const useCart = create<State & Actions>((set, get) => ({
       const isNotFoundError = errorMessage.includes("404");
 
       if (isAuthError || isNotFoundError) {
-        set({ cart: [], loading: false, cartLoadedForUserId: user.id, error: null, products: {} });
+        set({ cart: [], loading: false, error: null, products: {} });
       } else {
         console.error("[cart] loadCart error:", e);
-        set({ loading: false, cartLoadedForUserId: user.id, error: errorMessage || "Error al cargar el carrito" });
+        set({ loading: false, error: errorMessage || "Error al cargar el carrito" });
       }
     }
   },
