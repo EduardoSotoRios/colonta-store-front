@@ -200,7 +200,7 @@ export default function OrderSuccessClient() {
           <Link href="/mochilas" className="px-5 py-3 rounded-xl border font-semibold hover:bg-slate-50">
             Seguir comprando
           </Link>
-          <Link href="/perfil" className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold hover:opacity-90">
+          <Link href="/seguimiento" className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold hover:opacity-90">
             Ver mis pedidos
           </Link>
         </div>
