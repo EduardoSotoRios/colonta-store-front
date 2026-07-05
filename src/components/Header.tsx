@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 
 export default function Header() {
   const { user, logout, hydrated } = useAuth();
-  const { cart, loadCart } = useCart();
+  const { cart, loadCart, cartHydrated } = useCart();
   const { toggleCart } = useCartUI();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -110,7 +110,7 @@ export default function Header() {
           >
             <span aria-hidden className="text-base md:text-lg">🛒</span>
             <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-bold text-white bg-colonta-primary">
-              {hydrated ? count : 0}
+              {cartHydrated ? count : 0}
             </span>
           </button>
 

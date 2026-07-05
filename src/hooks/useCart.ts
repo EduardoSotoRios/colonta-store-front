@@ -44,6 +44,7 @@ function clearLocalCart(): void {
 type State = {
   cart: CartItem[];
   loading: boolean;
+  cartHydrated: boolean; // true tras el primer loadCart completado
   error: string | null;
   products: Record<string, ProductModel>; // Cache de productos para mostrar info
 
@@ -70,6 +71,7 @@ type Actions = {
 export const useCart = create<State & Actions>((set, get) => ({
   cart: [],
   loading: false,
+  cartHydrated: false,
   error: null,
   products: {},
   coupon: null,
@@ -81,14 +83,14 @@ export const useCart = create<State & Actions>((set, get) => ({
     // Si no hay usuario, cargar desde localStorage
     if (!user) {
       const localCart = getLocalCart();
-      set({ cart: localCart, loading: false });
-      
+      set({ cart: localCart, loading: false, cartHydrated: true });
+
       // Cargar información de productos si hay items (los diseños personalizados
       // no existen en Supabase, no tiene sentido buscarlos ahí)
       const localCartCatalog = localCart.filter(item => !item.customDesignImageUrl);
       if (localCartCatalog.length > 0) {
         const productIds = [...new Set(localCartCatalog.map(item => item.productModelId))];
-        const productPromises = productIds.map(id => 
+        const productPromises = productIds.map(id =>
           api.getProductoById(id).catch(() => null)
         );
         const loadedProducts = await Promise.all(productPromises);
@@ -109,12 +111,12 @@ export const useCart = create<State & Actions>((set, get) => ({
     try {
       const cart = await api.getCart();
       const cartArray = Array.isArray(cart) ? cart : [];
-      set({ cart: cartArray, loading: false });
+      set({ cart: cartArray, loading: false, cartHydrated: true });
 
       const cartArrayCatalog = cartArray.filter(item => !item.customDesignImageUrl);
       if (cartArrayCatalog.length > 0) {
         const productIds = [...new Set(cartArrayCatalog.map(item => item.productModelId))];
-        const productPromises = productIds.map(id => 
+        const productPromises = productIds.map(id =>
           api.getProductoById(id).catch(() => null)
         );
         const loadedProducts = await Promise.all(productPromises);
@@ -132,12 +134,12 @@ export const useCart = create<State & Actions>((set, get) => ({
       const errorMessage = e?.message ?? "";
       const isAuthError = errorMessage.includes("401") || errorMessage.includes("No token") || errorMessage.includes("Invalid or expired");
       const isNotFoundError = errorMessage.includes("404");
-      
+
       if (isAuthError || isNotFoundError) {
-        set({ cart: [], loading: false, error: null, products: {} });
+        set({ cart: [], loading: false, cartHydrated: true, error: null, products: {} });
       } else {
         console.error("[cart] loadCart error:", e);
-        set({ loading: false, error: errorMessage || "Error al cargar el carrito" });
+        set({ loading: false, cartHydrated: true, error: errorMessage || "Error al cargar el carrito" });
       }
     }
   },
