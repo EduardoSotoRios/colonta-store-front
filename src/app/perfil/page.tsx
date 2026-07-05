@@ -512,8 +512,29 @@ function OrderProgressBar({ estado }: { estado: Order["estado"] }) {
   );
 }
 
+// ── Modal imagen zoom ─────────────────────────────────────────────────────────
+function ImageZoom({ src, onClose }: { src: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+      onClick={onClose}
+    >
+      <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute -top-9 right-0 text-white/80 hover:text-white text-sm font-semibold"
+        >
+          Cerrar ✕
+        </button>
+        <img src={src} alt="Imagen del producto" className="w-full rounded-xl shadow-2xl" />
+      </div>
+    </div>
+  );
+}
+
 // ── Tarjeta de pedido en el perfil ────────────────────────────────────────────
 function OrderCard({ order, fmt }: { order: Order; fmt: (n: number | string) => string }) {
+  const [zoomSrc, setZoomSrc] = useState<string | null>(null);
   const badge = ESTADO_BADGE[order.estado];
   const bep = (order.deliveryAddress as BlueExpressDelivery).type === "blue_express"
     ? (order.deliveryAddress as BlueExpressDelivery)
@@ -521,6 +542,8 @@ function OrderCard({ order, fmt }: { order: Order; fmt: (n: number | string) => 
 
   return (
     <div className="rounded-xl border bg-white overflow-hidden">
+      {zoomSrc && <ImageZoom src={zoomSrc} onClose={() => setZoomSrc(null)} />}
+
       {/* Cabecera */}
       <div className="flex items-start justify-between gap-3 px-4 pt-4 pb-3 border-b bg-slate-50">
         <div>
@@ -556,11 +579,18 @@ function OrderCard({ order, fmt }: { order: Order; fmt: (n: number | string) => 
           return (
             <li key={idx} className="flex items-start gap-3">
               {imgSrc ? (
-                <img
-                  src={imgSrc}
-                  alt={item.productName}
-                  className="w-20 h-20 rounded-xl object-cover border border-slate-200 flex-shrink-0 shadow-sm"
-                />
+                <button
+                  type="button"
+                  onClick={() => setZoomSrc(imgSrc)}
+                  className="block w-20 h-20 flex-shrink-0 cursor-zoom-in"
+                  title="Ver imagen ampliada"
+                >
+                  <img
+                    src={imgSrc}
+                    alt={item.productName}
+                    className="w-20 h-20 rounded-xl object-cover border border-slate-200 shadow-sm hover:opacity-85 transition-opacity"
+                  />
+                </button>
               ) : (
                 <div className="w-20 h-20 rounded-xl bg-slate-100 flex-shrink-0" />
               )}

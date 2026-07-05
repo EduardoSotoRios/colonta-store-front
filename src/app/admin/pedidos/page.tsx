@@ -78,24 +78,24 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
 
   return (
     <>
-      {expanded && item.customDesignImageUrl && (
-        <ImageModal src={item.customDesignImageUrl} onClose={() => setExpanded(false)} />
+      {expanded && imgSrc && (
+        <ImageModal src={imgSrc} onClose={() => setExpanded(false)} />
       )}
 
       <li className="px-5 py-5 flex gap-5 items-start">
-        {/* Imagen — más grande para ver colores con claridad */}
+        {/* Imagen — clic para zoom */}
         <div className="shrink-0">
           {imgSrc ? (
             <button
               type="button"
-              onClick={() => isCustom && setExpanded(true)}
-              className={`block relative ${isCustom ? "cursor-zoom-in" : "cursor-default"}`}
-              title={isCustom ? "Ver diseño completo" : undefined}
+              onClick={() => setExpanded(true)}
+              className="block relative cursor-zoom-in"
+              title="Ver imagen ampliada"
             >
               <img
                 src={imgSrc}
                 alt={item.productName}
-                className="w-32 h-32 rounded-xl object-cover border border-slate-200 shadow-sm"
+                className="w-24 h-24 rounded-xl object-cover border border-slate-200 shadow-sm hover:opacity-90 transition-opacity"
               />
               {isCustom && (
                 <span className="absolute bottom-1.5 right-1.5 bg-purple-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold leading-tight">
@@ -104,7 +104,7 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
               )}
             </button>
           ) : (
-            <div className="w-32 h-32 rounded-xl bg-slate-100 flex items-center justify-center">
+            <div className="w-24 h-24 rounded-xl bg-slate-100 flex items-center justify-center">
               <svg className="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5M3 3.75h18M21 3.75v14.25" />
               </svg>
@@ -154,13 +154,12 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
             </p>
           )}
 
-          {/* Enlace diseño personalizado */}
-          {item.customDesignImageUrl && (
+          {imgSrc && (
             <button
               onClick={() => setExpanded(true)}
-              className="mt-2 text-xs text-purple-600 hover:text-purple-800 font-medium underline"
+              className="mt-2 text-xs text-slate-400 hover:text-slate-600 font-medium underline"
             >
-              Ver diseño completo →
+              Ver imagen ampliada →
             </button>
           )}
         </div>
