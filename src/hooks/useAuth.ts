@@ -133,6 +133,13 @@ export const useAuth = create<State & Actions>((set, get) => ({
     }
     setAuthToken(null);
     set({ user: null });
+    // Limpiar el carrito (y su cache de "ultimo visto") para que en un
+    // computador compartido el siguiente usuario no vea ni por un instante
+    // el carrito de la sesion anterior al recargar la pagina.
+    try {
+      const { useCart } = await import("./useCart");
+      useCart.getState().reset();
+    } catch {}
   },
 
   async updateProfile(data) {
