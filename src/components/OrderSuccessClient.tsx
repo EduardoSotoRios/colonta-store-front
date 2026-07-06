@@ -2,8 +2,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import type { Order, BlueExpressDelivery } from "@/lib/api";
 
 function ItemImage({ item }: { item: Order["items"][number] }) {
@@ -71,10 +72,12 @@ function DeliveryInfo({ delivery }: { delivery: Order["deliveryAddress"] }) {
 
 export default function OrderSuccessClient() {
   const { getOrderById, clearCart } = useCart();
+  const { user, hydrated } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [paidAmount, setPaidAmount] = useState<number | null>(null);
   const [paidViaWebpay, setPaidViaWebpay] = useState(false);
+  const clearedRef = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -85,16 +88,19 @@ export default function OrderSuccessClient() {
 
     if (orderId) {
       getOrderById(orderId)
-        .then((o) => {
-          setOrder(o);
-          setLoading(false);
-          clearCart();
-        })
+        .then((o) => { setOrder(o); setLoading(false); })
         .catch(() => { setLoading(false); });
     } else {
       setLoading(false);
     }
-  }, [getOrderById, clearCart]);
+  }, [getOrderById]);
+
+  // Limpiar carrito una vez que tengamos la orden Y el auth esté hidratado
+  useEffect(() => {
+    if (!order || !hydrated || clearedRef.current) return;
+    clearedRef.current = true;
+    clearCart(user ?? undefined);
+  }, [order, hydrated, user, clearCart]);
 
   if (loading) {
     return <div className="max-w-2xl mx-auto text-center"><p className="text-slate-600">Cargando orden...</p></div>;
