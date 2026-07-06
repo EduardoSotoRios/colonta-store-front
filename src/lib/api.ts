@@ -420,6 +420,7 @@ export type Order = {
   deliveryAddress: DeliveryAddress;
   total: number;
   estado: 'pendiente' | 'pagado' | 'manufactura' | 'enviado' | 'entregado' | 'cancelado';
+  trackingCode?: string | null;
   createdAt: string;
   items: OrderItem[];
   user?: { id: string; nombre: string; email: string; rol: string };
@@ -714,6 +715,8 @@ export const api = {
   getAllOrdersAdmin: () => get<Order[]>("/orders/admin"),
   updateOrderStatus: (id: string, estado: Order["estado"]) =>
     patch<Order>(`/orders/${id}/status`, undefined, { estado }),
+  updateOrderTracking: (id: string, trackingCode: string | null) =>
+    patch<Order>(`/orders/${id}/tracking`, undefined, { trackingCode }),
 
   /* Pagos - Backend: /api/payments */
   startWebpay: (payload: {
