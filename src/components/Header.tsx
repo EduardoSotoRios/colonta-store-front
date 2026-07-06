@@ -14,8 +14,17 @@ export default function Header() {
   const { toggleCart } = useCartUI();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // El servidor nunca conoce el carrito (vive en localStorage/cookie del
+    // cliente), asi que el primer render siempre "cree" que esta vacio. Se
+    // espera a montar para mostrar el contador y evitar que se vea como si
+    // el carrito se hubiera vaciado apenas se recarga la pagina.
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // Cargar el carrito (local si no hay usuario, servidor si hay usuario)
@@ -109,9 +118,11 @@ export default function Header() {
             aria-label="Abrir carrito"
           >
             <span aria-hidden className="text-base md:text-lg">🛒</span>
-            <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-bold text-white bg-colonta-primary">
-              {count}
-            </span>
+            {mounted && (
+              <span className="ml-1 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-xs font-bold text-white bg-colonta-primary">
+                {count}
+              </span>
+            )}
           </button>
 
           {/* Usuario / Login */}

@@ -11,6 +11,30 @@ import {
 } from "@/lib/api";
 
 const LOCAL_CART_KEY = "colonta_local_cart";
+const CART_CACHE_KEY = "colonta_cart_cache";
+
+// Cache del ultimo carrito visto (invitado o de servidor), solo para pintarlo
+// de inmediato al recargar la pagina sin esperar la respuesta de red y asi
+// evitar el parpadeo "vacio -> con items". loadCart() sigue siendo la fuente
+// de verdad y corrige este valor apenas responde.
+function getCachedCart(): CartItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(CART_CACHE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function setCachedCart(cart: CartItem[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CART_CACHE_KEY, JSON.stringify(cart));
+  } catch {}
+}
 
 // Funciones para manejar el carrito local
 function getLocalCart(): CartItem[] {
@@ -68,7 +92,7 @@ type Actions = {
 };
 
 export const useCart = create<State & Actions>((set, get) => ({
-  cart: [],
+  cart: getCachedCart(),
   loading: false,
   error: null,
   products: {},
@@ -409,6 +433,7 @@ export const useCart = create<State & Actions>((set, get) => ({
 
   reset() {
     clearLocalCart();
+    setCachedCart([]);
     set({
       cart: [],
       loading: false,
@@ -419,3 +444,9 @@ export const useCart = create<State & Actions>((set, get) => ({
     });
   },
 }));
+
+// Mantiene el cache de "ultimo carrito visto" al dia con cualquier cambio real,
+// para que el proximo reload pueda pintarlo de inmediato (ver getCachedCart arriba).
+if (typeof window !== "undefined") {
+  useCart.subscribe((state) => setCachedCart(state.cart));
+}

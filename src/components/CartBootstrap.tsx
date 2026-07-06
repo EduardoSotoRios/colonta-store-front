@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function CartBootstrap() {
   const { user, hydrated, hydrate } = useAuth();
-  const { cart, loadCart } = useCart();
+  const { loadCart } = useCart();
 
   useEffect(() => {
     // Restaura la sesión (si la cookie sigue válida) apenas carga la app
@@ -15,10 +15,12 @@ export default function CartBootstrap() {
   }, [hydrated, hydrate]);
 
   useEffect(() => {
-    // Cargar el carrito (local si no hay usuario, servidor si hay usuario)
-    // Se espera a que termine la restauración de sesión para no cargar
-    // el carrito de invitado por error mientras el usuario sigue logueado.
-    if (hydrated && cart.length === 0) {
+    // Cargar el carrito real (local si no hay usuario, servidor si hay usuario).
+    // El carrito ya se pinta de inmediato desde el cache (ver useCart.ts) apenas
+    // carga la app, asi que esto solo confirma/corrige ese valor en segundo plano
+    // sin que el usuario vea un estado vacio mientras tanto — por eso corre
+    // siempre que cambia la sesion, sin importar si el cache ya traia items.
+    if (hydrated) {
       loadCart(user);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
