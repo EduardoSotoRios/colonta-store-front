@@ -106,13 +106,13 @@ export const useCart = create<State & Actions>((set, get) => ({
     if (!user) {
       const localCart = getLocalCart();
       set({ cart: localCart, loading: false });
-      
+
       // Cargar información de productos si hay items (los diseños personalizados
       // no existen en Supabase, no tiene sentido buscarlos ahí)
       const localCartCatalog = localCart.filter(item => !item.customDesignImageUrl);
       if (localCartCatalog.length > 0) {
         const productIds = [...new Set(localCartCatalog.map(item => item.productModelId))];
-        const productPromises = productIds.map(id => 
+        const productPromises = productIds.map(id =>
           api.getProductoById(id).catch(() => null)
         );
         const loadedProducts = await Promise.all(productPromises);
@@ -138,7 +138,7 @@ export const useCart = create<State & Actions>((set, get) => ({
       const cartArrayCatalog = cartArray.filter(item => !item.customDesignImageUrl);
       if (cartArrayCatalog.length > 0) {
         const productIds = [...new Set(cartArrayCatalog.map(item => item.productModelId))];
-        const productPromises = productIds.map(id => 
+        const productPromises = productIds.map(id =>
           api.getProductoById(id).catch(() => null)
         );
         const loadedProducts = await Promise.all(productPromises);
@@ -156,7 +156,7 @@ export const useCart = create<State & Actions>((set, get) => ({
       const errorMessage = e?.message ?? "";
       const isAuthError = errorMessage.includes("401") || errorMessage.includes("No token") || errorMessage.includes("Invalid or expired");
       const isNotFoundError = errorMessage.includes("404");
-      
+
       if (isAuthError || isNotFoundError) {
         set({ cart: [], loading: false, error: null, products: {} });
       } else {
