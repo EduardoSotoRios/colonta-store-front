@@ -1,23 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login, loading, error } = useAuth();
   const [email, setEmail]         = useState("");
   const [password, setPassword]   = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess]     = useState(false);
+  const [redirectTo, setRedirectTo] = useState("/mochilas");
 
-  // Solo rutas internas para evitar open redirect
-  const rawRedirect = searchParams.get("redirect") ?? "";
-  const redirectTo  = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
-    ? rawRedirect
-    : "/mochilas";
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("redirect") ?? "";
+    if (raw.startsWith("/") && !raw.startsWith("//")) setRedirectTo(raw);
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
