@@ -44,6 +44,13 @@ export default function CheckoutPage() {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
+  // Redirigir al login si no hay sesión (solo tras hidratar, para evitar flash)
+  useEffect(() => {
+    if (hydrated && !user) {
+      router.replace("/login?redirect=/checkout");
+    }
+  }, [hydrated, user, router]);
+
   useEffect(() => {
     loadCart(user);
   }, [user]);
@@ -134,27 +141,7 @@ export default function CheckoutPage() {
     }
   }
 
-  if (!user) {
-    return (
-      <main className="min-h-screen">
-        <section className="bg-colonta-primary text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl md:text-4xl font-extrabold">Checkout</h1>
-          </div>
-        </section>
-        <section className="py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="rounded-xl border p-6 bg-white">
-              <p className="font-semibold mb-2">Debes iniciar sesión para continuar</p>
-              <a href="/login" className="text-colonta-primary underline">Iniciar sesión</a>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  if (loading && cart.length === 0) {
+  if (!hydrated || !user) {
     return (
       <main className="min-h-screen">
         <section className="bg-colonta-primary text-white">

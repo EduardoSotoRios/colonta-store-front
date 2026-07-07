@@ -1,16 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, loading, error } = useAuth();
   const [email, setEmail]         = useState("");
   const [password, setPassword]   = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess]     = useState(false);
+
+  // Solo rutas internas para evitar open redirect
+  const rawRedirect = searchParams.get("redirect") ?? "";
+  const redirectTo  = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+    ? rawRedirect
+    : "/mochilas";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -20,7 +27,7 @@ export default function LoginPage() {
       await login(email.trim(), password);
       setSuccess(true);
       await new Promise(r => setTimeout(r, 1500));
-      router.push("/mochilas");
+      router.push(redirectTo);
     } catch (err: any) {
       setLocalError(err?.message ?? "Error al iniciar sesión");
     }
