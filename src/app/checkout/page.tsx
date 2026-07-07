@@ -10,7 +10,7 @@ import { getCartItemUnitPrice } from "@/lib/cartPricing";
 import BlueExpressSelector from "@/components/BlueExpressSelector";
 import type { BlueExpressPoint } from "@/lib/blue-express-points";
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function CheckoutPage() {
   } = useCart();
 
   const [step, setStep] = useState<Step>(1);
-  const [busy, setBusy] = useState<null | "coupon" | "order" | "pay">(null);
+  const [busy, setBusy] = useState<null | "coupon" | "pay">(null);
   const [uiError, setUiError] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
   const [selectedPoint, setSelectedPoint] = useState<BlueExpressPoint | null>(null);
@@ -95,13 +95,6 @@ export default function CheckoutPage() {
     } finally {
       setBusy(null);
     }
-  }
-
-  function onPlaceOrder() {
-    if (cart.length === 0) { setUiError("El carrito está vacío"); return; }
-    if (!selectedPoint) { setUiError("Selecciona un punto de retiro"); return; }
-    setUiError(null);
-    setStep(4);
   }
 
   async function onPayWithWebpay() {
@@ -176,7 +169,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (cart.length === 0 && step !== 4) {
+  if (cart.length === 0 && step !== 3) {
     return (
       <main className="min-h-screen">
         <section className="bg-colonta-primary text-white">
@@ -213,8 +206,7 @@ export default function CheckoutPage() {
             <ol className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm overflow-x-auto pb-2">
               <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 1 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>1. Punto retiro</li>
               <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 2 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>2. Resumen</li>
-              <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 3 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>3. Confirmar</li>
-              <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 4 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>4. Pagar</li>
+              <li className={`px-2 sm:px-3 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${step >= 3 ? "bg-colonta-primary text-white" : "bg-slate-200"}`}>3. Pagar</li>
             </ol>
 
             {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
@@ -354,10 +346,10 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* STEP 3 - Confirmar */}
+            {/* STEP 3 - Confirmar y pagar */}
             {step === 3 && (
-              <div className="rounded-2xl ring-1 ring-black/5 p-5 bg-white space-y-4">
-                <h2 className="font-extrabold text-lg">Confirmar pedido</h2>
+              <div className="rounded-2xl ring-1 ring-black/5 p-5 bg-white space-y-5">
+                <h2 className="font-extrabold text-lg">Confirmar y pagar</h2>
 
                 {/* Punto seleccionado */}
                 {selectedPoint && (
@@ -367,80 +359,28 @@ export default function CheckoutPage() {
                       Punto de retiro Blue Express
                     </h3>
                     <p className="text-sm font-semibold">{selectedPoint.name}</p>
-                    <p className="text-sm text-slate-600">
-                      {selectedPoint.address}, {selectedPoint.comuna}
-                    </p>
+                    <p className="text-sm text-slate-600">{selectedPoint.address}, {selectedPoint.comuna}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{selectedPoint.hours}</p>
                   </div>
                 )}
 
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <h3 className="font-bold mb-3">Resumen de compra</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Subtotal productos</span>
-                      <span className="font-medium">${fmt(subtotal)}</span>
-                    </div>
-                    {coupon?.valid && discount > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Descuento ({coupon.code})</span>
-                        <span className="font-medium">-${fmt(discount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">
-                        Envío Blue Express{" "}
-                        {selectedPoint?.region.includes("Metropolitana") ? "(RM - 48h)" : "(Regiones - 3-5 días)"}
-                      </span>
-                      <span className="font-medium">${fmt(shippingCost)}</span>
-                    </div>
-                    <div className="flex justify-between font-extrabold text-base border-t pt-2 mt-2">
-                      <span>Total a pagar</span>
-                      <span>${fmt(total)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-col sm:flex-row justify-between gap-2">
-                  <button onClick={() => setStep(2)} className="px-5 py-3 rounded-xl border font-semibold hover:bg-slate-50 order-2 sm:order-1">Volver</button>
-                  <button
-                    onClick={onPlaceOrder}
-                    className="px-5 py-3 rounded-xl bg-colonta-primary text-white font-semibold order-1 sm:order-2"
-                  >
-                    Continuar al pago
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4 - Pagar con Webpay */}
-            {step === 4 && (
-              <div className="rounded-2xl ring-1 ring-black/5 p-5 bg-white space-y-6">
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-slate-100 mb-3">
-                    <svg className="w-7 h-7 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <h2 className="font-extrabold text-xl">Confirmar y pagar</h2>
-                  <p className="text-slate-500 text-sm mt-1">
-                    Revisa tu resumen antes de continuar al pago
-                  </p>
-                </div>
-
+                {/* Resumen */}
                 <div className="rounded-xl bg-slate-50 p-4 space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Subtotal</span>
+                    <span className="text-slate-600">Subtotal productos</span>
                     <span className="font-medium">${fmt(subtotal)}</span>
                   </div>
                   {coupon?.valid && discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Descuento ({coupon.code})</span>
-                      <span>-${fmt(discount)}</span>
+                      <span className="font-medium">-${fmt(discount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-slate-600">Envío Blue Express</span>
+                    <span className="text-slate-600">
+                      Envío Blue Express{" "}
+                      {selectedPoint?.region.includes("Metropolitana") ? "(RM - 48h)" : "(Regiones - 3-5 días)"}
+                    </span>
                     <span className="font-medium">${fmt(shippingCost)}</span>
                   </div>
                   <div className="flex justify-between font-extrabold text-base border-t pt-2 mt-1">
@@ -449,6 +389,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
+                {/* Botón Webpay */}
                 <div className="rounded-xl border-2 border-slate-200 p-5 text-center space-y-4">
                   <p className="text-sm text-slate-500 font-medium uppercase tracking-wide">Pago seguro con</p>
                   <div className="flex items-center justify-center gap-2">
@@ -482,9 +423,11 @@ export default function CheckoutPage() {
                   </button>
                 </div>
 
-                <p className="text-center text-xs text-slate-400">
-                  Tu pedido quedará reservado. Si cierras esta página puedes retomar el pago desde tu historial de órdenes.
-                </p>
+                <div className="flex justify-start">
+                  <button onClick={() => setStep(2)} className="px-5 py-3 rounded-xl border font-semibold hover:bg-slate-50 text-sm">
+                    ← Volver
+                  </button>
+                </div>
               </div>
             )}
           </div>
