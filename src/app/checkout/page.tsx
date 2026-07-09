@@ -40,6 +40,15 @@ export default function CheckoutPage() {
     else if (webpayError === "error") setUiError("Ocurrió un error en Webpay. Por favor intenta nuevamente.");
   }, []);
 
+  // Resetear busy si el usuario vuelve desde Webpay con el botón atrás (bfcache)
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setBusy(null);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   useEffect(() => {
     if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
