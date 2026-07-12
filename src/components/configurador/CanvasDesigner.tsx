@@ -331,10 +331,34 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
           <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Herramienta</p>
           <div className="grid grid-cols-3 gap-2">
             {([
-              { id: 'pencil', label: 'Lápiz',    emoji: '✏️' },
-              { id: 'fill',   label: 'Relleno',  emoji: '🪣' },
-              { id: 'eraser', label: 'Borrador', emoji: '🧹' },
-            ] as { id: Tool; label: string; emoji: string }[]).map(t => (
+              {
+                id: 'pencil', label: 'Lápiz',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                ),
+              },
+              {
+                id: 'fill', label: 'Relleno',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h10l-1.5 10A1.5 1.5 0 0114 18.5H10A1.5 1.5 0 018.5 17L7 7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 7h14M10 4h4" />
+                    <path d="M20 17c0 1.1-.85 2.5-1.75 2.5S16.5 18.1 16.5 17c0-1.4 1.75-3.5 1.75-3.5S20 15.6 20 17z" fill="currentColor" stroke="none" />
+                  </svg>
+                ),
+              },
+              {
+                id: 'eraser', label: 'Borrador',
+                icon: (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 20H9L4.5 15.5a2 2 0 010-2.83l8.17-8.17a2 2 0 012.83 0l5 5a2 2 0 010 2.83L13.5 20" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 17l3.5-3.5" />
+                  </svg>
+                ),
+              },
+            ] as { id: Tool; label: string; icon: React.ReactNode }[]).map(t => (
               <button
                 key={t.id}
                 onClick={() => selectTool(t.id)}
@@ -343,7 +367,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
                     ? 'border-[#5B2D8E] bg-[#5B2D8E] text-white'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-[#5B2D8E]'}`}
               >
-                <span className="text-lg">{t.emoji}</span>
+                {t.icon}
                 {t.label}
               </button>
             ))}
@@ -397,7 +421,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
           <div>
             <h2 className="font-bold text-lg text-gray-800">Diseñando: {productName}</h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              💡 <strong>Relleno 🪣</strong> colorea áreas grandes · <strong>Lápiz ✏️</strong> para detalles
+              <strong>Relleno</strong> colorea áreas grandes · <strong>Lápiz</strong> para detalles
             </p>
           </div>
           <div className="flex gap-2">
