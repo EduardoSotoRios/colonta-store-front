@@ -88,6 +88,15 @@ export default function Header() {
           <Link href="/" className="hover:text-colonta-primary whitespace-nowrap">Inicio</Link>
           <Link href="/mochilas" className="hover:text-colonta-primary whitespace-nowrap">Productos</Link>
           <Link href="/mision-vision" className="hover:text-colonta-primary whitespace-nowrap hidden xl:inline">Nosotros</Link>
+          <Link
+            href="/personalizar"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-colonta-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:opacity-90 transition-opacity"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+            </svg>
+            Dale tu Sello
+          </Link>
         </nav>
 
         <div className="flex-1 min-w-0" />
@@ -179,6 +188,18 @@ export default function Header() {
           <nav className="p-4 space-y-1 text-sm bg-white">
             <Link href="/" className="block rounded-lg px-3 py-2 hover:bg-slate-50" onClick={closeMobile}>
               Inicio
+            </Link>
+
+            {/* Dale tu Sello CTA */}
+            <Link
+              href="/personalizar"
+              onClick={closeMobile}
+              className="flex items-center gap-2 rounded-xl bg-colonta-primary px-3 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-opacity"
+            >
+              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+              </svg>
+              Dale tu Sello
             </Link>
 
             {/* Productos con categorías expandibles */}
