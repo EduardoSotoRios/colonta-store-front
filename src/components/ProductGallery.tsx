@@ -1,11 +1,11 @@
 "use client";
 // src/components/ProductGallery.tsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ImageZoom from "@/components/ImagenZoom";
 import { getColorEmoji } from "@/lib/colores-map";
 
-type ImagenColor = { nombre: string; hex: string | null };
+type ImagenColor = { nombre: string; hex: string | null; activo?: boolean };
 
 type Imagen = {
   id: number;
@@ -15,6 +15,10 @@ type Imagen = {
   orden: number;
   colores: ImagenColor[];
 };
+
+function esImagenAgotada(img: Imagen): boolean {
+  return img.colores.some((c) => c.activo === false);
+}
 
 type Props = {
   imagenes: Imagen[];
@@ -43,10 +47,24 @@ function ColorSwatch({ color, size = "md" }: { color: ImagenColor; size?: "sm" |
 
 export default function ProductGallery({ imagenes, nombre, fallback = "/mochila1.png", onSelectImage }: Props) {
   const principal = imagenes.find(i => i.principal) ?? imagenes[0];
-  const [selected, setSelected] = useState<Imagen | null>(principal ?? null);
+  // Si la variante principal quedo agotada, arrancar en la primera disponible en su lugar.
+  const inicial = (principal && esImagenAgotada(principal))
+    ? (imagenes.find(i => !esImagenAgotada(i)) ?? principal)
+    : principal;
+  const [selected, setSelected] = useState<Imagen | null>(inicial ?? null);
   const [hovered,  setHovered]  = useState<Imagen | null>(null);
 
+  // El padre (ProductDetailClient) calcula su propia "imagen inicial" por su cuenta
+  // (sin saber de variantes agotadas) para pasarsela a AddToCartButton. Le avisamos
+  // cual es la que realmente quedo seleccionada para que nunca queden desincronizados
+  // y no se pueda agregar al carrito una variante agotada por defecto.
+  useEffect(() => {
+    if (inicial) onSelectImage?.(inicial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function selectImage(img: Imagen) {
+    if (esImagenAgotada(img)) return;
     setSelected(img);
     onSelectImage?.(img);
   }
@@ -94,23 +112,29 @@ export default function ProductGallery({ imagenes, nombre, fallback = "/mochila1
           {imagenes.map(img => {
             const isActive  = selected?.id === img.id;
             const isHovered = hovered?.id === img.id;
+            const agotada   = esImagenAgotada(img);
 
             return (
               <div
                 key={img.id}
-                className="relative group cursor-pointer"
+                className={`relative group ${agotada ? "cursor-not-allowed" : "cursor-pointer"}`}
                 onClick={() => selectImage(img)}
                 onMouseEnter={() => setHovered(img)}
                 onMouseLeave={() => setHovered(null)}
               >
-                <div className={`aspect-square rounded-xl overflow-hidden ring-2 transition-all ${
+                <div className={`relative aspect-square rounded-xl overflow-hidden ring-2 transition-all ${
                   isActive ? "ring-colonta-primary" : "ring-transparent hover:ring-slate-300"
-                }`}>
+                } ${agotada ? "opacity-40" : ""}`}>
                   <img
                     src={img.url || fallback}
                     alt={img.alt || nombre}
                     className="w-full h-full object-cover"
                   />
+                  {agotada && (
+                    <span className="absolute inset-x-0 bottom-0 bg-slate-900/80 text-white text-[10px] font-semibold text-center py-0.5">
+                      Agotado
+                    </span>
+                  )}
                 </div>
 
                 {/* Puntos de color debajo de la miniatura */}

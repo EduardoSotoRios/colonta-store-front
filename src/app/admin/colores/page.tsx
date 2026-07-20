@@ -3,34 +3,64 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { api, type ColorSchemeType } from "@/lib/api";
 import Link from "next/link";
+import { getColoresProductos, toggleColorProductoActivo, type ColorProducto } from "./actions";
+import { getConfiguradorColoresEstado, setConfiguradorColorActivo } from "@/lib/configurador/colores-estado";
+import { COLORS as CONFIGURADOR_COLORS } from "@/lib/configurador/products";
+import { getColorEmoji } from "@/lib/colores-map";
 
-type ColorScheme = {
-  id: string;
-  type: ColorSchemeType;
-  name: string | null;
-  colors: string[];
-};
+function textureSrc(value: string): string {
+  return `/configurador/patterns/${value.replace("pattern-", "")}.png`;
+}
+
+// ── Tarjeta de swatch reutilizable para ambas secciones ─────────────────────
+function SwatchCard({
+  nombre, activo, busy, onToggle, preview,
+}: {
+  nombre: string;
+  activo: boolean;
+  busy: boolean;
+  onToggle: () => void;
+  preview: React.ReactNode;
+}) {
+  return (
+    <div className={`rounded-xl border p-3 flex flex-col items-center gap-2 text-center ${activo ? "border-slate-200 bg-white" : "border-slate-200 bg-slate-50"}`}>
+      <div className={`relative w-14 h-14 rounded-lg overflow-hidden ring-1 ring-black/10 ${activo ? "" : "opacity-40 grayscale"}`}>
+        {preview}
+      </div>
+      <p className="text-xs font-medium text-slate-700">{nombre}</p>
+      {!activo && (
+        <span className="text-[10px] font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full">
+          Agotado
+        </span>
+      )}
+      <button
+        onClick={onToggle}
+        disabled={busy}
+        className={`text-xs font-semibold px-2 py-1 rounded-lg w-full disabled:opacity-50 ${
+          activo
+            ? "bg-red-50 text-red-700 hover:bg-red-100"
+            : "bg-green-50 text-green-700 hover:bg-green-100"
+        }`}
+      >
+        {busy ? "..." : activo ? "Marcar agotado" : "Marcar disponible"}
+      </button>
+    </div>
+  );
+}
 
 export default function ColoresAdminPage() {
   const { user, hydrate, hydrated } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [colorSchemes, setColorSchemes] = useState<ColorScheme[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [editingScheme, setEditingScheme] = useState<ColorScheme | null>(null);
-  const [formData, setFormData] = useState<{ type: ColorSchemeType; name: string; colors: string[] }>({
-    type: "preset",
-    name: "",
-    colors: [],
-  });
+
+  const [coloresProductos, setColoresProductos] = useState<ColorProducto[]>([]);
+  const [estadoConfigurador, setEstadoConfigurador] = useState<Record<string, boolean>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!hydrated) {
-      hydrate();
-    }
+    if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
   useEffect(() => {
@@ -40,96 +70,51 @@ export default function ColoresAdminPage() {
       } else if (user.rol !== "admin") {
         router.push("/");
       } else {
-        loadColorSchemes();
+        cargarTodo();
       }
     }
   }, [user, hydrated, router]);
 
-  async function loadColorSchemes() {
+  async function cargarTodo() {
     try {
       setLoading(true);
-      const schemes = await api.getColorSchemes();
-      setColorSchemes(schemes);
       setError(null);
+      const [colores, estado] = await Promise.all([
+        getColoresProductos(),
+        getConfiguradorColoresEstado(),
+      ]);
+      setColoresProductos(colores);
+      setEstadoConfigurador(estado);
     } catch (e: any) {
-      setError(e?.message ?? "Error al cargar esquemas de color");
+      setError(e?.message ?? "Error al cargar los colores");
     } finally {
       setLoading(false);
     }
   }
 
-  function handleNew() {
-    setEditingScheme(null);
-    setFormData({ type: "preset", name: "", colors: [] });
-    setShowForm(true);
-  }
-
-  function handleEdit(scheme: ColorScheme) {
-    setEditingScheme(scheme);
-    setFormData({
-      type: scheme.type,
-      name: scheme.name || "",
-      colors: [...scheme.colors],
-    });
-    setShowForm(true);
-  }
-
-  function addColor() {
-    setFormData({
-      ...formData,
-      colors: [...formData.colors, "#000000"],
-    });
-  }
-
-  function removeColor(index: number) {
-    setFormData({
-      ...formData,
-      colors: formData.colors.filter((_, i) => i !== index),
-    });
-  }
-
-  function updateColor(index: number, color: string) {
-    const newColors = [...formData.colors];
-    newColors[index] = color;
-    setFormData({
-      ...formData,
-      colors: newColors,
-    });
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (formData.colors.length === 0) {
-      setError("Debes agregar al menos un color");
-      return;
-    }
+  async function handleToggleProducto(color: ColorProducto) {
+    setBusyId(`producto-${color.id}`);
     try {
-      setError(null);
-      const data = {
-        type: formData.type,
-        name: formData.name || undefined,
-        colors: formData.colors.filter((c) => c.trim() !== ""),
-      };
-      if (editingScheme) {
-        await api.updateColorScheme(editingScheme.id, data);
-      } else {
-        await api.createColorScheme(data);
-      }
-      setShowForm(false);
-      await loadColorSchemes();
+      await toggleColorProductoActivo(color.id, !color.activo);
+      setColoresProductos((prev) =>
+        prev.map((c) => (c.id === color.id ? { ...c, activo: !c.activo } : c))
+      );
     } catch (e: any) {
-      setError(e?.message ?? "Error al guardar esquema de color");
+      setError(e?.message ?? "Error al actualizar el color");
+    } finally {
+      setBusyId(null);
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("¿Estás seguro de eliminar este esquema de color?")) return;
+  async function handleToggleConfigurador(nombre: string, activoActual: boolean) {
+    setBusyId(`config-${nombre}`);
     try {
-      setError(null);
-      await api.deleteColorScheme(id);
-      await loadColorSchemes();
+      await setConfiguradorColorActivo(nombre, !activoActual);
+      setEstadoConfigurador((prev) => ({ ...prev, [nombre]: !activoActual }));
     } catch (e: any) {
-      setError(e?.message ?? "Error al eliminar esquema de color");
+      setError(e?.message ?? "Error al actualizar la tela");
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -156,187 +141,92 @@ export default function ColoresAdminPage() {
     <main className="min-h-screen bg-slate-50">
       <section className="bg-colonta-primary text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link href="/admin" className="text-white/80 hover:text-white text-sm mb-2 inline-block">
-                ← Volver al panel
-              </Link>
-              <h1 className="text-3xl md:text-4xl font-extrabold">Mantenedor de Colores</h1>
-              <p className="text-white/85 mt-2">Gestiona los esquemas de colores disponibles</p>
-            </div>
-            <button
-              onClick={handleNew}
-              className="px-5 py-3 rounded-xl bg-white text-colonta-primary font-semibold hover:opacity-90"
-            >
-              + Nuevo Esquema
-            </button>
-          </div>
+          <Link href="/admin" className="text-white/80 hover:text-white text-sm mb-2 inline-block">
+            ← Volver al panel
+          </Link>
+          <h1 className="text-3xl md:text-4xl font-extrabold">Mantenedor de Colores</h1>
+          <p className="text-white/85 mt-2">
+            Marca como "Agotado" cualquier color o tela que ya no tenga material disponible —
+            deja de poder elegirse tanto en los productos como en el diseñador, sin borrar
+            fotos ni diseños ya existentes.
+          </p>
         </div>
       </section>
 
       <section className="py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {error && (
-            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
               {error}
             </div>
           )}
 
-          {showForm && (
-            <div className="mb-6 rounded-2xl ring-1 ring-black/5 p-6 bg-white">
-              <h2 className="font-extrabold text-lg mb-4">
-                {editingScheme ? "Editar Esquema de Color" : "Nuevo Esquema de Color"}
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold block mb-1">Tipo *</label>
-                    <select
-                      required
-                      className="w-full border rounded-xl px-3 py-2 text-sm"
-                      value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as ColorSchemeType })}
-                    >
-                      <option value="preset">Preset</option>
-                      <option value="custom">Personalizado</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold block mb-1">Nombre</label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-xl px-3 py-2 text-sm"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Ej: Azul Marino"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-semibold block mb-2">Colores *</label>
-                    
-                    {/* Tags de colores */}
-                    {formData.colors.length > 0 && (
-                      <div className="mb-4 flex flex-wrap gap-2">
-                        {formData.colors.map((color, index) => (
-                          <div
-                            key={index}
-                            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 bg-white"
-                            style={{ borderColor: color }}
-                          >
-                            <input
-                              type="color"
-                              value={color}
-                              onChange={(e) => updateColor(index, e.target.value)}
-                              className="w-8 h-8 rounded border cursor-pointer"
-                              title="Seleccionar color"
-                            />
-                            <input
-                              type="text"
-                              value={color}
-                              onChange={(e) => updateColor(index, e.target.value)}
-                              className="w-24 border rounded px-2 py-1 text-xs font-mono"
-                              placeholder="#000000"
-                              pattern="^#[0-9A-Fa-f]{6}$"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeColor(index)}
-                              className="text-red-600 hover:text-red-700 text-sm font-bold"
-                              title="Eliminar color"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
+          {/* Colores de productos reales */}
+          <div>
+            <h2 className="font-extrabold text-lg mb-1">Colores de productos</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Usados en las fotos/variantes de los productos de la tienda. Si marcas uno como
+              agotado, sus fotos siguen apareciendo en la ficha del producto pero ya no se
+              pueden elegir para comprar.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {coloresProductos.map((c) => (
+                <SwatchCard
+                  key={c.id}
+                  nombre={c.nombre}
+                  activo={c.activo}
+                  busy={busyId === `producto-${c.id}`}
+                  onToggle={() => handleToggleProducto(c)}
+                  preview={
+                    c.hex ? (
+                      <div className="w-full h-full" style={{ backgroundColor: c.hex }} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-100 text-2xl">
+                        {getColorEmoji(c.nombre) ?? "🎨"}
                       </div>
-                    )}
-
-                    {/* Botón para agregar color */}
-                    <button
-                      type="button"
-                      onClick={addColor}
-                      className="px-4 py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50 text-sm font-medium"
-                    >
-                      + Agregar Color
-                    </button>
-                    {formData.colors.length === 0 && (
-                      <p className="text-xs text-slate-500 mt-2">Haz clic en "Agregar Color" para comenzar</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl bg-colonta-primary text-white font-semibold hover:opacity-90"
-                  >
-                    {editingScheme ? "Actualizar" : "Crear"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="px-5 py-2 rounded-xl border font-semibold hover:bg-slate-50"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
+                    )
+                  }
+                />
+              ))}
             </div>
-          )}
+          </div>
 
-          <div className="rounded-2xl ring-1 ring-black/5 bg-white overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Nombre</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Tipo</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Colores</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {colorSchemes.map((scheme) => (
-                    <tr key={scheme.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 text-sm font-medium">{scheme.name || "Sin nombre"}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{scheme.type}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        <div className="flex gap-2 flex-wrap">
-                          {scheme.colors.map((color, idx) => (
-                            <div
-                              key={idx}
-                              className="inline-flex items-center gap-2 rounded-lg border px-2 py-1 bg-white"
-                              style={{ borderColor: color }}
-                            >
-                              <span
-                                className="inline-block w-5 h-5 rounded border border-slate-300"
-                                style={{ backgroundColor: color }}
-                                title={color}
-                              />
-                              <span className="text-xs font-mono text-slate-700">{color}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(scheme)}
-                            className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleDelete(scheme.id)}
-                            className="px-3 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 font-medium"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Colores y telas del configurador */}
+          <div>
+            <h2 className="font-extrabold text-lg mb-1">Colores y telas del diseñador ("Dale tu Sello")</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Los colores lisos y las telas con imagen (Manchas, Leopardo, etc.) que un cliente
+              puede elegir al diseñar su propio producto. Agotar uno lo deja atenuado y no
+              seleccionable en el lienzo de diseño.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {CONFIGURADOR_COLORS.map((c) => {
+                const activo = estadoConfigurador[c.name] !== false;
+                const esTela = c.value.startsWith("pattern-");
+                return (
+                  <SwatchCard
+                    key={c.name}
+                    nombre={c.name}
+                    activo={activo}
+                    busy={busyId === `config-${c.name}`}
+                    onToggle={() => handleToggleConfigurador(c.name, activo)}
+                    preview={
+                      esTela ? (
+                        <div
+                          className="w-full h-full"
+                          style={{
+                            backgroundImage: `url('${textureSrc(c.value)}')`,
+                            backgroundSize: "200%",
+                            backgroundPosition: "center",
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full" style={{ backgroundColor: c.value }} />
+                      )
+                    }
+                  />
+                );
+              })}
             </div>
           </div>
         </div>

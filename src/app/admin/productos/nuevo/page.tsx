@@ -14,7 +14,7 @@ const CATEGORIAS = [
 
 export default async function NuevoProductoPage() {
   const supabase = await createSupabaseServerClient();
-  const { data: colores } = await supabase.from("colores").select("id,nombre,hex").order("nombre");
+  const { data: colores } = await supabase.from("colores").select("id,nombre,hex,activo").order("nombre");
 
   return (
     <div className="p-8 max-w-4xl">

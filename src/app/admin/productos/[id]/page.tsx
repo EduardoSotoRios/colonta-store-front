@@ -25,7 +25,7 @@ export default async function AdminProductoPage({
   const supabase = await createSupabaseServerClient();
 
   const [{ data: colores }, productoResult] = await Promise.all([
-    supabase.from("colores").select("id,nombre,hex").order("nombre"),
+    supabase.from("colores").select("id,nombre,hex,activo").order("nombre"),
     esNuevo
       ? Promise.resolve({ data: null, error: null })
       : supabase

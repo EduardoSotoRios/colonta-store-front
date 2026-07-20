@@ -13,7 +13,7 @@ import {
 } from "@/app/admin/productos/actions";
 
 type Spec      = { label: string; valor: string };
-type Color     = { id: number; nombre: string; hex: string | null };
+type Color     = { id: number; nombre: string; hex: string | null; activo?: boolean };
 type Imagen    = {
   id: number; url: string; alt: string | null; principal: boolean; orden: number;
   color: number | null; color_secundario: number | null;
@@ -50,7 +50,9 @@ function ColorSelect({
         >
           <option value="">Sin color</option>
           {colores.map((c) => (
-            <option key={c.id} value={c.id}>{c.nombre}</option>
+            <option key={c.id} value={c.id} disabled={c.activo === false}>
+              {c.nombre}{c.activo === false ? " (Agotado)" : ""}
+            </option>
           ))}
         </select>
       </div>

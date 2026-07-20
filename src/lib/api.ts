@@ -398,7 +398,7 @@ export type ProductModel = {
     alt: string | null;
     principal: boolean;
     orden: number;
-    colores: Array<{ nombre: string; hex: string | null }>;
+    colores: Array<{ nombre: string; hex: string | null; activo: boolean }>;
   }>;
 };
 
@@ -456,7 +456,7 @@ function normalizeImgUrl(url: string | null | undefined): string | null {
   return url;
 }
 
-type ColorEntry = { nombre: string; hex: string | null };
+type ColorEntry = { nombre: string; hex: string | null; activo: boolean };
 type ColoresMap = Map<number, ColorEntry>;
 
 // Selects usados en todas las queries de productos
@@ -465,8 +465,13 @@ const PROD_SELECT  = `*, producto_specs(*), producto_caracteristicas(*), product
 
 // Carga los 24 colores de la BD — tabla pequeña, siempre fresca
 async function fetchColoresMap(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>): Promise<ColoresMap> {
-  const { data } = await supabase.from('colores').select('id,nombre,hex');
-  return new Map((data ?? []).map((c: any) => [c.id as number, { nombre: (c.nombre ?? '').trim(), hex: c.hex ?? null }]));
+  let { data, error } = await supabase.from('colores').select('id,nombre,hex,activo');
+  if (error) {
+    // La columna 'activo' puede no existir todavia (migracion pendiente) —
+    // reintentar sin ella para no romper los colores de producto mientras tanto.
+    ({ data } = await supabase.from('colores').select('id,nombre,hex'));
+  }
+  return new Map((data ?? []).map((c: any) => [c.id as number, { nombre: (c.nombre ?? '').trim(), hex: c.hex ?? null, activo: c.activo ?? true }]));
 }
 
 // ─── Supabase: mapea fila → ProductModel ────────────────────────────────────

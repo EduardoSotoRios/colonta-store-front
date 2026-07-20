@@ -13,6 +13,7 @@ import {
   downloadCanvas,
 } from '@/lib/configurador/canvasUtils';
 import { PRODUCT_IMAGES, COLORS, type ProductId } from '@/lib/configurador/products';
+import { getConfiguradorColoresEstado } from '@/lib/configurador/colores-estado';
 
 type Tool = 'pencil' | 'fill' | 'eraser';
 
@@ -42,6 +43,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   const [activePattern, setActivePattern] = useState<string | null>(null);
   const [toast, setToast]      = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [estadoColores, setEstadoColores] = useState<Record<string, boolean>>({});
 
   const toolRef      = useRef<Tool>('pencil');
   const colorRef     = useRef('#E53935');
@@ -59,6 +61,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   useEffect(() => { syncRefs(tool, color, activePattern, brushSize); }, [tool, color, activePattern, brushSize, syncRefs]);
 
   useEffect(() => { preloadPatternTextures(); }, []);
+  useEffect(() => { getConfiguradorColoresEstado().then(setEstadoColores).catch(() => {}); }, []);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -261,7 +264,8 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     showToast('Imagen descargada');
   }
 
-  function selectColor(value: string) {
+  function selectColor(nombre: string, value: string) {
+    if (estadoColores[nombre] === false) return; // agotado, no se puede elegir
     if (value.startsWith('pattern-')) {
       setActivePattern(value);
     } else {
@@ -278,6 +282,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     const isSelected = c.value.startsWith('pattern-')
       ? activePattern === c.value
       : (!activePattern && color === c.value);
+    const agotado = estadoColores[c.name] === false;
 
     let swatchStyle: React.CSSProperties = {};
     if (isTexturePattern(c.value)) {
@@ -293,19 +298,25 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     return (
       <div key={c.name} className="relative group">
         <button
-          title={c.name}
-          onClick={() => selectColor(c.value)}
+          title={agotado ? `${c.name} (agotado)` : c.name}
+          onClick={() => selectColor(c.name, c.value)}
           style={swatchStyle}
-          className={`w-full aspect-square rounded-xl border-[3px] transition-transform hover:scale-110
+          className={`w-full aspect-square rounded-xl border-[3px] transition-transform
+            ${agotado ? 'opacity-30 grayscale cursor-not-allowed' : 'hover:scale-110'}
             ${isSelected ? 'border-[#5B2D8E] scale-110' : 'border-transparent'}`}
         />
+        {agotado && (
+          <span className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-xl bg-slate-900/80 text-white text-[8px] font-semibold text-center leading-tight py-0.5">
+            Agotado
+          </span>
+        )}
         <span
           role="tooltip"
           className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap
             rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg
             transition-opacity duration-150 group-hover:opacity-100 z-10"
         >
-          {c.name}
+          {c.name}{agotado ? ' (Agotado)' : ''}
         </span>
       </div>
     );
