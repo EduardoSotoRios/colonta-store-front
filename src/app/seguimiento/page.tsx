@@ -198,7 +198,7 @@ function OrderCard({ order }: { order: Order }) {
 
       {/* Punto de retiro / dirección */}
       {bep ? (
-        <div className="mx-5 mb-5 flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
+        <div className="mx-5 mb-4 flex items-start gap-2 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
           <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0L6.343 16.657a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -209,10 +209,37 @@ function OrderCard({ order }: { order: Order }) {
           </div>
         </div>
       ) : addr?.street ? (
-        <p className="mx-5 mb-5 text-xs text-slate-500">
+        <p className="mx-5 mb-4 text-xs text-slate-500">
           {addr.street} {addr.number}, {addr.comuna}
         </p>
       ) : null}
+
+      {/* Código de seguimiento Blue Express */}
+      {order.trackingCode && (order.estado === "enviado" || order.estado === "entregado") ? (
+        <div className="mx-5 mb-5 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 flex items-start gap-3">
+          <svg className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 0m8 0H5m8 0l2 0m0 0h2a1 1 0 001-1v-5a1 1 0 00-.293-.707l-3-3A1 1 0 0016 6h-1v10z" />
+          </svg>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-indigo-800">Tu pedido está en camino</p>
+            <p className="text-xs text-indigo-600 mt-0.5">
+              Código de seguimiento Blue Express:{" "}
+              <span className="font-mono font-bold">{order.trackingCode}</span>
+            </p>
+            <a
+              href={`https://www.blue.cl/tracking/?numero=${order.trackingCode}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-indigo-700 hover:text-indigo-900 underline"
+            >
+              Rastrear en Blue Express →
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-5" />
+      )}
     </div>
   );
 }

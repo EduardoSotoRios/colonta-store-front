@@ -1,7 +1,7 @@
 "use client";
 // src/components/ImageZoom.tsx
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 type Props = {
   src: string;
@@ -16,7 +16,49 @@ export default function ImageZoom({ src, alt, zoomLevel = 3 }: Props) {
   const [cursor, setCursor]   = useState({ x: 0, y: 0 });
   const [imgRect, setImgRect] = useState({ w: 0, h: 0, top: 0, left: 0 });
   const [visible, setVisible] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+  const [isTouch, setIsTouch]   = useState(false);
 
+  useEffect(() => {
+    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
+
+  // ── Modo táctil: tap → lightbox ───────────────────────────────────────────
+  if (isTouch) {
+    return (
+      <>
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover cursor-zoom-in select-none"
+          draggable={false}
+          onClick={() => setLightbox(true)}
+        />
+        {lightbox && (
+          <div
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setLightbox(false)}
+          >
+            <img
+              src={src}
+              alt={alt}
+              className="max-w-full max-h-full object-contain rounded-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              className="absolute top-4 right-4 text-white/80 hover:text-white text-2xl leading-none"
+              onClick={() => setLightbox(false)}
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // ── Modo escritorio: hover zoom ───────────────────────────────────────────
   function handleMouseMove(e: React.MouseEvent<HTMLImageElement>) {
     const rect = imgRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -24,15 +66,10 @@ export default function ImageZoom({ src, alt, zoomLevel = 3 }: Props) {
     setCursor({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   }
 
-  // Zona del selector centrada en el cursor
   const selectorSize = PANEL / zoomLevel;
   const selLeft = Math.min(Math.max(cursor.x - selectorSize / 2, 0), imgRect.w - selectorSize);
   const selTop  = Math.min(Math.max(cursor.y - selectorSize / 2, 0), imgRect.h - selectorSize);
 
-  // La imagen en el panel se escala zoomLevel veces
-  // y se desplaza para que la zona seleccionada quede visible
-  // Lógica: el punto selLeft,selTop de la imagen original
-  // debe aparecer en 0,0 del panel tras el scale
   const imgScaledW = imgRect.w * zoomLevel;
   const imgScaledH = imgRect.h * zoomLevel;
   const offsetX    = -selLeft * zoomLevel;
@@ -43,7 +80,6 @@ export default function ImageZoom({ src, alt, zoomLevel = 3 }: Props) {
 
   return (
     <div className="relative w-full h-full">
-      {/* Imagen base */}
       <img
         ref={imgRef}
         src={src}
@@ -55,43 +91,31 @@ export default function ImageZoom({ src, alt, zoomLevel = 3 }: Props) {
         onMouseLeave={() => setVisible(false)}
       />
 
-      {/* Selector sobre la imagen */}
       {visible && imgRect.w > 0 && (
         <div
           className="absolute pointer-events-none border-2 border-white"
           style={{
-            width:     selectorSize,
-            height:    selectorSize,
-            top:       selTop,
-            left:      selLeft,
-            zIndex:    10,
+            width: selectorSize, height: selectorSize,
+            top: selTop, left: selLeft,
+            zIndex: 10,
             boxShadow: "0 0 0 9999px rgba(0,0,0,0.3)",
           }}
         />
       )}
 
-      {/* Panel flotante */}
       {visible && imgRect.w > 0 && (
         <div
           className="fixed rounded-2xl border-2 border-slate-200 shadow-2xl pointer-events-none overflow-hidden bg-slate-100"
-          style={{
-            width:  PANEL,
-            height: PANEL,
-            left:   panelLeft,
-            top:    panelTop,
-            zIndex: 9999,
-          }}
+          style={{ width: PANEL, height: PANEL, left: panelLeft, top: panelTop, zIndex: 9999 }}
         >
           <img
             src={src}
             alt=""
             style={{
-              position:  "absolute",
-              width:     imgScaledW,
-              height:    imgScaledH,
-              top:       offsetY,
-              left:      offsetX,
-              maxWidth:  "none",   // importante: evita que Next/Tailwind limite el ancho
+              position: "absolute",
+              width: imgScaledW, height: imgScaledH,
+              top: offsetY, left: offsetX,
+              maxWidth: "none",
             }}
             draggable={false}
           />

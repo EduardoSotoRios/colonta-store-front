@@ -172,11 +172,16 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
 function OrderCard({
   pedido,
   onStatusChange,
+  onTrackingChange,
 }: {
   pedido: Order;
   onStatusChange: (id: string, estado: EstadoKey) => Promise<void>;
+  onTrackingChange: (id: string, trackingCode: string | null) => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  const [trackingInput, setTrackingInput] = useState(pedido.trackingCode ?? "");
+  const [trackingBusy, setTrackingBusy] = useState(false);
+  const [trackingSaved, setTrackingSaved] = useState(false);
   const isBlueExpress =
     (pedido.deliveryAddress as BlueExpressDelivery).type === "blue_express";
   const bep  = isBlueExpress ? (pedido.deliveryAddress as BlueExpressDelivery) : null;
@@ -189,6 +194,15 @@ function OrderCard({
     setBusy(true);
     await onStatusChange(pedido.id, estado).catch(() => {});
     setBusy(false);
+  }
+
+  async function handleSaveTracking() {
+    setTrackingBusy(true);
+    setTrackingSaved(false);
+    await onTrackingChange(pedido.id, trackingInput.trim() || null).catch(() => {});
+    setTrackingBusy(false);
+    setTrackingSaved(true);
+    setTimeout(() => setTrackingSaved(false), 2000);
   }
 
   return (
@@ -243,8 +257,31 @@ function OrderCard({
           ) : null}
         </div>
 
+        {/* Código de seguimiento Blue Express */}
+        {isBlueExpress && (
+          <div className="w-full mt-3 pt-3 border-t flex items-center gap-2 flex-wrap">
+            <label className="text-xs font-semibold text-slate-600 shrink-0">
+              Código seguimiento:
+            </label>
+            <input
+              type="text"
+              value={trackingInput}
+              onChange={(e) => { setTrackingInput(e.target.value); setTrackingSaved(false); }}
+              placeholder="Ej: 123456789"
+              className="flex-1 min-w-0 rounded-lg border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-colonta-primary"
+            />
+            <button
+              disabled={trackingBusy}
+              onClick={handleSaveTracking}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0056A2] text-white hover:opacity-90 disabled:opacity-50 shrink-0"
+            >
+              {trackingBusy ? "Guardando…" : trackingSaved ? "¡Guardado!" : "Guardar"}
+            </button>
+          </div>
+        )}
+
         {/* Botones de estado — flujo lineal */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap mt-3">
           {nextEstado && nextLabel && (
             <button
               disabled={busy}
@@ -304,6 +341,11 @@ export default function PedidosAdminPage() {
   async function handleStatusChange(id: string, estado: EstadoKey) {
     await api.updateOrderStatus(id, estado);
     setPedidos((prev) => prev.map((p) => p.id === id ? { ...p, estado } : p));
+  }
+
+  async function handleTrackingChange(id: string, trackingCode: string | null) {
+    await api.updateOrderTracking(id, trackingCode);
+    setPedidos((prev) => prev.map((p) => p.id === id ? { ...p, trackingCode } : p));
   }
 
   const visible = filtro === "todos" ? pedidos : pedidos.filter((p) => p.estado === filtro);
@@ -384,6 +426,7 @@ export default function PedidosAdminPage() {
                 key={pedido.id}
                 pedido={pedido}
                 onStatusChange={handleStatusChange}
+                onTrackingChange={handleTrackingChange}
               />
             ))}
           </div>

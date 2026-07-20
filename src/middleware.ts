@@ -6,6 +6,11 @@ const BACKEND = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api")
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Modo mantención: redirigir a /mantencion salvo admins
+  if (process.env.MAINTENANCE_MODE === "true" && !pathname.startsWith("/admin")) {
+    return NextResponse.redirect(new URL("/mantencion", req.url));
+  }
+
   // Solo proteger rutas /admin
   if (!pathname.startsWith("/admin")) {
     return NextResponse.next();
@@ -47,5 +52,8 @@ function redirectToLogin(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/((?!_next/static|_next/image|favicon\\.ico|mantencion).*)",
+  ],
 };

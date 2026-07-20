@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -21,6 +21,12 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess]     = useState(false);
+  const [redirectTo, setRedirectTo] = useState("/mochilas");
+
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("redirect") ?? "";
+    if (raw.startsWith("/") && !raw.startsWith("//")) setRedirectTo(raw);
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -30,7 +36,7 @@ export default function LoginPage() {
       await login(email.trim(), password, rememberMe);
       setSuccess(true);
       await new Promise(r => setTimeout(r, 1500));
-      router.push("/mochilas");
+      router.push(redirectTo);
     } catch (err: any) {
       setLocalError(traducirErrorLogin(err));
       // Limpiar los campos para que el usuario los vuelva a escribir bien
