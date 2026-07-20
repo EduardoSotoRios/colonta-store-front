@@ -149,6 +149,15 @@ export default function OrderSuccessClient() {
           </p>
         </div>
 
+        <div className="flex items-start gap-3 rounded-xl bg-blue-50 border border-blue-100 p-4">
+          <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8-1.284 0-2.503-.24-3.61-.673L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <p className="text-sm text-blue-800">
+            Nos pondremos en contacto contigo pronto para coordinar los detalles de tu pedido.
+          </p>
+        </div>
+
         {/* Productos */}
         <div>
           <h2 className="font-bold mb-3">Productos</h2>
