@@ -1,6 +1,6 @@
 // src/app/admin/productos/[id]/page.tsx
 // También sirve para crear: src/app/admin/productos/nuevo/page.tsx
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import AdminProductoForm from "@/components/admin/AdminProductoForm";
 
@@ -22,7 +22,7 @@ export default async function AdminProductoPage({
   const { id } = await params;
   const esNuevo = id === "nuevo";
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   const [{ data: colores }, productoResult] = await Promise.all([
     supabase.from("colores").select("id,nombre,hex,activo").order("nombre"),

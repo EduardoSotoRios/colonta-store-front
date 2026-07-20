@@ -1,10 +1,10 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import AdminBannersClient from "./AdminBannersClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminBannersPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
   const { data: banners } = await supabase
     .from("banners")
     .select("*")

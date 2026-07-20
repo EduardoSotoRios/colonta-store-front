@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export type ColorProducto = {
@@ -11,7 +11,7 @@ export type ColorProducto = {
 };
 
 export async function getColoresProductos(): Promise<ColorProducto[]> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("colores")
     .select("id,nombre,hex,activo")
@@ -26,7 +26,7 @@ export async function getColoresProductos(): Promise<ColorProducto[]> {
 }
 
 export async function toggleColorProductoActivo(id: number, activo: boolean): Promise<void> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
   const { error } = await supabase.from("colores").update({ activo }).eq("id", id);
   if (error) throw new Error(`Error actualizando color: ${error.message}`);
   revalidatePath("/admin/colores");

@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 // Capa liviana de disponibilidad sobre el array COLORS de products.ts (13
@@ -13,7 +13,7 @@ import { revalidatePath } from "next/cache";
 // ya que tanto la lectura (configurador publico) como la escritura (toggle
 // del admin) pasan siempre por estas Server Actions, nunca directo del cliente.
 export async function getConfiguradorColoresEstado(): Promise<Record<string, boolean>> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseAdminClient();
   const { data } = await supabase.from("configurador_colores_estado").select("nombre,activo");
   const mapa: Record<string, boolean> = {};
   for (const row of data ?? []) {
@@ -23,7 +23,7 @@ export async function getConfiguradorColoresEstado(): Promise<Record<string, boo
 }
 
 export async function setConfiguradorColorActivo(nombre: string, activo: boolean): Promise<void> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = await createSupabaseAdminClient();
   const { error } = await supabase
     .from("configurador_colores_estado")
     .upsert({ nombre, activo }, { onConflict: "nombre" });

@@ -1,7 +1,7 @@
 // src/app/admin/productos/actions.ts
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { v2 as cloudinary } from "cloudinary";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -14,7 +14,7 @@ cloudinary.config({
 
 // ─── Crear producto ────────────────────────────────────────────
 export async function crearProducto(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   const categoria_slug = formData.get("categoria_slug") as string;
 
@@ -77,7 +77,7 @@ export async function crearProducto(formData: FormData) {
 
 // ─── Actualizar producto ───────────────────────────────────────
 export async function actualizarProducto(id: string, formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   const categoria_slug = formData.get("categoria_slug") as string;
   const { data: cat } = await supabase
@@ -139,7 +139,7 @@ export async function actualizarProducto(id: string, formData: FormData) {
 
 // ─── Eliminar producto ─────────────────────────────────────────
 export async function eliminarProducto(id: string) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   const { error } = await supabase.from("productos").delete().eq("id", id);
   if (error) throw new Error(`Error eliminando producto: ${error.message}`);
@@ -151,7 +151,7 @@ export async function eliminarProducto(id: string) {
 
 // ─── Agregar imagen ────────────────────────────────────────────
 export async function agregarImagen(productoId: string, formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   const url       = formData.get("url") as string;
   const alt       = formData.get("alt") as string || null;
@@ -197,7 +197,7 @@ export async function actualizarColoresImagen(
   productoId: string,
   formData: FormData
 ) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   const toColorId = (key: string) => {
     const v = formData.get(key) as string;
@@ -220,7 +220,7 @@ export async function actualizarColoresImagen(
 
 // ─── Eliminar imagen ───────────────────────────────────────────
 export async function eliminarImagen(imagenId: number, productoId: string) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   const { error } = await supabase
     .from("producto_imagenes")
@@ -256,7 +256,7 @@ export async function subirImagenStorage(formData: FormData): Promise<string> {
 
 // ─── Marcar imagen como principal ─────────────────────────────
 export async function marcarImagenPrincipal(imagenId: number, productoId: string) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   // Desmarcar todas
   await supabase

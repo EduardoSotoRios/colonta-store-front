@@ -1,5 +1,5 @@
 // src/app/admin/productos/page.tsx
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export default async function AdminProductosPage({
   const q        = sp.q?.trim() || undefined;
   const categoria = sp.categoria?.trim() || undefined;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
 
   let query = supabase
     .from("productos_completos")
