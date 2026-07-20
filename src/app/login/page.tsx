@@ -4,11 +4,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
+// Traduce errores tecnicos del backend a mensajes que un usuario entienda.
+function traducirErrorLogin(err: any): string {
+  const msg = String(err?.message ?? "");
+  if (msg.includes(" 401 ") || /invalid credentials/i.test(msg)) {
+    return "El correo o la contraseña son incorrectos. Intenta de nuevo.";
+  }
+  return "No se pudo iniciar sesión. Intenta de nuevo en unos minutos.";
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, loading, error } = useAuth();
   const [email, setEmail]         = useState("");
   const [password, setPassword]   = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
   const [success, setSuccess]     = useState(false);
 
@@ -17,12 +27,15 @@ export default function LoginPage() {
     setLocalError(null);
 
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, rememberMe);
       setSuccess(true);
       await new Promise(r => setTimeout(r, 1500));
       router.push("/mochilas");
     } catch (err: any) {
-      setLocalError(err?.message ?? "Error al iniciar sesión");
+      setLocalError(traducirErrorLogin(err));
+      // Limpiar los campos para que el usuario los vuelva a escribir bien
+      setEmail("");
+      setPassword("");
     }
   }
 
@@ -82,9 +95,19 @@ export default function LoginPage() {
             />
           </div>
 
-          {(error || localError) && (
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-sm text-slate-600">Mantener mi sesión iniciada</span>
+          </label>
+
+          {(localError || error) && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {error || localError}
+              {localError || error}
             </div>
           )}
 

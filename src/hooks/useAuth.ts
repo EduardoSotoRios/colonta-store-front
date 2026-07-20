@@ -23,7 +23,7 @@ type State = {
 
 type Actions = {
   hydrate: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (data: {
     nombre: string;
     email: string;
@@ -59,10 +59,10 @@ export const useAuth = create<State & Actions>((set, get) => ({
     }
   },
 
-  async login(email, password) {
+  async login(email, password, rememberMe = true) {
     set({ loading: true, error: null });
     try {
-      const { token, user } = await api.login(email, password);
+      const { token, user } = await api.login(email, password, rememberMe);
       // El token se guarda en cookie httpOnly por el backend
       // Solo guardamos la referencia del usuario
       setAuthToken(token);

@@ -515,22 +515,22 @@ export const api = {
   health: () => get<{ status: string; timestamp: string }>("/health"),
 
   /* Auth - Backend: /api/auth */
-  login: (email: string, password: string) =>
-    post<{ 
-      token: string; 
-      user: { 
-        id: string; 
-        email: string; 
-        nombre: string; 
+  login: (email: string, password: string, rememberMe: boolean = true) =>
+    post<{
+      token: string;
+      user: {
+        id: string;
+        email: string;
+        nombre: string;
         rol: string;
         rut: string;
         telefono: string;
         direccion: Address;
-      } 
+      }
     }>(
       "/auth/login",
       undefined,
-      { email, password }
+      { email, password, rememberMe }
     ),
   register: (data: {
     nombre: string;
