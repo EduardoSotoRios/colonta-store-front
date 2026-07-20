@@ -154,7 +154,7 @@ export default function OrderSuccessClient() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8-1.284 0-2.503-.24-3.61-.673L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
           <p className="text-sm text-blue-800">
-            Nos pondremos en contacto contigo pronto para coordinar los detalles de tu pedido.
+            Nos pondremos en contacto contigo durante el día para coordinar los detalles de tu pedido.
           </p>
         </div>
 
