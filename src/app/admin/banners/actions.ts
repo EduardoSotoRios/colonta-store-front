@@ -1,10 +1,10 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function crearBanner(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
   const { error } = await supabase.from("banners").insert({
     url:        formData.get("url") as string,
     titulo:     (formData.get("titulo") as string)    || null,
@@ -22,7 +22,7 @@ export async function crearBanner(formData: FormData) {
 }
 
 export async function actualizarBanner(id: number, formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
   const { error } = await supabase.from("banners").update({
     url:        formData.get("url") as string,
     titulo:     (formData.get("titulo") as string)    || null,
@@ -39,7 +39,7 @@ export async function actualizarBanner(id: number, formData: FormData) {
 }
 
 export async function toggleBanner(id: number, activo: boolean) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
   const { error } = await supabase.from("banners").update({ activo }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/banners");
@@ -47,7 +47,7 @@ export async function toggleBanner(id: number, activo: boolean) {
 }
 
 export async function eliminarBanner(id: number) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
   const { error } = await supabase.from("banners").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/banners");

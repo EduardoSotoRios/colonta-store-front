@@ -1,5 +1,5 @@
 // src/app/admin/productos/nuevo/page.tsx
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import AdminProductoForm from "@/components/admin/AdminProductoForm";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ const CATEGORIAS = [
 ];
 
 export default async function NuevoProductoPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdminClient();
   const { data: colores } = await supabase.from("colores").select("id,nombre,hex").order("nombre");
 
   return (

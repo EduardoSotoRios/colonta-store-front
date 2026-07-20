@@ -6,15 +6,16 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// Cliente singleton para uso en Server Components y Server Actions
-// La anon key solo puede leer datos públicos (productos activos)
-// según las políticas RLS que definimos en el schema
+const AUTH_OPTS = { auth: { persistSession: false, autoRefreshToken: false } }
+
+// Lectura pública — usa anon key, respeta RLS
 export async function createSupabaseServerClient() {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,   // en servidor no hay sesión de usuario
-      autoRefreshToken: false,
-    },
-  })
+  return createClient(supabaseUrl, supabaseAnonKey, AUTH_OPTS)
+}
+
+// Operaciones admin (INSERT/UPDATE/DELETE) — usa service role, bypasea RLS
+export async function createSupabaseAdminClient() {
+  return createClient(supabaseUrl, supabaseServiceKey, AUTH_OPTS)
 }
