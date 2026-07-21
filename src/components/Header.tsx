@@ -50,8 +50,8 @@ export default function Header() {
     router.push("/");
   };
 
-  const getUserInitials = (nombre: string) =>
-    nombre.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+  const getUserInitials = (nombre: string | undefined | null) =>
+    (nombre ?? "?").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const count = useMemo(
     () => Array.isArray(cart) ? cart.reduce((acc, it) => acc + it.quantity, 0) : 0,
