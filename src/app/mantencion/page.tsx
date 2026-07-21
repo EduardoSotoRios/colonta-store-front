@@ -3,6 +3,11 @@ export default function MantencionPage() {
     <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center space-y-6">
 
+        {/* Logo */}
+        <div className="flex justify-center">
+          <img src="/logo.png" alt="Colonta" className="h-16 w-auto" />
+        </div>
+
         {/* Ícono */}
         <div className="flex justify-center">
           <div className="w-20 h-20 rounded-full bg-colonta-primary/10 flex items-center justify-center">
