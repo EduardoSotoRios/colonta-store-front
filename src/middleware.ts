@@ -7,7 +7,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Modo mantención: redirigir a /mantencion salvo admins o preview bypass
-  if (process.env.MAINTENANCE_MODE === "true" && !pathname.startsWith("/admin")) {
+  if (process.env.MAINTENANCE_MODE === "true" && !pathname.startsWith("/admin") && pathname !== "/login") {
     const previewKey = req.nextUrl.searchParams.get("preview");
     const previewCookie = req.cookies.get("preview_bypass")?.value;
     const secret = process.env.MAINTENANCE_PREVIEW_KEY;
