@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { FaWhatsapp } from "react-icons/fa";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -79,6 +80,16 @@ export default function Footer() {
           </div>
         </div>
         <div className="flex justify-center gap-4 mt-4 text-white/80">
+          <a
+            href="https://wa.me/56931481411?text=Hola%2C%20quiero%20consultar%20sobre%20mi%20pedido%20en%20Colonta"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="WhatsApp"
+            className="inline-flex items-center gap-1.5 hover:text-white"
+          >
+            <FaWhatsapp size={18} />
+            WhatsApp
+          </a>
           <a
             href="https://www.instagram.com/colonta/?hl=es"
             target="_blank"
