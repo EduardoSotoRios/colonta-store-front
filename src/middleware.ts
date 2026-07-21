@@ -70,6 +70,6 @@ function redirectToLogin(req: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/((?!_next/static|_next/image|favicon\\.ico|mantencion).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|mantencion|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf)).*)",
   ],
 };
