@@ -6,8 +6,29 @@ const BACKEND = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api")
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Modo mantención: redirigir a /mantencion salvo admins
-  if (process.env.MAINTENANCE_MODE === "true" && !pathname.startsWith("/admin")) {
+  // Modo mantención: redirigir a /mantencion salvo admins o preview bypass
+  if (
+    process.env.MAINTENANCE_MODE === "true" &&
+    !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/api/") &&
+    pathname !== "/login"
+  ) {
+    const previewKey = req.nextUrl.searchParams.get("preview");
+    const previewCookie = req.cookies.get("preview_bypass")?.value;
+    const secret = process.env.MAINTENANCE_PREVIEW_KEY;
+
+    // Si viene con ?preview=<clave> correcta, setear cookie y dejar pasar
+    if (secret && previewKey === secret) {
+      const res = NextResponse.next();
+      res.cookies.set("preview_bypass", secret, { path: "/", httpOnly: true, maxAge: 60 * 60 * 8 });
+      return res;
+    }
+
+    // Si ya tiene la cookie de bypass, dejar pasar
+    if (secret && previewCookie === secret) {
+      return NextResponse.next();
+    }
+
     return NextResponse.redirect(new URL("/mantencion", req.url));
   }
 
@@ -39,6 +60,17 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
+    // Verificación de PIN — excluir la propia página de verificación
+    if (pathname !== "/admin/verificar") {
+      const pin         = process.env.ADMIN_VERIFY_PIN;
+      const cookiePin   = req.cookies.get("admin_verified")?.value;
+      if (pin && cookiePin !== pin) {
+        const dest = new URL("/admin/verificar", req.url);
+        dest.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(dest);
+      }
+    }
+
     return NextResponse.next();
   } catch {
     return redirectToLogin(req);
@@ -54,6 +86,6 @@ function redirectToLogin(req: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/((?!_next/static|_next/image|favicon\\.ico|mantencion).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|mantencion|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf)).*)",
   ],
 };
