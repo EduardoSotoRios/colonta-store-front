@@ -60,6 +60,17 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
+    // Verificación de PIN — excluir la propia página de verificación
+    if (pathname !== "/admin/verificar") {
+      const pin         = process.env.ADMIN_VERIFY_PIN;
+      const cookiePin   = req.cookies.get("admin_verified")?.value;
+      if (pin && cookiePin !== pin) {
+        const dest = new URL("/admin/verificar", req.url);
+        dest.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(dest);
+      }
+    }
+
     return NextResponse.next();
   } catch {
     return redirectToLogin(req);
