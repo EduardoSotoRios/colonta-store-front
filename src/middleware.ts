@@ -6,8 +6,24 @@ const BACKEND = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api")
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Modo mantención: redirigir a /mantencion salvo admins
+  // Modo mantención: redirigir a /mantencion salvo admins o preview bypass
   if (process.env.MAINTENANCE_MODE === "true" && !pathname.startsWith("/admin")) {
+    const previewKey = req.nextUrl.searchParams.get("preview");
+    const previewCookie = req.cookies.get("preview_bypass")?.value;
+    const secret = process.env.MAINTENANCE_PREVIEW_KEY;
+
+    // Si viene con ?preview=<clave> correcta, setear cookie y dejar pasar
+    if (secret && previewKey === secret) {
+      const res = NextResponse.next();
+      res.cookies.set("preview_bypass", secret, { path: "/", httpOnly: true, maxAge: 60 * 60 * 8 });
+      return res;
+    }
+
+    // Si ya tiene la cookie de bypass, dejar pasar
+    if (secret && previewCookie === secret) {
+      return NextResponse.next();
+    }
+
     return NextResponse.redirect(new URL("/mantencion", req.url));
   }
 
