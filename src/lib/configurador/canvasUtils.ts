@@ -60,6 +60,7 @@ export const TEXTURE_PATTERN_VALUES = [
   'pattern-girasoles',
   'pattern-manchas',
   'pattern-circulos-retro',
+  'pattern-cintas-color',
 ] as const;
 
 const TEXTURE_TILE_SIZE = 110;
