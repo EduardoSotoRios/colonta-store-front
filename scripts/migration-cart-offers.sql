@@ -26,10 +26,9 @@ END $$;
 -- Puedes consultarlos con: SELECT nombre, slug FROM productos ORDER BY nombre;
 
 INSERT INTO cart_offers (umbral_minimo, producto_slug, precio_oferta, activo, orden) VALUES
-  (20000, 'porta-documento', 1990, true, 1),
-  (20000, 'estuche',         1000, true, 2),
-  (36000, 'tabaquera',       1000, true, 3),
-  (36000, 'manta',           1000, true, 4),
-  (50000, 'billetera',       1000, true, 5),
-  (50000, 'banano-simple',   1000, true, 6)
+  (20000, 'porta-documentos',  1990, true, 1),
+  (36000, 'tabaquera',         1000, true, 2),
+  (36000, 'manta-impermeable', 1000, true, 3),
+  (50000, 'billetera',         1000, true, 4),
+  (50000, 'banano-simple',     1000, true, 5)
 ON CONFLICT DO NOTHING;
