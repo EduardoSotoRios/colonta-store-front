@@ -42,7 +42,7 @@ export default function AddToCartButton({
   productModel: ProductModel;
   colorSchemes?: Array<{
     id: string;
-    type: 'preset' | 'custom';
+    type: "preset" | "custom";
     name: string | null;
     colors: string[];
   }>;
@@ -57,13 +57,17 @@ export default function AddToCartButton({
   const { user } = useAuth();
   const { addItem } = useCart();
   const [qty, setQty] = useState<number>(1);
-  const [selectedColorSchemeId, setSelectedColorSchemeId] = useState<string | undefined>(
-    colorSchemes.find(cs => cs.type === 'preset')?.id
-  );
+  const [selectedColorSchemeId, setSelectedColorSchemeId] = useState<
+    string | undefined
+  >(colorSchemes.find((cs) => cs.type === "preset")?.id);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<"variante" | "extras">(
+    "variante"
+  );
 
   const hasImageSelected = selectedImage !== undefined;
-  const hasImageColors   = hasImageSelected && selectedImage.colores.length > 0;
+  const hasImageColors = hasImageSelected && selectedImage.colores.length > 0;
+  const useTabs = extras.length > 0;
 
   const handleAdd = async () => {
     const item: CartItem = {
@@ -79,9 +83,9 @@ export default function AddToCartButton({
       item.productImageUrl = selectedImage.url;
       if (hasImageColors) {
         item.colorScheme = {
-          type: 'custom',
-          name: selectedImage.colores.map(c => c.nombre).join(' / '),
-          colors: selectedImage.colores.map(c => c.nombre),
+          type: "custom",
+          name: selectedImage.colores.map((c) => c.nombre).join(" / "),
+          colors: selectedImage.colores.map((c) => c.nombre),
         };
       }
     } else if (selectedColorSchemeId) {
@@ -92,126 +96,274 @@ export default function AddToCartButton({
   };
 
   const toggleExtra = (extraId: string) => {
-    setSelectedExtras(prev =>
+    setSelectedExtras((prev) =>
       prev.includes(extraId)
-        ? prev.filter(id => id !== extraId)
+        ? prev.filter((id) => id !== extraId)
         : [...prev, extraId]
     );
   };
 
-  return (
-    <div className="space-y-4">
-      {/* Variante seleccionada */}
-      {hasImageSelected ? (
-        <div className="rounded-xl bg-colonta-primary/5 border border-colonta-primary/20 px-4 py-3">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-            Variante seleccionada
-          </p>
-          <div className="flex items-center gap-3">
-            <img
-              src={selectedImage.url}
-              alt={selectedImage.alt ?? ""}
-              className="w-14 h-14 rounded-lg object-cover border border-slate-200 shrink-0"
-            />
-            <div className="flex-1 min-w-0">
-              {hasImageColors ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  {selectedImage.colores.map((color, i) => (
-                    <div key={i} className="flex items-center gap-1.5">
-                      <ColorDot color={color} />
-                      <span className="text-sm font-medium text-slate-800">{color.nombre}</span>
-                    </div>
-                  ))}
+  /* ── Contenido pestaña Variante ── */
+  const variantePanel = hasImageSelected ? (
+    <div className="rounded-xl bg-colonta-primary/5 border border-colonta-primary/20 px-4 py-3">
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+        Variante seleccionada
+      </p>
+      <div className="flex items-center gap-3">
+        <img
+          src={selectedImage.url}
+          alt={selectedImage.alt ?? ""}
+          className="w-14 h-14 rounded-lg object-cover border border-slate-200 shrink-0"
+        />
+        <div className="flex-1 min-w-0">
+          {hasImageColors ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedImage.colores.map((color, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <ColorDot color={color} />
+                  <span className="text-sm font-medium text-slate-800">
+                    {color.nombre}
+                  </span>
                 </div>
-              ) : (
-                <p className="text-sm font-medium text-slate-700">Variante seleccionada</p>
-              )}
-              <p className="text-xs text-slate-400 mt-1">
-                Selecciona otra imagen para cambiar variante.
-              </p>
+              ))}
             </div>
-          </div>
+          ) : (
+            <p className="text-sm font-medium text-slate-700">
+              Variante seleccionada
+            </p>
+          )}
+          <p className="text-xs text-slate-400 mt-1">
+            Selecciona otra imagen para cambiar variante.
+          </p>
         </div>
-      ) : colorSchemes.length > 0 ? (
-        <div>
-          <label className="text-sm font-semibold block mb-2">Esquema de color</label>
-          <div className="flex flex-wrap gap-2">
-            {colorSchemes.map((cs) => {
-              const isSelected = selectedColorSchemeId === cs.id;
-              return (
-                <button
-                  key={cs.id}
-                  type="button"
-                  onClick={() => setSelectedColorSchemeId(cs.id)}
-                  className={`px-4 py-2 rounded-xl border text-sm flex items-center gap-2 ${
-                    isSelected
-                      ? "border-colonta-primary bg-colonta-primary/10"
-                      : "border-slate-300 hover:border-slate-400 bg-white"
+      </div>
+    </div>
+  ) : colorSchemes.length > 0 ? (
+    <div className="flex flex-wrap gap-2">
+      {colorSchemes.map((cs) => {
+        const isSelected = selectedColorSchemeId === cs.id;
+        return (
+          <button
+            key={cs.id}
+            type="button"
+            onClick={() => setSelectedColorSchemeId(cs.id)}
+            className={`px-4 py-2 rounded-xl border text-sm flex items-center gap-2 ${
+              isSelected
+                ? "border-colonta-primary bg-colonta-primary/10"
+                : "border-slate-300 hover:border-slate-400 bg-white"
+            }`}
+          >
+            <div className="flex gap-1">
+              {cs.colors.map((color, idx) => (
+                <div
+                  key={idx}
+                  className="w-4 h-4 rounded-full border border-slate-300"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+            <span>{cs.name || "Personalizado"}</span>
+          </button>
+        );
+      })}
+      {productModel.allowCustomColors && (
+        <button
+          type="button"
+          onClick={() => setSelectedColorSchemeId(undefined)}
+          className={`px-4 py-2 rounded-xl border text-sm ${
+            selectedColorSchemeId === undefined
+              ? "border-colonta-primary bg-colonta-primary/10"
+              : "border-slate-300 hover:border-slate-400 bg-white"
+          }`}
+        >
+          Personalizar
+        </button>
+      )}
+    </div>
+  ) : (
+    <p className="text-sm text-slate-500 py-2">
+      Haz clic en una imagen de la galería para seleccionar la variante.
+    </p>
+  );
+
+  /* ── Contenido pestaña Extras ── */
+  const extrasPanel = (
+    <div className="space-y-2">
+      {extras.map((extra) => {
+        const price = Number(extra.price) || 0;
+        const isSelected = selectedExtras.includes(extra.id);
+        return (
+          <label
+            key={extra.id}
+            className={`flex items-start gap-3 cursor-pointer p-2.5 rounded-xl border transition-colors ${
+              isSelected
+                ? "border-colonta-primary bg-colonta-primary/5"
+                : "border-slate-200 hover:border-slate-300 bg-white"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => toggleExtra(extra.id)}
+              className="rounded mt-0.5 accent-colonta-primary"
+            />
+            <div className="flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-slate-900">
+                  {extra.name}
+                </span>
+                <span
+                  className={`text-sm font-semibold shrink-0 ${
+                    isSelected ? "text-colonta-primary" : "text-slate-600"
                   }`}
                 >
-                  <div className="flex gap-1">
-                    {cs.colors.map((color, idx) => (
-                      <div
-                        key={idx}
-                        className="w-4 h-4 rounded-full border border-slate-300"
-                        style={{ backgroundColor: color }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                  <span>{cs.name || "Personalizado"}</span>
-                </button>
-              );
-            })}
-            {productModel.allowCustomColors && (
-              <button
-                type="button"
-                onClick={() => setSelectedColorSchemeId(undefined)}
-                className={`px-4 py-2 rounded-xl border text-sm ${
-                  selectedColorSchemeId === undefined
-                    ? "border-colonta-primary bg-colonta-primary/10"
-                    : "border-slate-300 hover:border-slate-400 bg-white"
-                }`}
-              >
-                Personalizar
-              </button>
-            )}
-          </div>
-        </div>
-      ) : null}
+                  +${new Intl.NumberFormat("es-CL").format(price)}
+                </span>
+              </div>
+              {extra.description && (
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {extra.description}
+                </p>
+              )}
+            </div>
+          </label>
+        );
+      })}
+    </div>
+  );
 
-      {/* Selector de extras */}
-      {extras.length > 0 && (
-        <div>
-          <label className="text-sm font-semibold block mb-2">Extras</label>
-          <div className="space-y-2">
-            {extras.map((extra) => {
-              const price = Number(extra.price) || 0;
-              const isSelected = selectedExtras.includes(extra.id);
-              return (
-                <label key={extra.id} className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleExtra(extra.id)}
-                    className="rounded mt-0.5"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-900">{extra.name}</span>
-                      <span className="text-sm text-slate-600 font-medium">
-                        +${new Intl.NumberFormat("es-CL").format(price)}
-                      </span>
-                    </div>
-                    {extra.description && (
-                      <p className="text-xs text-slate-500 mt-0.5">{extra.description}</p>
-                    )}
-                  </div>
-                </label>
-              );
-            })}
+  return (
+    <div className="space-y-4">
+      {useTabs ? (
+        /* ── Vista con pestañas (productos con extras) ── */
+        <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <div className="flex border-b border-slate-200">
+            <button
+              type="button"
+              onClick={() => setActiveTab("variante")}
+              className={`flex-1 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px ${
+                activeTab === "variante"
+                  ? "bg-white text-colonta-primary border-colonta-primary"
+                  : "bg-slate-50 text-slate-500 hover:text-slate-700 border-transparent"
+              }`}
+            >
+              Variante
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("extras")}
+              className={`flex-1 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center justify-center gap-1.5 ${
+                activeTab === "extras"
+                  ? "bg-white text-colonta-primary border-colonta-primary"
+                  : "bg-slate-50 text-slate-500 hover:text-slate-700 border-transparent"
+              }`}
+            >
+              Extras
+              {selectedExtras.length > 0 && (
+                <span
+                  className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
+                    activeTab === "extras"
+                      ? "bg-colonta-primary text-white"
+                      : "bg-slate-300 text-slate-700"
+                  }`}
+                >
+                  {selectedExtras.length}
+                </span>
+              )}
+            </button>
+          </div>
+          <div className="p-4">
+            {activeTab === "variante" ? variantePanel : extrasPanel}
           </div>
         </div>
+      ) : (
+        /* ── Vista sin pestañas (productos sin extras) ── */
+        <>
+          {hasImageSelected ? (
+            <div className="rounded-xl bg-colonta-primary/5 border border-colonta-primary/20 px-4 py-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                Variante seleccionada
+              </p>
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedImage.url}
+                  alt={selectedImage.alt ?? ""}
+                  className="w-14 h-14 rounded-lg object-cover border border-slate-200 shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  {hasImageColors ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {selectedImage.colores.map((color, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <ColorDot color={color} />
+                          <span className="text-sm font-medium text-slate-800">
+                            {color.nombre}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm font-medium text-slate-700">
+                      Variante seleccionada
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-400 mt-1">
+                    Selecciona otra imagen para cambiar variante.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : colorSchemes.length > 0 ? (
+            <div>
+              <label className="text-sm font-semibold block mb-2">
+                Esquema de color
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {colorSchemes.map((cs) => {
+                  const isSelected = selectedColorSchemeId === cs.id;
+                  return (
+                    <button
+                      key={cs.id}
+                      type="button"
+                      onClick={() => setSelectedColorSchemeId(cs.id)}
+                      className={`px-4 py-2 rounded-xl border text-sm flex items-center gap-2 ${
+                        isSelected
+                          ? "border-colonta-primary bg-colonta-primary/10"
+                          : "border-slate-300 hover:border-slate-400 bg-white"
+                      }`}
+                    >
+                      <div className="flex gap-1">
+                        {cs.colors.map((color, idx) => (
+                          <div
+                            key={idx}
+                            className="w-4 h-4 rounded-full border border-slate-300"
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
+                      <span>{cs.name || "Personalizado"}</span>
+                    </button>
+                  );
+                })}
+                {productModel.allowCustomColors && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedColorSchemeId(undefined)}
+                    className={`px-4 py-2 rounded-xl border text-sm ${
+                      selectedColorSchemeId === undefined
+                        ? "border-colonta-primary bg-colonta-primary/10"
+                        : "border-slate-300 hover:border-slate-400 bg-white"
+                    }`}
+                  >
+                    Personalizar
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </>
       )}
 
       {/* Selector de cantidad */}
@@ -230,7 +382,9 @@ export default function AddToCartButton({
             min={1}
             className="w-12 text-center py-2 outline-none"
             value={qty}
-            onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+            onChange={(e) =>
+              setQty(Math.max(1, Number(e.target.value) || 1))
+            }
           />
           <button
             type="button"
@@ -250,7 +404,11 @@ export default function AddToCartButton({
           Agregar al carrito
         </button>
         <FavoriteButton
-          productId={hasImageSelected ? `${productModel.id}:${selectedImage.id}` : productModel.id}
+          productId={
+            hasImageSelected
+              ? `${productModel.id}:${selectedImage.id}`
+              : productModel.id
+          }
         />
       </div>
     </div>
