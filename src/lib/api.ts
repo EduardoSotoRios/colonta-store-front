@@ -474,6 +474,46 @@ async function fetchColoresMap(supabase: Awaited<ReturnType<typeof createSupabas
   return new Map((data ?? []).map((c: any) => [c.id as number, { nombre: (c.nombre ?? '').trim(), hex: c.hex ?? null, activo: c.activo ?? true }]));
 }
 
+// ─── Extras del backend para productos Supabase ──────────────────────────────
+// Obtiene los extras del modelo Railway que corresponde al producto según su categoría y nombre.
+// La llamada a /models se cachea 1 hora vía Next.js fetch cache.
+async function fetchExtrasParaProducto(
+  nombre: string,
+  categoria_slug: string
+): Promise<NonNullable<ProductModel['extras']>> {
+  try {
+    const res = await fetch(`${API}/models`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const models: any[] = await res.json();
+
+    const nombreLower = nombre.toLowerCase();
+    let modelo: any | undefined;
+
+    if (categoria_slug === 'bananos') {
+      // Todos los bananos tienen el mismo extra; usamos el modelo "Banano (Diseñado)"
+      modelo = models.find((m) => /^banano \(/i.test(m.name));
+    } else if (categoria_slug === 'mochilas') {
+      if (nombreLower.includes('ligera')) {
+        modelo = models.find((m) => /ligera/i.test(m.name));
+      } else {
+        modelo = models.find((m) => /normal/i.test(m.name));
+      }
+    }
+
+    if (!modelo?.extras?.length) return [];
+
+    return modelo.extras
+      .map((item: any) => {
+        const e = item.extra ?? item;
+        if (!e?.id || !e?.name) return null;
+        return { id: e.id, name: e.name, description: e.description ?? '', price: Number(e.price) || 0 };
+      })
+      .filter(Boolean) as NonNullable<ProductModel['extras']>;
+  } catch {
+    return [];
+  }
+}
+
 // ─── Supabase: mapea fila → ProductModel ────────────────────────────────────
 function mapSupabaseProduct(row: any, coloresMap: ColoresMap): ProductModel {
   const principalImg = row.producto_imagenes?.find((i: any) => i.principal)
@@ -674,7 +714,7 @@ export const api = {
     return (data ?? []).map(r => mapSupabaseProduct(r, coloresMap))
   },
 
-  // Detalle de cualquier producto por id — lee desde Supabase
+  // Detalle de cualquier producto por id — lee desde Supabase + extras del backend
   getProductoById: async (id: string): Promise<ProductModel> => {
     const supabase = await createSupabaseServerClient()
     const [coloresMap, { data, error }] = await Promise.all([
@@ -682,7 +722,10 @@ export const api = {
       supabase.from('productos_completos').select(PROD_SELECT).eq('id', id).single(),
     ])
     if (error || !data) throw new Error('Product not found')
-    return mapSupabaseProduct(data, coloresMap)
+    const product = mapSupabaseProduct(data, coloresMap)
+    const extras = await fetchExtrasParaProducto(data.nombre ?? '', data.categoria_slug ?? '')
+    if (extras.length > 0) product.extras = extras
+    return product
   },
 
   /* Categorías - Se extraen de los productos, no hay endpoint dedicado */
