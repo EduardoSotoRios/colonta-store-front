@@ -9,6 +9,7 @@ import {
   preloadPatternTextures,
   isTexturePattern,
   createZoneMap,
+  buildProductMask,
   getMergedDataURL,
   downloadCanvas,
 } from '@/lib/configurador/canvasUtils';
@@ -32,6 +33,9 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   const colorCanvasRef   = useRef<HTMLCanvasElement | null>(null);
   const templateCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const zoneMapRef       = useRef<Int32Array | null>(null);
+  const productMaskRef   = useRef<Uint8Array | null>(null);
+  const maskCanvasRef    = useRef<HTMLCanvasElement | null>(null);
+  const scratchCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const historyRef       = useRef<ImageData[]>([]);
   const isDrawingRef     = useRef(false);
   const lastPosRef       = useRef({ x: 0, y: 0 });
@@ -103,7 +107,14 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     templateCanvas.height   = CANVAS_H;
     templateCanvasRef.current = templateCanvas;
 
+    const scratchCanvas    = document.createElement('canvas');
+    scratchCanvas.width    = CANVAS_W;
+    scratchCanvas.height   = CANVAS_H;
+    scratchCanvasRef.current = scratchCanvas;
+
     zoneMapRef.current = createZoneMap(CANVAS_W, CANVAS_H);
+    productMaskRef.current = null;
+    maskCanvasRef.current = null;
 
     const colorCtx = colorCanvas.getContext('2d')!;
     colorCtx.fillStyle = '#FFFFFF';
@@ -114,6 +125,9 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     const img = new Image();
     img.src = PRODUCT_IMAGES[product];
     drawTemplateFromImage(img, templateCanvas, () => {
+      const { mask, maskCanvas } = buildProductMask(templateCanvas);
+      productMaskRef.current = mask;
+      maskCanvasRef.current = maskCanvas;
       renderComposite();
       saveHistory();
     });
@@ -141,6 +155,25 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     return colorRef.current;
   }
 
+  // Dibuja en un canvas auxiliar, lo recorta a la silueta del producto
+  // (maskCanvasRef) y recién ahí lo compone sobre colorCanvas — así la parte
+  // de un trazo que cae fuera de la plantilla nunca llega a pintarse.
+  function paintMasked(draw: (ctx: CanvasRenderingContext2D) => void) {
+    const col = colorCanvasRef.current;
+    const scratch = scratchCanvasRef.current;
+    if (!col || !scratch) return;
+    const sctx = scratch.getContext('2d')!;
+    sctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+    draw(sctx);
+    const mask = maskCanvasRef.current;
+    if (mask) {
+      sctx.globalCompositeOperation = 'destination-in';
+      sctx.drawImage(mask, 0, 0);
+      sctx.globalCompositeOperation = 'source-over';
+    }
+    col.getContext('2d')!.drawImage(scratch, 0, 0);
+  }
+
   // ── Drawing events ──────────────────────────────────────────────────────
   useEffect(() => {
     const canvas = mainCanvasRef.current;
@@ -155,12 +188,20 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
       const pos = getPos(e);
 
       if (toolRef.current === 'fill') {
+        const mask = productMaskRef.current;
+        const sx = Math.max(0, Math.min(CANVAS_W - 1, Math.round(pos.x)));
+        const sy = Math.max(0, Math.min(CANVAS_H - 1, Math.round(pos.y)));
+        if (mask && mask[sy * CANVAS_W + sx] === 0) {
+          showToast('Solo puedes pintar dentro del producto');
+          return;
+        }
         floodFill(pos.x, pos.y, {
           colorCanvas: col,
           templateCanvas: tpl,
           activePattern: patternRef.current,
           currentColor: colorRef.current,
           zoneMap: zones,
+          productMask: mask ?? undefined,
         });
         renderComposite();
         saveHistory();
@@ -169,12 +210,13 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
 
       isDrawingRef.current = true;
       lastPosRef.current = pos;
-      const ctx = col.getContext('2d')!;
       const size = toolRef.current === 'eraser' ? brushRef.current * 2 : brushRef.current;
-      ctx.beginPath();
-      ctx.fillStyle = toolRef.current === 'eraser' ? '#FFFFFF' : getDrawFill() as string;
-      ctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
-      ctx.fill();
+      paintMasked(sctx => {
+        sctx.beginPath();
+        sctx.fillStyle = toolRef.current === 'eraser' ? '#FFFFFF' : getDrawFill() as string;
+        sctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
+        sctx.fill();
+      });
       renderComposite();
     };
 
@@ -184,16 +226,17 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
       const col = colorCanvasRef.current;
       if (!col) return;
       const pos = getPos(e);
-      const ctx = col.getContext('2d')!;
       const size = toolRef.current === 'eraser' ? brushRef.current * 2 : brushRef.current;
-      ctx.beginPath();
-      ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.strokeStyle = toolRef.current === 'eraser' ? '#FFFFFF' : getDrawFill() as string;
-      ctx.lineWidth  = size;
-      ctx.lineCap    = 'round';
-      ctx.lineJoin   = 'round';
-      ctx.stroke();
+      paintMasked(sctx => {
+        sctx.beginPath();
+        sctx.moveTo(lastPosRef.current.x, lastPosRef.current.y);
+        sctx.lineTo(pos.x, pos.y);
+        sctx.strokeStyle = toolRef.current === 'eraser' ? '#FFFFFF' : getDrawFill() as string;
+        sctx.lineWidth  = size;
+        sctx.lineCap    = 'round';
+        sctx.lineJoin   = 'round';
+        sctx.stroke();
+      });
       lastPosRef.current = pos;
       renderComposite();
     };

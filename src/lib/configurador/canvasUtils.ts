@@ -126,10 +126,13 @@ interface FloodFillOptions {
   activePattern: string | null;
   currentColor: string;
   zoneMap: Int32Array;
+  /** From `buildProductMask`. 0 = fuera del producto. Si el click de inicio cae
+   *  ahí, el fill no hace nada; también actúa como tope extra durante el BFS. */
+  productMask?: Uint8Array;
 }
 
 export function floodFill(startX: number, startY: number, opts: FloodFillOptions): void {
-  const { colorCanvas, templateCanvas, activePattern, currentColor, zoneMap } = opts;
+  const { colorCanvas, templateCanvas, activePattern, currentColor, zoneMap, productMask } = opts;
   const colorCtx = colorCanvas.getContext('2d')!;
   const templateCtx = templateCanvas.getContext('2d')!;
   const cw = colorCanvas.width, ch = colorCanvas.height;
@@ -140,6 +143,7 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
   const imgData = colorCtx.getImageData(0, 0, cw, ch);
   const data = imgData.data;
   const startPos = startY * cw + startX;
+  if (productMask && productMask[startPos] === 0) return;
   const startZone = zoneMap[startPos];
 
   let fillR: number, fillG: number, fillB: number;
@@ -172,6 +176,7 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
     if (x < 0 || x >= cw || y < 0 || y >= ch) continue;
     if (visited[pos]) continue;
     if (zoneMap[pos] !== startZone) continue;
+    if (productMask && productMask[pos] === 0) continue;
     const i = pos * 4;
     if (isDarkOutline(i)) continue;
     visited[pos] = 1;
@@ -209,6 +214,50 @@ export function floodFill(startX: number, startY: number, opts: FloodFillOptions
 
     colorCtx.drawImage(patC, 0, 0);
   }
+}
+
+// Marca qué píxeles del canvas pertenecen a la silueta del producto (interior
+// + contorno) vs. el fondo fuera de ella, para poder confinar ahí el pintado
+// (lápiz y relleno) sin depender únicamente del zoneMap. Se calcula con un
+// flood fill sembrado desde los bordes del canvas: todo lo alcanzable desde
+// un borde sin cruzar un píxel de contorno es "afuera"; el resto (el propio
+// contorno + regiones interiores cerradas, como tirantes o bolsillos) es
+// "adentro" y por lo tanto pintable.
+export function buildProductMask(templateCanvas: HTMLCanvasElement): { mask: Uint8Array; maskCanvas: HTMLCanvasElement } {
+  const w = templateCanvas.width, h = templateCanvas.height;
+  const ctx = templateCanvas.getContext('2d')!;
+  const data = ctx.getImageData(0, 0, w, h).data;
+  const isOutline = (pos: number) => data[pos * 4 + 3] > 80;
+
+  const outside = new Uint8Array(w * h);
+  const queue: number[] = [];
+  const seed = (pos: number) => {
+    if (!outside[pos] && !isOutline(pos)) { outside[pos] = 1; queue.push(pos); }
+  };
+  for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + (w - 1)); }
+
+  let qi = 0;
+  while (qi < queue.length) {
+    const pos = queue[qi++];
+    const x = pos % w;
+    if (x > 0) seed(pos - 1);
+    if (x < w - 1) seed(pos + 1);
+    if (pos - w >= 0) seed(pos - w);
+    if (pos + w < w * h) seed(pos + w);
+  }
+
+  const mask = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) mask[i] = outside[i] ? 0 : 1;
+
+  const maskCanvas = document.createElement('canvas');
+  maskCanvas.width = w; maskCanvas.height = h;
+  const mctx = maskCanvas.getContext('2d')!;
+  const maskImg = mctx.createImageData(w, h);
+  for (let i = 0; i < w * h; i++) maskImg.data[i * 4 + 3] = mask[i] ? 255 : 0;
+  mctx.putImageData(maskImg, 0, 0);
+
+  return { mask, maskCanvas };
 }
 
 export function getMergedDataURL(
