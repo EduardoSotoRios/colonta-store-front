@@ -706,17 +706,22 @@ export const api = {
     return (data ?? []).map(r => mapSupabaseProduct(r, coloresMap))
   },
 
-  // Detalle de cualquier producto por id — lee desde Supabase + extras del backend
+  // Detalle de cualquier producto por id — lee desde Supabase + extras + imágenes de extras
   getProductoById: async (id: string): Promise<ProductModel> => {
     const supabase = await createSupabaseServerClient()
-    const [coloresMap, { data, error }] = await Promise.all([
+    const [coloresMap, { data, error }, { data: extrasMeta }] = await Promise.all([
       fetchColoresMap(supabase),
       supabase.from('productos_completos').select(PROD_SELECT).eq('id', id).single(),
+      supabase.from('extras_meta').select('extra_id, image_url'),
     ])
     if (error || !data) throw new Error('Product not found')
     const product = mapSupabaseProduct(data, coloresMap)
     const extras = extrasParaProducto(data.nombre ?? '', data.categoria_slug ?? '')
-    if (extras.length > 0) product.extras = extras
+    if (extras.length > 0) {
+      const imgMap: Record<string, string> = {}
+      extrasMeta?.forEach((r: { extra_id: string; image_url: string }) => { imgMap[r.extra_id] = r.image_url })
+      product.extras = extras.map(e => ({ ...e, imageUrl: imgMap[e.id] }))
+    }
     return product
   },
 
