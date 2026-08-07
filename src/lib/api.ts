@@ -383,6 +383,7 @@ export type ProductModel = {
     name: string;
     description: string;
     price: number;
+    imageUrl?: string;
   }>;
   // Campos extra Colonta
   tagline?: string | null;
@@ -478,7 +479,7 @@ async function fetchColoresMap(supabase: Awaited<ReturnType<typeof createSupabas
 // IDs obtenidos del backend Railway al crear los extras (2026-07-23).
 // El backend requiere auth para GET /models, así que usamos estos valores directamente.
 // Al cambiar precios: actualizar precio en Railway Y en este objeto.
-type ExtraEntry = { id: string; name: string; description: string; price: number };
+type ExtraEntry = { id: string; name: string; description: string; price: number; imageUrl?: string };
 
 const EX: Record<string, ExtraEntry> = {
   bolsilloEspalda:    { id: '5440afab-dfa5-4fca-9157-98293c2f1cef', name: 'Bolsillo Espalda',    description: '', price: 1000 },
