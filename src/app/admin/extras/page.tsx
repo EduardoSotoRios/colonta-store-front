@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import { subirImagenExtra, getExtrasMeta } from "@/actions/extras-meta";
 import Link from "next/link";
 
 type Extra = {
@@ -16,40 +17,33 @@ type Extra = {
 export default function ExtrasAdminPage() {
   const { user, hydrate, hydrated } = useAuth();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [extras, setExtras] = useState<Extra[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading]           = useState(true);
+  const [extras, setExtras]             = useState<Extra[]>([]);
+  const [imagenesMap, setImagenesMap]   = useState<Record<string, string>>({});
+  const [subiendoId, setSubiendoId]     = useState<string | null>(null);
+  const [error, setError]               = useState<string | null>(null);
+  const [showForm, setShowForm]         = useState(false);
   const [editingExtra, setEditingExtra] = useState<Extra | null>(null);
-  const [formData, setFormData] = useState<{ name: string; description: string; price: number }>({
-    name: "",
-    description: "",
-    price: 0,
-  });
+  const [formData, setFormData]         = useState({ name: "", description: "", price: 0 });
 
   useEffect(() => {
-    if (!hydrated) {
-      hydrate();
-    }
+    if (!hydrated) hydrate();
   }, [hydrated, hydrate]);
 
   useEffect(() => {
     if (hydrated) {
-      if (!user) {
-        router.push("/login");
-      } else if (user.rol !== "admin") {
-        router.push("/");
-      } else {
-        loadExtras();
-      }
+      if (!user) router.push("/login");
+      else if (user.rol !== "admin") router.push("/");
+      else loadAll();
     }
   }, [user, hydrated, router]);
 
-  async function loadExtras() {
+  async function loadAll() {
     try {
       setLoading(true);
-      const exts = await api.getExtras();
+      const [exts, meta] = await Promise.all([api.getExtras(), getExtrasMeta()]);
       setExtras(exts);
+      setImagenesMap(meta);
       setError(null);
     } catch (e: any) {
       setError(e?.message ?? "Error al cargar extras");
@@ -66,11 +60,7 @@ export default function ExtrasAdminPage() {
 
   function handleEdit(extra: Extra) {
     setEditingExtra(extra);
-    setFormData({
-      name: extra.name,
-      description: extra.description,
-      price: extra.price,
-    });
+    setFormData({ name: extra.name, description: extra.description, price: extra.price });
     setShowForm(true);
   }
 
@@ -78,20 +68,11 @@ export default function ExtrasAdminPage() {
     e.preventDefault();
     try {
       setError(null);
-      // Asegurar que el precio sea un entero según la API
-      const dataToSend = {
-        name: formData.name,
-        description: formData.description,
-        price: Math.round(Number(formData.price) || 0), // Convertir a entero
-      };
-      
-      if (editingExtra) {
-        await api.updateExtra(editingExtra.id, dataToSend);
-      } else {
-        await api.createExtra(dataToSend);
-      }
+      const data = { ...formData, price: Math.round(Number(formData.price) || 0) };
+      if (editingExtra) await api.updateExtra(editingExtra.id, data);
+      else await api.createExtra(data);
       setShowForm(false);
-      await loadExtras();
+      await loadAll();
     } catch (e: any) {
       setError(e?.message ?? "Error al guardar extra");
     }
@@ -102,160 +83,186 @@ export default function ExtrasAdminPage() {
     try {
       setError(null);
       await api.deleteExtra(id);
-      await loadExtras();
+      await loadAll();
     } catch (e: any) {
       setError(e?.message ?? "Error al eliminar extra");
     }
   }
 
+  async function handleSubirImagen(extraId: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendoId(extraId);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const url = await subirImagenExtra(extraId, fd);
+      setImagenesMap((prev) => ({ ...prev, [extraId]: url }));
+    } catch (err: any) {
+      setError(err?.message ?? "Error al subir imagen");
+    } finally {
+      setSubiendoId(null);
+      e.target.value = "";
+    }
+  }
+
   if (loading || !user || user.rol !== "admin") {
     return (
-      <main className="min-h-screen">
-        <section className="bg-colonta-primary text-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl md:text-4xl font-extrabold">Extras</h1>
-          </div>
-        </section>
-        <section className="py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="rounded-xl border p-6 bg-white">
-              <p>Cargando...</p>
-            </div>
-          </div>
-        </section>
-      </main>
+      <div className="p-8">
+        <p className="text-slate-500 text-sm">Cargando...</p>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <section className="bg-colonta-primary text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <Link href="/admin" className="text-white/80 hover:text-white text-sm mb-2 inline-block">
-                ← Volver al panel
-              </Link>
-              <h1 className="text-3xl md:text-4xl font-extrabold">Mantenedor de Extras</h1>
-              <p className="text-white/85 mt-2">Gestiona los extras y accesorios adicionales</p>
-            </div>
-            <button
-              onClick={handleNew}
-              className="px-5 py-3 rounded-xl bg-white text-colonta-primary font-semibold hover:opacity-90"
-            >
-              + Nuevo Extra
-            </button>
-          </div>
+    <div className="p-8 max-w-5xl">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <Link href="/admin" className="text-sm text-slate-500 hover:text-slate-700">
+            ← Volver al panel
+          </Link>
+          <h1 className="text-2xl font-extrabold mt-2">Extras</h1>
         </div>
-      </section>
+        <button
+          onClick={handleNew}
+          className="px-5 py-2.5 rounded-xl bg-colonta-primary text-white font-semibold hover:opacity-90"
+        >
+          + Nuevo Extra
+        </button>
+      </div>
 
-      <section className="py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {error && (
-            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-              {error}
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Formulario crear/editar */}
+      {showForm && (
+        <div className="mb-6 rounded-2xl ring-1 ring-black/5 p-6 bg-white">
+          <h2 className="font-extrabold text-lg mb-4">
+            {editingExtra ? "Editar Extra" : "Nuevo Extra"}
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-semibold block mb-1">Nombre *</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full border rounded-xl px-3 py-2 text-sm"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold block mb-1">Precio *</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  className="w-full border rounded-xl px-3 py-2 text-sm"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-semibold block mb-1">Descripción</label>
+                <textarea
+                  rows={2}
+                  className="w-full border rounded-xl px-3 py-2 text-sm"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+              </div>
             </div>
-          )}
-
-          {showForm && (
-            <div className="mb-6 rounded-2xl ring-1 ring-black/5 p-6 bg-white">
-              <h2 className="font-extrabold text-lg mb-4">
-                {editingExtra ? "Editar Extra" : "Nuevo Extra"}
-              </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold block mb-1">Nombre *</label>
-                    <input
-                      type="text"
-                      required
-                      className="w-full border rounded-xl px-3 py-2 text-sm"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold block mb-1">Precio *</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      className="w-full border rounded-xl px-3 py-2 text-sm"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-semibold block mb-1">Descripción *</label>
-                    <textarea
-                      required
-                      rows={3}
-                      className="w-full border rounded-xl px-3 py-2 text-sm"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl bg-colonta-primary text-white font-semibold hover:opacity-90"
-                  >
-                    {editingExtra ? "Actualizar" : "Crear"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="px-5 py-2 rounded-xl border font-semibold hover:bg-slate-50"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
+            <div className="flex gap-2">
+              <button type="submit" className="px-5 py-2 rounded-xl bg-colonta-primary text-white font-semibold hover:opacity-90">
+                {editingExtra ? "Actualizar" : "Crear"}
+              </button>
+              <button type="button" onClick={() => setShowForm(false)}
+                className="px-5 py-2 rounded-xl border font-semibold hover:bg-slate-50">
+                Cancelar
+              </button>
             </div>
-          )}
+          </form>
+        </div>
+      )}
 
-          <div className="rounded-2xl ring-1 ring-black/5 bg-white overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Nombre</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Descripción</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Precio</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {extras.map((extra) => (
-                    <tr key={extra.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4 text-sm font-medium">{extra.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{extra.description}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">${new Intl.NumberFormat("es-CL").format(extra.price)}</td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(extra)}
-                            className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleDelete(extra.id)}
-                            className="px-3 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 font-medium"
-                          >
-                            Eliminar
-                          </button>
+      {/* Tabla de extras */}
+      <div className="rounded-2xl ring-1 ring-black/5 bg-white overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-slate-50 border-b">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase w-16">Imagen</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Nombre</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase hidden md:table-cell">Descripción</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Precio</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {extras.map((extra) => {
+              const imgUrl     = imagenesMap[extra.id];
+              const subiendo   = subiendoId === extra.id;
+              return (
+                <tr key={extra.id} className="hover:bg-slate-50">
+                  {/* Thumbnail + upload */}
+                  <td className="px-4 py-3">
+                    <label className="relative block w-12 h-12 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 cursor-pointer group">
+                      {imgUrl ? (
+                        <img src={imgUrl} alt={extra.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+                      )}
+                      {/* Overlay al hacer hover */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        {subiendo ? (
+                          <span className="text-white text-xs font-semibold">...</span>
+                        ) : (
+                          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                          </svg>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={subiendo}
+                        onChange={(e) => handleSubirImagen(extra.id, e)}
+                      />
+                    </label>
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium">{extra.name}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600 hidden md:table-cell">{extra.description}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">
+                    ${new Intl.NumberFormat("es-CL").format(extra.price)}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex gap-2">
+                      <button onClick={() => handleEdit(extra)}
+                        className="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium text-xs">
+                        Editar
+                      </button>
+                      <button onClick={() => handleDelete(extra.id)}
+                        className="px-3 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 font-medium text-xs">
+                        Eliminar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
