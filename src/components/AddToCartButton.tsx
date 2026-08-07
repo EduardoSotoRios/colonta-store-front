@@ -42,7 +42,7 @@ export default function AddToCartButton({
   productModel: ProductModel;
   colorSchemes?: Array<{
     id: string;
-    type: 'preset' | 'custom';
+    type: "preset" | "custom";
     name: string | null;
     colors: string[];
   }>;
@@ -51,19 +51,21 @@ export default function AddToCartButton({
     name: string;
     description: string;
     price: number;
+    imageUrl?: string;
   }>;
   selectedImage?: SelectedImage;
 }) {
   const { user } = useAuth();
   const { addItem } = useCart();
   const [qty, setQty] = useState<number>(1);
-  const [selectedColorSchemeId, setSelectedColorSchemeId] = useState<string | undefined>(
-    colorSchemes.find(cs => cs.type === 'preset')?.id
-  );
+  const [selectedColorSchemeId, setSelectedColorSchemeId] = useState<
+    string | undefined
+  >(colorSchemes.find((cs) => cs.type === "preset")?.id);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
+  const [extrasOpen, setExtrasOpen] = useState(false);
 
   const hasImageSelected = selectedImage !== undefined;
-  const hasImageColors   = hasImageSelected && selectedImage.colores.length > 0;
+  const hasImageColors = hasImageSelected && selectedImage.colores.length > 0;
 
   const handleAdd = async () => {
     const item: CartItem = {
@@ -79,9 +81,9 @@ export default function AddToCartButton({
       item.productImageUrl = selectedImage.url;
       if (hasImageColors) {
         item.colorScheme = {
-          type: 'custom',
-          name: selectedImage.colores.map(c => c.nombre).join(' / '),
-          colors: selectedImage.colores.map(c => c.nombre),
+          type: "custom",
+          name: selectedImage.colores.map((c) => c.nombre).join(" / "),
+          colors: selectedImage.colores.map((c) => c.nombre),
         };
       }
     } else if (selectedColorSchemeId) {
@@ -92,9 +94,9 @@ export default function AddToCartButton({
   };
 
   const toggleExtra = (extraId: string) => {
-    setSelectedExtras(prev =>
+    setSelectedExtras((prev) =>
       prev.includes(extraId)
-        ? prev.filter(id => id !== extraId)
+        ? prev.filter((id) => id !== extraId)
         : [...prev, extraId]
     );
   };
@@ -119,12 +121,16 @@ export default function AddToCartButton({
                   {selectedImage.colores.map((color, i) => (
                     <div key={i} className="flex items-center gap-1.5">
                       <ColorDot color={color} />
-                      <span className="text-sm font-medium text-slate-800">{color.nombre}</span>
+                      <span className="text-sm font-medium text-slate-800">
+                        {color.nombre}
+                      </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm font-medium text-slate-700">Variante seleccionada</p>
+                <p className="text-sm font-medium text-slate-700">
+                  Variante seleccionada
+                </p>
               )}
               <p className="text-xs text-slate-400 mt-1">
                 Selecciona otra imagen para cambiar variante.
@@ -134,7 +140,9 @@ export default function AddToCartButton({
         </div>
       ) : colorSchemes.length > 0 ? (
         <div>
-          <label className="text-sm font-semibold block mb-2">Esquema de color</label>
+          <label className="text-sm font-semibold block mb-2">
+            Esquema de color
+          </label>
           <div className="flex flex-wrap gap-2">
             {colorSchemes.map((cs) => {
               const isSelected = selectedColorSchemeId === cs.id;
@@ -180,37 +188,102 @@ export default function AddToCartButton({
         </div>
       ) : null}
 
-      {/* Selector de extras */}
+      {/* Extras colapsable */}
       {extras.length > 0 && (
-        <div>
-          <label className="text-sm font-semibold block mb-2">Extras</label>
-          <div className="space-y-2">
-            {extras.map((extra) => {
-              const price = Number(extra.price) || 0;
-              const isSelected = selectedExtras.includes(extra.id);
-              return (
-                <label key={extra.id} className="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-slate-50">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleExtra(extra.id)}
-                    className="rounded mt-0.5"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-900">{extra.name}</span>
-                      <span className="text-sm text-slate-600 font-medium">
-                        +${new Intl.NumberFormat("es-CL").format(price)}
-                      </span>
+        <div className="rounded-xl border border-slate-200 overflow-hidden">
+          {/* Cabecera del acordeón */}
+          <button
+            type="button"
+            onClick={() => setExtrasOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-slate-800">
+                Extras opcionales
+              </span>
+              {selectedExtras.length > 0 && (
+                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-colonta-primary text-white">
+                  {selectedExtras.length} seleccionado
+                  {selectedExtras.length > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+            <svg
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                extrasOpen ? "rotate-180" : ""
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {/* Lista de extras */}
+          {extrasOpen && (
+            <div className="border-t border-slate-200 p-3 space-y-2">
+              {extras.map((extra) => {
+                const price = Number(extra.price) || 0;
+                const isSelected = selectedExtras.includes(extra.id);
+                return (
+                  <label
+                    key={extra.id}
+                    className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-xl border transition-colors ${
+                      isSelected
+                        ? "border-colonta-primary bg-colonta-primary/5"
+                        : "border-slate-200 hover:border-slate-300 bg-white"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleExtra(extra.id)}
+                      className="rounded shrink-0 accent-colonta-primary"
+                    />
+                    {/* Imagen del extra */}
+                    <div className="w-12 h-12 rounded-lg shrink-0 overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                      {extra.imageUrl ? (
+                        <img
+                          src={extra.imageUrl}
+                          alt={extra.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg className="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      )}
                     </div>
-                    {extra.description && (
-                      <p className="text-xs text-slate-500 mt-0.5">{extra.description}</p>
-                    )}
-                  </div>
-                </label>
-              );
-            })}
-          </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-slate-900 truncate">
+                          {extra.name}
+                        </span>
+                        <span
+                          className={`text-sm font-semibold shrink-0 ${
+                            isSelected ? "text-colonta-primary" : "text-slate-600"
+                          }`}
+                        >
+                          +${new Intl.NumberFormat("es-CL").format(price)}
+                        </span>
+                      </div>
+                      {extra.description && (
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                          {extra.description}
+                        </p>
+                      )}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -230,7 +303,9 @@ export default function AddToCartButton({
             min={1}
             className="w-12 text-center py-2 outline-none"
             value={qty}
-            onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+            onChange={(e) =>
+              setQty(Math.max(1, Number(e.target.value) || 1))
+            }
           />
           <button
             type="button"
@@ -250,7 +325,11 @@ export default function AddToCartButton({
           Agregar al carrito
         </button>
         <FavoriteButton
-          productId={hasImageSelected ? `${productModel.id}:${selectedImage.id}` : productModel.id}
+          productId={
+            hasImageSelected
+              ? `${productModel.id}:${selectedImage.id}`
+              : productModel.id
+          }
         />
       </div>
     </div>

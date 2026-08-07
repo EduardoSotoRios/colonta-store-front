@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
 
   output: "standalone",
 
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "8mb",
+    },
+  },
+
   async rewrites() {
     return [
       {
