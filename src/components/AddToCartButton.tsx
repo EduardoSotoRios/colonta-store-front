@@ -63,6 +63,7 @@ export default function AddToCartButton({
   >(colorSchemes.find((cs) => cs.type === "preset")?.id);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [extrasOpen, setExtrasOpen] = useState(false);
+  const [previewExtra, setPreviewExtra] = useState<(typeof extras)[0] | null>(null);
 
   const hasImageSelected = selectedImage !== undefined;
   const hasImageColors = hasImageSelected && selectedImage.colores.length > 0;
@@ -103,6 +104,40 @@ export default function AddToCartButton({
 
   return (
     <div className="space-y-4">
+      {/* Modal preview imagen extra */}
+      {previewExtra?.imageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+          onClick={() => setPreviewExtra(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl max-w-sm w-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-slate-100 aspect-square w-full">
+              <img
+                src={previewExtra.imageUrl}
+                alt={previewExtra.name}
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="p-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-slate-800 text-sm">{previewExtra.name}</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  +${new Intl.NumberFormat("es-CL").format(Number(previewExtra.price))}
+                </p>
+              </div>
+              <button
+                onClick={() => setPreviewExtra(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 text-sm font-semibold hover:bg-slate-200"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Variante seleccionada */}
       {hasImageSelected ? (
         <div className="rounded-xl bg-colonta-primary/5 border border-colonta-primary/20 px-4 py-3">
@@ -246,8 +281,15 @@ export default function AddToCartButton({
                       onChange={() => toggleExtra(extra.id)}
                       className="rounded shrink-0 accent-colonta-primary"
                     />
-                    {/* Imagen del extra */}
-                    <div className="w-12 h-12 rounded-lg shrink-0 overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                    {/* Imagen del extra — clic abre preview */}
+                    <div
+                      className={`w-12 h-12 rounded-lg shrink-0 overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center ${extra.imageUrl ? "cursor-zoom-in hover:ring-2 hover:ring-colonta-primary" : ""}`}
+                      onClick={(e) => {
+                        if (!extra.imageUrl) return;
+                        e.preventDefault();
+                        setPreviewExtra(extra);
+                      }}
+                    >
                       {extra.imageUrl ? (
                         <img
                           src={extra.imageUrl}
