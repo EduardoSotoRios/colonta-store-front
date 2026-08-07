@@ -25,10 +25,15 @@ export function drawTemplateFromImage(
 
     tmpCtx.drawImage(img, dx, dy, dw, dh);
 
-    // Make white/light background transparent; keep dark outlines
+    // Make white/light background transparent; keep dark outlines.
+    // Los pixeles que ya venian transparentes en el PNG original (alpha=0,
+    // ej. plantillas exportadas sin fondo) se dejan como estan — si no, su
+    // RGB en blanco (0,0,0) se leeria como luminosidad 0 y se pintarian
+    // negro solido en vez de transparente.
     const imgData = tmpCtx.getImageData(0, 0, canW, canH);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] === 0) continue;
       const lum = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
       if (lum > 160) {
         data[i + 3] = 0;
