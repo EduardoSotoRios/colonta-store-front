@@ -1,6 +1,7 @@
 export type ProductId =
   | 'mochila_normal'
   | 'mochila_ligera'
+  | 'mochila_mini'
   | 'banano'
   | 'billetera'
   | 'bolso'
@@ -20,6 +21,7 @@ export interface ProductInfo {
 export const PRODUCT_THUMBNAILS: Record<ProductId, string> = {
   mochila_normal:  '/configurador/mochila.png',
   mochila_ligera:  '/configurador/mochila-ligera.png',
+  mochila_mini:    '/configurador/mochila-mini.png',
   banano:          '/configurador/banano.png',
   billetera:       '/configurador/billetera.png',
   bolso:           '/configurador/bolso.png',
@@ -33,6 +35,7 @@ export const PRODUCT_THUMBNAILS: Record<ProductId, string> = {
 export const PRODUCT_IMAGES: Record<ProductId, string> = {
   mochila_normal:  '/configurador/plantillas/mochila-ligera.png',
   mochila_ligera:  '/configurador/plantillas/mochila.png',
+  mochila_mini:    '/configurador/plantillas/mochila-mini.png',
   banano:          '/configurador/plantillas/banano-mulera.png',
   billetera:       '/configurador/plantillas/billetera.png',
   bolso:           '/configurador/plantillas/bolso.png',
@@ -45,10 +48,11 @@ export const PRODUCT_IMAGES: Record<ProductId, string> = {
 export const MOCHILA_TYPES: ProductInfo[] = [
   { id: 'mochila_normal', name: 'Normal', description: 'Modelo estándar',         image: '/configurador/mochila.png' },
   { id: 'mochila_ligera', name: 'Ligera', description: 'Ultraliviana y flexible', image: '/configurador/mochila-ligera.png' },
+  { id: 'mochila_mini',   name: 'Mini',   description: 'Compacta y práctica',     image: '/configurador/mochila-mini.png' },
 ];
 
 export const PRODUCT_LIST: Array<ProductInfo | { id: 'mochila'; name: string; description: string; image: string; isMochila: true }> = [
-  { id: 'mochila',        name: 'Mochila',        description: 'Normal o Ligera',       image: '/configurador/mochila.png',       isMochila: true },
+  { id: 'mochila',        name: 'Mochila',        description: 'Normal, Ligera o Mini', image: '/configurador/mochila.png',       isMochila: true },
   { id: 'banano',         name: 'Banano',         description: 'Riñonera clásica',      image: '/configurador/banano.png' },
   { id: 'billetera',      name: 'Billetera',      description: 'Bifold clásica',        image: '/configurador/billetera.png' },
   { id: 'bolso',          name: 'Bolso Tote',     description: 'Para el día a día',     image: '/configurador/bolso.png' },

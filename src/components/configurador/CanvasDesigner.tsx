@@ -39,12 +39,18 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   const historyRef       = useRef<ImageData[]>([]);
   const isDrawingRef     = useRef(false);
   const lastPosRef       = useRef({ x: 0, y: 0 });
+  // Evita pintar (lapiz o relleno) mientras la plantilla del producto
+  // todavia se esta cargando/procesando: sin sus contornos ni mascara listos
+  // no hay nada que confine el color, y terminaria derramandose por todo el
+  // lienzo. Ref para leer el valor actual dentro de los event handlers.
+  const templateReadyRef = useRef(false);
 
   const [tool, setToolState]   = useState<Tool>('pencil');
   const [brushSize, setBrushSize] = useState(8);
   const [color, setColor]      = useState('#E53935');
   // A COLORS `value` like 'pattern-leopardo', or null when painting a plain color.
   const [activePattern, setActivePattern] = useState<string | null>(null);
+  const [templateReady, setTemplateReady] = useState(false);
   const [toast, setToast]      = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [estadoColores, setEstadoColores] = useState<Record<string, boolean>>({});
@@ -115,6 +121,8 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     zoneMapRef.current = createZoneMap(CANVAS_W, CANVAS_H);
     productMaskRef.current = null;
     maskCanvasRef.current = null;
+    templateReadyRef.current = false;
+    setTemplateReady(false);
 
     const colorCtx = colorCanvas.getContext('2d')!;
     colorCtx.fillStyle = '#FFFFFF';
@@ -130,6 +138,8 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
       maskCanvasRef.current = maskCanvas;
       renderComposite();
       saveHistory();
+      templateReadyRef.current = true;
+      setTemplateReady(true);
     });
   }, [product, renderComposite]);
 
@@ -181,6 +191,10 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
 
     const onDown = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
+      if (!templateReadyRef.current) {
+        showToast('Espera a que cargue la plantilla…');
+        return;
+      }
       const col = colorCanvasRef.current;
       const tpl = templateCanvasRef.current;
       const zones = zoneMapRef.current;
@@ -490,13 +504,22 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
           </div>
         </div>
 
-        <div className="border-2 border-dashed border-gray-200 rounded-xl overflow-hidden bg-white">
+        <div className="relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden bg-white">
           <canvas
             ref={mainCanvasRef}
             width={CANVAS_W}
             height={CANVAS_H}
-            style={{ display: 'block', width: '100%', height: 'auto', touchAction: 'none', cursor: 'crosshair' }}
+            style={{
+              display: 'block', width: '100%', height: 'auto', touchAction: 'none',
+              cursor: templateReady ? 'crosshair' : 'wait',
+              pointerEvents: templateReady ? 'auto' : 'none',
+            }}
           />
+          {!templateReady && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-sm text-gray-500 font-medium">
+              Cargando plantilla…
+            </div>
+          )}
         </div>
       </div>
 

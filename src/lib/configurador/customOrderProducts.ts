@@ -5,6 +5,7 @@ import type { ProductId } from './products';
 export const CUSTOM_ORDER_PRODUCT_MODEL_IDS: Record<ProductId, string> = {
   mochila_normal:  '43c90824-b3d9-44b4-a317-02f7e43ad79e',
   mochila_ligera:  'ea0651ce-a0b5-4f23-8668-facbb83f6e95',
+  mochila_mini:    '2968f8f9-9ff7-47b5-9b20-71484f3dad3e',
   banano:          '261928b3-82bf-4c29-8d10-de584ff957ab',
   billetera:       '8bc82c92-fdc4-4b5c-b9df-d9a8577db62c',
   bolso:           '35dc2c4d-1d11-4d62-9891-6a365b2a841d',
@@ -21,6 +22,7 @@ export const CUSTOM_ORDER_PRODUCT_MODEL_IDS: Record<ProductId, string> = {
 export const CUSTOM_ORDER_PRICES: Record<ProductId, number> = {
   mochila_normal: 45000,
   mochila_ligera: 42000,
+  mochila_mini: 35000,
   banano: 25000,
   billetera: 18000,
   bolso: 30000,
@@ -33,6 +35,7 @@ export const CUSTOM_ORDER_PRICES: Record<ProductId, number> = {
 export const CUSTOM_ORDER_PRODUCT_NAMES: Record<ProductId, string> = {
   mochila_normal: 'Mochila Normal (Diseñada)',
   mochila_ligera: 'Mochila Ligera (Diseñada)',
+  mochila_mini: 'Mini Mochila (Diseñada)',
   banano: 'Banano (Diseñado)',
   billetera: 'Billetera (Diseñada)',
   bolso: 'Bolso Tote (Diseñado)',
