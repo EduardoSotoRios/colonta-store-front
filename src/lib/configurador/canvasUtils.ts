@@ -41,7 +41,6 @@ export function drawTemplateFromImage(
         data[i + 3] = Math.min(255, Math.round((1 - lum / 255) * 280));
       }
     }
-    sealSmallEnclosedDetails(data, canW, canH);
     tmpCtx.putImageData(imgData, 0, 0);
 
     templateCtx.clearRect(0, 0, templateCanvas.width, templateCanvas.height);
@@ -53,60 +52,6 @@ export function drawTemplateFromImage(
     render();
   } else {
     img.onload = render;
-  }
-}
-
-// Detalles como el interior de las letras del logo "Colonta" quedan, tras el
-// paso anterior, como huecos transparentes (blanco -> alpha 0) rodeados de
-// contorno — visualmente blancos solo porque el lienzo de pintura de abajo
-// arranca blanco, no porque esten protegidos: en cuanto el usuario pinta esa
-// zona (lapiz o relleno), el color se ve a traves del hueco y el logo se
-// pierde. No hay forma de detectar "esto es el logo" a partir del dibujo, asi
-// que se usa una heuristica geometrica: cualquier hueco transparente que
-// queda COMPLETAMENTE encerrado por contorno (no toca el borde del canvas) y
-// es demasiado chico para ser una zona real de tela (bolsillo, panel, tira)
-// se sella como blanco opaco, para que quede fijo sin importar que pinte el
-// usuario debajo.
-const MIN_PAINTABLE_AREA = 900; // px^2 aprox., bien por debajo de cualquier zona de tela real
-
-function sealSmallEnclosedDetails(data: Uint8ClampedArray, canW: number, canH: number): void {
-  const isInk = (pos: number) => data[pos * 4 + 3] > 0;
-  const visited = new Uint8Array(canW * canH);
-
-  for (let y = 0; y < canH; y++) {
-    for (let x = 0; x < canW; x++) {
-      const start = y * canW + x;
-      if (visited[start] || isInk(start)) continue;
-
-      const stack = [start];
-      const pixels = [start];
-      visited[start] = 1;
-      let touchesBorder = x === 0 || y === 0 || x === canW - 1 || y === canH - 1;
-
-      while (stack.length) {
-        const pos = stack.pop()!;
-        const px = pos % canW;
-        const neighbors = [pos - 1, pos + 1, pos - canW, pos + canW];
-        for (const n of neighbors) {
-          if (n < 0 || n >= canW * canH) continue;
-          const nx = n % canW;
-          if (Math.abs(nx - px) > 1) continue;
-          if (visited[n] || isInk(n)) continue;
-          visited[n] = 1;
-          const ny = (n / canW) | 0;
-          if (nx === 0 || ny === 0 || nx === canW - 1 || ny === canH - 1) touchesBorder = true;
-          stack.push(n);
-          pixels.push(n);
-        }
-      }
-
-      if (!touchesBorder && pixels.length <= MIN_PAINTABLE_AREA) {
-        for (const p of pixels) {
-          const i = p * 4;
-          data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
-        }
-      }
-    }
   }
 }
 
