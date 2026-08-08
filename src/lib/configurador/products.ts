@@ -38,7 +38,7 @@ export const PRODUCT_IMAGES: Record<ProductId, string> = {
   bolso:           '/configurador/plantillas/bolso.png',
   tabaquera:       '/configurador/plantillas/tabaquera.png',
   banano_simple:   '/configurador/plantillas/banano.png',
-  banano_muslera:  '/configurador/plantillas/banano-simple.jpg',
+  banano_muslera:  '/configurador/plantillas/banano-simple.png',
   porta_matt:      '/configurador/plantillas/porta-matt.png',
 };
 
