@@ -13,6 +13,8 @@ export const CUSTOM_ORDER_PRODUCT_MODEL_IDS: Record<ProductId, string> = {
   banano_simple:   '7546cdbe-ea5d-45ea-82f5-53f4db7e9987',
   banano_muslera:  '4c35185f-5465-448e-8672-154a1b3faaec',
   porta_matt:      'b98424d1-6a02-4825-b5da-2cb7f5ffe7dd',
+  roll_top:        'd87adaaf-1112-4c6d-b4fe-2b3434d3a4aa',
+  porta_notebook:  'b71339db-06e0-43ff-8970-1d253106f39f',
 };
 
 // SOLO para mostrar el precio en el carrito antes del pago — el precio real
@@ -30,6 +32,8 @@ export const CUSTOM_ORDER_PRICES: Record<ProductId, number> = {
   banano_simple: 20000,
   banano_muslera: 23000,
   porta_matt: 28000,
+  roll_top: 32000,
+  porta_notebook: 30000,
 };
 
 export const CUSTOM_ORDER_PRODUCT_NAMES: Record<ProductId, string> = {
@@ -43,4 +47,6 @@ export const CUSTOM_ORDER_PRODUCT_NAMES: Record<ProductId, string> = {
   banano_simple: 'Banano Simple (Diseñado)',
   banano_muslera: 'Banano Muslera (Diseñado)',
   porta_matt: 'Porta Matt (Diseñado)',
+  roll_top: 'Roll Top (Diseñado)',
+  porta_notebook: 'Porta Notebook (Diseñado)',
 };
