@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import {
   crearProducto,
   actualizarProducto,
@@ -10,7 +10,10 @@ import {
   marcarImagenPrincipal,
   actualizarColoresImagen,
   subirImagenStorage,
+  getProductoExtrasIds,
+  setProductoExtras,
 } from "@/app/admin/productos/actions";
+import { EX } from "@/lib/api";
 
 type Spec      = { label: string; valor: string };
 type Color     = { id: number; nombre: string; hex: string | null; activo?: boolean };
@@ -88,6 +91,27 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
   const [imagenes, setImagenes] = useState<Imagen[]>(
     producto?.producto_imagenes?.sort((a: any, b: any) => a.orden - b.orden) ?? []
   );
+
+  // Extras asignados
+  const [extrasAsignados, setExtrasAsignados] = useState<string[]>([]);
+  const [guardandoExtras, setGuardandoExtras] = useState(false);
+
+  useEffect(() => {
+    if (!esNuevo) {
+      getProductoExtrasIds(producto.id).then(setExtrasAsignados);
+    }
+  }, [producto?.id, esNuevo]);
+
+  async function handleGuardarExtras() {
+    setGuardandoExtras(true);
+    try {
+      await setProductoExtras(producto.id, extrasAsignados);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setGuardandoExtras(false);
+    }
+  }
 
   // Nueva imagen
   const [nuevaUrl, setNuevaUrl]             = useState("");
@@ -358,6 +382,62 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
           </button>
         </div>
       </form>
+
+      {/* Extras — solo en edición */}
+      {!esNuevo && (
+        <div className="bg-white rounded-2xl ring-1 ring-black/5 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-slate-800">Extras opcionales</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Selecciona los extras disponibles para este producto
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleGuardarExtras}
+              disabled={guardandoExtras}
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-colonta-primary hover:opacity-90 disabled:opacity-50"
+            >
+              {guardandoExtras ? "Guardando…" : "Guardar extras"}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {Object.values(EX).map((extra) => {
+              const checked = extrasAsignados.includes(extra.id);
+              return (
+                <label
+                  key={extra.id}
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                    checked
+                      ? "border-colonta-primary bg-colonta-primary/5"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() =>
+                      setExtrasAsignados((prev) =>
+                        prev.includes(extra.id)
+                          ? prev.filter((id) => id !== extra.id)
+                          : [...prev, extra.id]
+                      )
+                    }
+                    className="rounded accent-colonta-primary"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-800">{extra.name}</p>
+                    <p className="text-xs text-slate-500">
+                      +${new Intl.NumberFormat("es-CL").format(extra.price)}
+                    </p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Imágenes — solo en edición */}
       {!esNuevo && (

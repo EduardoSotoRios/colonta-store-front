@@ -274,3 +274,24 @@ export async function marcarImagenPrincipal(imagenId: number, productoId: string
 
   revalidatePath(`/admin/productos/${productoId}`);
 }
+
+// ─── Extras del producto ───────────────────────────────────────
+export async function getProductoExtrasIds(productoId: string): Promise<string[]> {
+  const supabase = await createSupabaseAdminClient();
+  const { data } = await supabase
+    .from("producto_extras")
+    .select("extra_id")
+    .eq("producto_id", productoId);
+  return data?.map((r) => r.extra_id) ?? [];
+}
+
+export async function setProductoExtras(productoId: string, extraIds: string[]): Promise<void> {
+  const supabase = await createSupabaseAdminClient();
+  await supabase.from("producto_extras").delete().eq("producto_id", productoId);
+  if (extraIds.length > 0) {
+    await supabase.from("producto_extras").insert(
+      extraIds.map((id) => ({ producto_id: productoId, extra_id: id }))
+    );
+  }
+  revalidatePath(`/admin/productos/${productoId}`);
+}

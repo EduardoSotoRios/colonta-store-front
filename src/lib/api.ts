@@ -481,7 +481,7 @@ async function fetchColoresMap(supabase: Awaited<ReturnType<typeof createSupabas
 // Al cambiar precios: actualizar precio en Railway Y en este objeto.
 type ExtraEntry = { id: string; name: string; description: string; price: number; imageUrl?: string };
 
-const EX: Record<string, ExtraEntry> = {
+export const EX: Record<string, ExtraEntry> = {
   bolsilloEspalda:    { id: '5440afab-dfa5-4fca-9157-98293c2f1cef', name: 'Bolsillo Espalda',    description: '', price: 1000 },
   cintaMattYoga:      { id: 'c5fdf1a5-9c76-4364-8a28-e07d12787bcf', name: 'Cinta Matt Yoga',     description: '', price: 1000 },
   cintasSaco:         { id: '9984a38e-6763-4222-a1b4-5d4952d4a0b1', name: 'Cintas Saco',         description: '', price: 1000 },
@@ -706,17 +706,24 @@ export const api = {
     return (data ?? []).map(r => mapSupabaseProduct(r, coloresMap))
   },
 
-  // Detalle de cualquier producto por id — lee desde Supabase + extras + imágenes de extras
+  // Detalle de cualquier producto por id — extras desde DB, con fallback al hardcode por categoría
   getProductoById: async (id: string): Promise<ProductModel> => {
     const supabase = await createSupabaseServerClient()
-    const [coloresMap, { data, error }, { data: extrasMeta }] = await Promise.all([
+    const [coloresMap, { data, error }, { data: extrasMeta }, { data: prodExtras }] = await Promise.all([
       fetchColoresMap(supabase),
       supabase.from('productos_completos').select(PROD_SELECT).eq('id', id).single(),
       supabase.from('extras_meta').select('extra_id, image_url'),
+      supabase.from('producto_extras').select('extra_id').eq('producto_id', id),
     ])
     if (error || !data) throw new Error('Product not found')
     const product = mapSupabaseProduct(data, coloresMap)
-    const extras = extrasParaProducto(data.nombre ?? '', data.categoria_slug ?? '')
+
+    // Extras: usar asignación manual de la DB; si no hay, caer en lógica por categoría
+    const extras: ExtraEntry[] =
+      prodExtras && prodExtras.length > 0
+        ? Object.values(EX).filter(e => prodExtras.some(r => r.extra_id === e.id))
+        : extrasParaProducto(data.nombre ?? '', data.categoria_slug ?? '')
+
     if (extras.length > 0) {
       const imgMap: Record<string, string> = {}
       extrasMeta?.forEach((r: { extra_id: string; image_url: string }) => { imgMap[r.extra_id] = r.image_url })
