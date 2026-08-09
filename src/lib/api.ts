@@ -706,28 +706,37 @@ export const api = {
     return (data ?? []).map(r => mapSupabaseProduct(r, coloresMap))
   },
 
-  // Detalle de cualquier producto por id — extras desde DB, con fallback al hardcode por categoría
+  // Detalle de cualquier producto por id — extras desde Supabase (datos vivos) con fallback a hardcode
   getProductoById: async (id: string): Promise<ProductModel> => {
     const supabase = await createSupabaseServerClient()
-    const [coloresMap, { data, error }, { data: extrasMeta }, { data: prodExtras }] = await Promise.all([
+    const [coloresMap, { data, error }, { data: extrasDB }, { data: extrasMeta }, { data: prodExtras }] = await Promise.all([
       fetchColoresMap(supabase),
       supabase.from('productos_completos').select(PROD_SELECT).eq('id', id).single(),
+      supabase.from('extras').select('id, name, description, price'),
       supabase.from('extras_meta').select('extra_id, image_url'),
       supabase.from('producto_extras').select('extra_id').eq('producto_id', id),
     ])
     if (error || !data) throw new Error('Product not found')
     const product = mapSupabaseProduct(data, coloresMap)
 
-    // Extras: usar asignación manual de la DB; si no hay, caer en lógica por categoría
-    const extras: ExtraEntry[] =
-      prodExtras && prodExtras.length > 0
-        ? Object.values(EX).filter(e => prodExtras.some(r => r.extra_id === e.id))
-        : extrasParaProducto(data.nombre ?? '', data.categoria_slug ?? '')
+    // Mapa de extras con datos actualizados (precio, nombre) desde Supabase
+    const extrasMap: Record<string, ExtraEntry> = {}
+    if (extrasDB && extrasDB.length > 0) {
+      extrasDB.forEach((e: { id: string; name: string; description: string; price: number }) => {
+        extrasMap[e.id] = { id: e.id, name: e.name, description: e.description, price: e.price }
+      })
+    }
 
-    if (extras.length > 0) {
+    // Lista de extras asignados: DB manual o fallback por categoría
+    const extrasBase: ExtraEntry[] =
+      prodExtras && prodExtras.length > 0
+        ? prodExtras.map(r => extrasMap[r.extra_id] ?? EX[r.extra_id as keyof typeof EX]).filter(Boolean)
+        : extrasParaProducto(data.nombre ?? '', data.categoria_slug ?? '').map(e => extrasMap[e.id] ?? e)
+
+    if (extrasBase.length > 0) {
       const imgMap: Record<string, string> = {}
       extrasMeta?.forEach((r: { extra_id: string; image_url: string }) => { imgMap[r.extra_id] = r.image_url })
-      product.extras = extras.map(e => ({ ...e, imageUrl: imgMap[e.id] }))
+      product.extras = extrasBase.map(e => ({ ...e, imageUrl: imgMap[e.id] }))
     }
     return product
   },

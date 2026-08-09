@@ -43,3 +43,28 @@ export async function getExtrasMeta(): Promise<Record<string, string>> {
   data?.forEach((row) => { map[row.extra_id] = row.image_url; });
   return map;
 }
+
+export async function sincronizarExtra(extra: {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}): Promise<void> {
+  const supabase = await createSupabaseAdminClient();
+  await supabase.from("extras").upsert({
+    id:          extra.id,
+    name:        extra.name,
+    description: extra.description,
+    price:       extra.price,
+    updated_at:  new Date().toISOString(),
+  });
+}
+
+export async function eliminarExtraMeta(extraId: string): Promise<void> {
+  const supabase = await createSupabaseAdminClient();
+  await Promise.all([
+    supabase.from("extras").delete().eq("id", extraId),
+    supabase.from("extras_meta").delete().eq("extra_id", extraId),
+    supabase.from("producto_extras").delete().eq("extra_id", extraId),
+  ]);
+}

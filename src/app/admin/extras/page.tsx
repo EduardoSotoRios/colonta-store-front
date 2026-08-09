@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
-import { subirImagenExtra, getExtrasMeta } from "@/actions/extras-meta";
+import { subirImagenExtra, getExtrasMeta, sincronizarExtra, eliminarExtraMeta } from "@/actions/extras-meta";
 import Link from "next/link";
 
 type Extra = {
@@ -160,8 +160,14 @@ export default function ExtrasAdminPage() {
     try {
       setError(null);
       const data = { ...formData, price: Math.round(Number(formData.price) || 0) };
-      if (editingExtra) await api.updateExtra(editingExtra.id, data);
-      else await api.createExtra(data);
+      let saved: Extra;
+      if (editingExtra) {
+        saved = await api.updateExtra(editingExtra.id, data);
+      } else {
+        saved = await api.createExtra(data);
+      }
+      // Sincronizar con Supabase para que los productos reflejen el precio actualizado
+      await sincronizarExtra(saved);
       setShowForm(false);
       await loadAll();
     } catch (e: any) {
@@ -174,6 +180,7 @@ export default function ExtrasAdminPage() {
     try {
       setError(null);
       await api.deleteExtra(id);
+      await eliminarExtraMeta(id);
       await loadAll();
     } catch (e: any) {
       setError(e?.message ?? "Error al eliminar extra");
