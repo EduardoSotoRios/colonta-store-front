@@ -101,7 +101,7 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
   useEffect(() => {
     if (!esNuevo) {
       Promise.all([
-        getProductoExtrasIds(producto.id),
+        getProductoExtrasIds(producto.id, producto.categoria_slug ?? '', producto.nombre ?? ''),
         getExtrasConImagenes(),
       ]).then(([ids, todos]) => {
         setExtrasAsignados(ids);
@@ -446,12 +446,7 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-slate-800 truncate">{extra.name}</p>
-                      {checked && (
-                        <span className="text-xs font-semibold text-colonta-primary shrink-0">✓ Asignado</span>
-                      )}
-                    </div>
+                    <p className="text-sm font-medium text-slate-800 truncate">{extra.name}</p>
                     <p className="text-xs text-slate-500">
                       +${new Intl.NumberFormat("es-CL").format(extra.price)}
                     </p>

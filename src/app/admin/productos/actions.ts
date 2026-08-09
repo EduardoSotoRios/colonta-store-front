@@ -276,13 +276,43 @@ export async function marcarImagenPrincipal(imagenId: number, productoId: string
 }
 
 // ─── Extras del producto ───────────────────────────────────────
-export async function getProductoExtrasIds(productoId: string): Promise<string[]> {
+const EXTRAS_IDS = {
+  bolsilloEspalda:    '5440afab-dfa5-4fca-9157-98293c2f1cef',
+  cintaMattYoga:      'c5fdf1a5-9c76-4364-8a28-e07d12787bcf',
+  cintasSaco:         '9984a38e-6763-4222-a1b4-5d4952d4a0b1',
+  cintasReflectantes: '54a9fec4-f2bc-44ad-b784-da6dc294b469',
+  tipTopTapa:         'd1146736-17cd-4baf-b6c4-a3cf4ed868b8',
+  cintasCintura:      '41bf122b-872a-431b-96de-9bffabbbc472',
+  cintasPecho:        'db38b57c-a3e4-4fa0-9754-6a3fb4d648ae',
+  cintaReflectante:   '05d0c15d-bb89-47d5-9fea-90f907dc1e72',
+};
+
+function extrasFallback(categoriaSlug: string, nombre: string): string[] {
+  if (categoriaSlug === 'bananos') return [EXTRAS_IDS.cintaReflectante];
+  if (categoriaSlug === 'mochilas') {
+    return nombre.toLowerCase().includes('ligera')
+      ? [EXTRAS_IDS.bolsilloEspalda, EXTRAS_IDS.cintasReflectantes]
+      : [EXTRAS_IDS.bolsilloEspalda, EXTRAS_IDS.cintaMattYoga, EXTRAS_IDS.cintasSaco,
+         EXTRAS_IDS.cintasReflectantes, EXTRAS_IDS.tipTopTapa, EXTRAS_IDS.cintasCintura, EXTRAS_IDS.cintasPecho];
+  }
+  return [];
+}
+
+export async function getProductoExtrasIds(
+  productoId: string,
+  categoriaSlug?: string,
+  nombre?: string,
+): Promise<string[]> {
   const supabase = await createSupabaseAdminClient();
   const { data } = await supabase
     .from("producto_extras")
     .select("extra_id")
     .eq("producto_id", productoId);
-  return data?.map((r) => r.extra_id) ?? [];
+
+  if (data && data.length > 0) return data.map((r) => r.extra_id);
+
+  // Sin asignación manual: usar lógica por categoría como punto de partida
+  return categoriaSlug && nombre ? extrasFallback(categoriaSlug, nombre) : [];
 }
 
 export async function setProductoExtras(productoId: string, extraIds: string[]): Promise<void> {
