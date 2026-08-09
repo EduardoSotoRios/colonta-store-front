@@ -44,6 +44,23 @@ export async function getExtrasMeta(): Promise<Record<string, string>> {
   return map;
 }
 
+export async function getExtrasConImagenes(): Promise<Array<{
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl?: string;
+}>> {
+  const supabase = await createSupabaseAdminClient();
+  const [{ data: extras }, { data: meta }] = await Promise.all([
+    supabase.from("extras").select("id, name, description, price").order("name"),
+    supabase.from("extras_meta").select("extra_id, image_url"),
+  ]);
+  const imgMap: Record<string, string> = {};
+  meta?.forEach((r) => { imgMap[r.extra_id] = r.image_url; });
+  return (extras ?? []).map((e) => ({ ...e, imageUrl: imgMap[e.id] }));
+}
+
 export async function sincronizarExtra(extra: {
   id: string;
   name: string;
