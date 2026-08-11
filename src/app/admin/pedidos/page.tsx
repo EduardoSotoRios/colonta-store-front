@@ -69,31 +69,32 @@ function ImageModal({ src, onClose }: { src: string; onClose: () => void }) {
 
 // ── Fila de item dentro de un pedido ─────────────────────────────────────────
 function OrderItemRow({ item }: { item: Order["items"][number] }) {
-  const [expanded, setExpanded] = useState(false);
-  const isCustom  = Boolean(item.customDesignImageUrl);
-  const imgSrc    = item.customDesignImageUrl || item.productImageUrl;
-  const colors    = item.chosenColorScheme?.colors ?? [];
-  const colorName = item.chosenColorScheme?.name;
-  const extras    = item.chosenExtras ?? [];
+  const [expandedSrc, setExpandedSrc] = useState<string | null>(null);
+  const isCustom     = Boolean(item.customDesignImageUrl);
+  const hasStamp     = Boolean(item.stampImageUrl);
+  const productImg   = item.customDesignImageUrl || item.productImageUrl;
+  const colors       = item.chosenColorScheme?.colors ?? [];
+  const colorName    = item.chosenColorScheme?.name;
+  const extras       = item.chosenExtras ?? [];
 
   return (
     <>
-      {expanded && imgSrc && (
-        <ImageModal src={imgSrc} onClose={() => setExpanded(false)} />
+      {expandedSrc && (
+        <ImageModal src={expandedSrc} onClose={() => setExpandedSrc(null)} />
       )}
 
       <li className="px-5 py-5 flex gap-5 items-start">
-        {/* Imagen — clic para zoom */}
+        {/* Imagen producto — clic para zoom */}
         <div className="shrink-0">
-          {imgSrc ? (
+          {productImg ? (
             <button
               type="button"
-              onClick={() => setExpanded(true)}
+              onClick={() => setExpandedSrc(productImg)}
               className="block relative cursor-zoom-in"
               title="Ver imagen ampliada"
             >
               <img
-                src={imgSrc}
+                src={productImg}
                 alt={item.productName}
                 className="w-24 h-24 rounded-xl object-cover border border-slate-200 shadow-sm hover:opacity-90 transition-opacity"
               />
@@ -121,6 +122,11 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
                 {isCustom && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-100 text-purple-700 shrink-0">
                     Diseñado
+                  </span>
+                )}
+                {hasStamp && (
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-orange-100 text-orange-700 shrink-0">
+                    Estampado
                   </span>
                 )}
               </div>
@@ -154,13 +160,32 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
             </p>
           )}
 
-          {imgSrc && (
-            <button
-              onClick={() => setExpanded(true)}
-              className="mt-2 text-xs text-slate-400 hover:text-slate-600 font-medium underline"
-            >
-              Ver imagen ampliada →
-            </button>
+          {/* Imagen de estampado del cliente */}
+          {hasStamp && item.stampImageUrl && (
+            <div className="mt-3 flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-3">
+              <button
+                type="button"
+                onClick={() => setExpandedSrc(item.stampImageUrl!)}
+                className="shrink-0 cursor-zoom-in"
+                title="Ver diseño de estampado ampliado"
+              >
+                <img
+                  src={item.stampImageUrl}
+                  alt="Diseño a estampar"
+                  className="w-16 h-16 rounded-lg object-contain border border-orange-200 bg-white hover:opacity-80 transition-opacity"
+                />
+              </button>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-orange-800">Imagen de estampado</p>
+                <p className="text-xs text-orange-700 mt-0.5">El cliente subió un diseño para estampar en el producto.</p>
+                <button
+                  onClick={() => setExpandedSrc(item.stampImageUrl!)}
+                  className="mt-1 text-xs text-orange-600 hover:text-orange-800 font-medium underline"
+                >
+                  Ver ampliada →
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </li>

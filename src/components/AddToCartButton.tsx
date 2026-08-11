@@ -5,7 +5,10 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { getColorEmoji } from "@/lib/colores-map";
 import FavoriteButton from "@/components/FavoriteButton";
+import { subirImagenEstampado } from "@/actions/extras-meta";
 import type { ProductModel, CartItem } from "@/lib/api";
+
+const esExtraEstampado = (nombre: string) => nombre.toLowerCase().includes("estampado");
 
 type ImagenColor = { nombre: string; hex: string | null };
 
@@ -64,9 +67,30 @@ export default function AddToCartButton({
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [previewExtra, setPreviewExtra] = useState<(typeof extras)[0] | null>(null);
+  const [stampImageUrl, setStampImageUrl] = useState<string | null>(null);
+  const [subiendoStamp, setSubiendoStamp] = useState(false);
+  const [stampError, setStampError] = useState<string | null>(null);
 
   const hasImageSelected = selectedImage !== undefined;
   const hasImageColors = hasImageSelected && selectedImage.colores.length > 0;
+
+  const handleSubirStamp = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendoStamp(true);
+    setStampError(null);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const url = await subirImagenEstampado(fd);
+      setStampImageUrl(url);
+    } catch (err: any) {
+      setStampError(err?.message ?? "Error al subir imagen");
+    } finally {
+      setSubiendoStamp(false);
+      e.target.value = "";
+    }
+  };
 
   const handleAdd = async () => {
     const item: CartItem = {
@@ -76,6 +100,10 @@ export default function AddToCartButton({
       productName: productModel.name,
       unitPrice: Number(productModel.basePrice),
     };
+
+    if (stampImageUrl) {
+      item.stampImageUrl = stampImageUrl;
+    }
 
     if (hasImageSelected) {
       item.imageId = selectedImage.id;
@@ -94,12 +122,16 @@ export default function AddToCartButton({
     await addItem(item, user);
   };
 
-  const toggleExtra = (extraId: string) => {
+  const toggleExtra = (extraId: string, nombre: string) => {
+    const wasSelected = selectedExtras.includes(extraId);
     setSelectedExtras((prev) =>
-      prev.includes(extraId)
-        ? prev.filter((id) => id !== extraId)
-        : [...prev, extraId]
+      wasSelected ? prev.filter((id) => id !== extraId) : [...prev, extraId]
     );
+    // Al deseleccionar estampado, limpiar la imagen
+    if (wasSelected && esExtraEstampado(nombre)) {
+      setStampImageUrl(null);
+      setStampError(null);
+    }
   };
 
   return (
@@ -266,62 +298,127 @@ export default function AddToCartButton({
               {extras.map((extra) => {
                 const price = Number(extra.price) || 0;
                 const isSelected = selectedExtras.includes(extra.id);
+                const isEstampado = esExtraEstampado(extra.name);
                 return (
-                  <label
-                    key={extra.id}
-                    className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-xl border transition-colors ${
-                      isSelected
-                        ? "border-colonta-primary bg-colonta-primary/5"
-                        : "border-slate-200 hover:border-slate-300 bg-white"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleExtra(extra.id)}
-                      className="rounded shrink-0 accent-colonta-primary"
-                    />
-                    {/* Imagen del extra — clic abre preview */}
-                    <div
-                      className={`w-12 h-12 rounded-lg shrink-0 overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center ${extra.imageUrl ? "cursor-zoom-in hover:ring-2 hover:ring-colonta-primary" : ""}`}
-                      onClick={(e) => {
-                        if (!extra.imageUrl) return;
-                        e.preventDefault();
-                        setPreviewExtra(extra);
-                      }}
+                  <div key={extra.id}>
+                    <label
+                      className={`flex items-center gap-3 cursor-pointer p-2.5 rounded-xl border transition-colors ${
+                        isSelected
+                          ? "border-colonta-primary bg-colonta-primary/5"
+                          : "border-slate-200 hover:border-slate-300 bg-white"
+                      }`}
                     >
-                      {extra.imageUrl ? (
-                        <img
-                          src={extra.imageUrl}
-                          alt={extra.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <svg className="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-slate-900 truncate">
-                          {extra.name}
-                        </span>
-                        <span
-                          className={`text-sm font-semibold shrink-0 ${
-                            isSelected ? "text-colonta-primary" : "text-slate-600"
-                          }`}
-                        >
-                          +${new Intl.NumberFormat("es-CL").format(price)}
-                        </span>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleExtra(extra.id, extra.name)}
+                        className="rounded shrink-0 accent-colonta-primary"
+                      />
+                      {/* Imagen del extra — clic abre preview */}
+                      <div
+                        className={`w-12 h-12 rounded-lg shrink-0 overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center ${extra.imageUrl ? "cursor-zoom-in hover:ring-2 hover:ring-colonta-primary" : ""}`}
+                        onClick={(e) => {
+                          if (!extra.imageUrl) return;
+                          e.preventDefault();
+                          setPreviewExtra(extra);
+                        }}
+                      >
+                        {extra.imageUrl ? (
+                          <img
+                            src={extra.imageUrl}
+                            alt={extra.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg className="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        )}
                       </div>
-                      {extra.description && (
-                        <p className="text-xs text-slate-500 mt-0.5 truncate">
-                          {extra.description}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-slate-900 truncate">
+                            {extra.name}
+                          </span>
+                          <span
+                            className={`text-sm font-semibold shrink-0 ${
+                              isSelected ? "text-colonta-primary" : "text-slate-600"
+                            }`}
+                          >
+                            +${new Intl.NumberFormat("es-CL").format(price)}
+                          </span>
+                        </div>
+                        {extra.description && (
+                          <p className="text-xs text-slate-500 mt-0.5 truncate">
+                            {extra.description}
+                          </p>
+                        )}
+                      </div>
+                    </label>
+
+                    {/* Bloque de subida para estampado */}
+                    {isEstampado && isSelected && (
+                      <div className="mt-1.5 ml-2 rounded-xl border border-dashed border-colonta-primary/40 bg-colonta-primary/5 p-3">
+                        <p className="text-xs font-semibold text-slate-700 mb-2">
+                          Sube tu diseño para estampar
                         </p>
-                      )}
-                    </div>
-                  </label>
+                        {stampImageUrl ? (
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={stampImageUrl}
+                              alt="Diseño a estampar"
+                              className="w-16 h-16 rounded-lg object-contain border border-slate-200 bg-white"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-green-700 font-medium">Imagen cargada</p>
+                              <label className="mt-1 inline-block text-xs text-slate-500 underline cursor-pointer hover:text-slate-700">
+                                Cambiar imagen
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  disabled={subiendoStamp}
+                                  onChange={handleSubirStamp}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        ) : (
+                          <label
+                            className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-4 cursor-pointer hover:bg-slate-50 transition-colors ${subiendoStamp ? "opacity-60 pointer-events-none" : ""}`}
+                          >
+                            {subiendoStamp ? (
+                              <>
+                                <svg className="w-5 h-5 text-colonta-primary animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                </svg>
+                                <span className="text-xs text-slate-500">Subiendo…</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                </svg>
+                                <span className="text-xs text-slate-600 font-medium">Seleccionar imagen</span>
+                                <span className="text-[11px] text-slate-400">JPG, PNG, SVG — máx. 8 MB</span>
+                              </>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={subiendoStamp}
+                              onChange={handleSubirStamp}
+                            />
+                          </label>
+                        )}
+                        {stampError && (
+                          <p className="mt-2 text-xs text-red-600">{stampError}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>

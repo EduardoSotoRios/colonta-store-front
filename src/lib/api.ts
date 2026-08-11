@@ -132,6 +132,10 @@ function cleanCartItem(item: CartItem): Record<string, any> {
     cleaned.customDesignImageUrl = String(item.customDesignImageUrl);
   }
 
+  if (item.stampImageUrl) {
+    cleaned.stampImageUrl = String(item.stampImageUrl);
+  }
+
   if (item.productImageUrl) {
     cleaned.productImageUrl = String(item.productImageUrl);
   }
@@ -337,6 +341,7 @@ export type CartItem = {
   };
   extras: string[];            // IDs de extras (siempre presente, puede ser array vacío)
   customDesignImageUrl?: string; // Diseño del configurador (Cloudinary) — se envía al backend
+  stampImageUrl?: string;       // Imagen de estampado subida por el cliente — se envía al backend
   productImageUrl?: string;    // URL de la imagen del producto seleccionada — se guarda en la orden
   unitPrice?: number;          // Precio del producto — se envía al backend como fallback para productos Supabase
   productName?: string;        // Nombre del producto — se envía al backend como fallback para productos Supabase
@@ -412,6 +417,7 @@ export type OrderItem = {
   chosenExtras: Array<{ id: string; name: string; price: number }>;
   unitPrice: number;
   customDesignImageUrl: string | null;
+  stampImageUrl?: string | null;
   productImageUrl: string | null;
 };
 
