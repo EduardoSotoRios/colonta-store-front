@@ -46,7 +46,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   const templateReadyRef = useRef(false);
 
   const [tool, setToolState]   = useState<Tool>('pencil');
-  const [brushSize, setBrushSize] = useState(8);
+  const [brushSize, setBrushSize] = useState(16);
   const [color, setColor]      = useState('#E53935');
   // A COLORS `value` like 'pattern-leopardo', or null when painting a plain color.
   const [activePattern, setActivePattern] = useState<string | null>(null);
@@ -448,7 +448,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
             Tamaño: <span className="text-gray-700">{brushSize}px</span>
           </p>
           <input
-            type="range" min={2} max={40} value={brushSize}
+            type="range" min={4} max={80} value={brushSize}
             onChange={e => setBrushSize(Number(e.target.value))}
             className="w-full accent-[#5B2D8E]"
           />

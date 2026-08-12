@@ -1,5 +1,8 @@
-export const CANVAS_W = 680;
-export const CANVAS_H = 520;
+// Al doble de la resolucion original (680x520) para que las plantillas se
+// vean nitidas en vez de pixeladas — todo el resto del archivo escala solo
+// porque usa estas constantes en lugar de numeros sueltos.
+export const CANVAS_W = 1360;
+export const CANVAS_H = 1040;
 
 export function drawTemplateFromImage(
   img: HTMLImageElement,
@@ -19,10 +22,13 @@ export function drawTemplateFromImage(
     const ih = img.naturalHeight || 1080;
     const canW = templateCanvas.width;
     const canH = templateCanvas.height;
-    const scale = Math.min((canW - 40) / iw, (canH - 40) / ih);
+    const margin = 80;
+    const scale = Math.min((canW - margin) / iw, (canH - margin) / ih);
     const dw = iw * scale, dh = ih * scale;
     const dx = (canW - dw) / 2, dy = (canH - dh) / 2;
 
+    tmpCtx.imageSmoothingEnabled = true;
+    tmpCtx.imageSmoothingQuality = 'high';
     tmpCtx.drawImage(img, dx, dy, dw, dh);
 
     // Make white/light background transparent; keep dark outlines.
@@ -68,7 +74,7 @@ export const TEXTURE_PATTERN_VALUES = [
   'pattern-cintas-color',
 ] as const;
 
-const TEXTURE_TILE_SIZE = 110;
+const TEXTURE_TILE_SIZE = 220; // al doble junto con CANVAS_W/H, mismo tamaño relativo de mosaico
 // Placeholder color painted into the flood-fill mask before the real tiled
 // texture is composited over it — never visible once a texture is ready.
 const TEXTURE_SENTINEL: [number, number, number] = [17, 17, 17];
