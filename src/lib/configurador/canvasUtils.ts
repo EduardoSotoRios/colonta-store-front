@@ -278,6 +278,36 @@ export function buildProductMask(templateCanvas: HTMLCanvasElement): { mask: Uin
   return { mask, maskCanvas };
 }
 
+// Patron de cuadros gris/gris oscuro (el mismo lenguaje visual que Photoshop
+// o Figma usan para "transparente") que se muestra SOLO en el lienzo en
+// vivo del editor donde todavia no se pinto nada, para poder distinguir
+// "sin pintar" de "pintado de blanco a proposito" — ambos casos antes se
+// veian identicos porque el lienzo de pintura arrancaba blanco solido.
+// getMergedDataURL (arriba) sigue usando blanco solido de fondo: la imagen
+// final que se descarga/agrega al carrito nunca debe llevar este patron,
+// solo representa "sin decidir todavia" mientras se esta diseñando.
+const CHECKER_SIZE = 24;
+let checkerTile: HTMLCanvasElement | null = null;
+
+function getCheckerTile(): HTMLCanvasElement {
+  if (checkerTile) return checkerTile;
+  const tile = document.createElement('canvas');
+  tile.width = CHECKER_SIZE * 2;
+  tile.height = CHECKER_SIZE * 2;
+  const tctx = tile.getContext('2d')!;
+  tctx.fillStyle = '#e4e4e4';
+  tctx.fillRect(0, 0, CHECKER_SIZE * 2, CHECKER_SIZE * 2);
+  tctx.fillStyle = '#bcbcbc';
+  tctx.fillRect(0, 0, CHECKER_SIZE, CHECKER_SIZE);
+  tctx.fillRect(CHECKER_SIZE, CHECKER_SIZE, CHECKER_SIZE, CHECKER_SIZE);
+  checkerTile = tile;
+  return tile;
+}
+
+export function createCheckerboardPattern(ctx: CanvasRenderingContext2D): CanvasPattern {
+  return ctx.createPattern(getCheckerTile(), 'repeat')!;
+}
+
 export function getMergedDataURL(
   colorCanvas: HTMLCanvasElement,
   templateCanvas: HTMLCanvasElement,

@@ -10,6 +10,7 @@ import {
   isTexturePattern,
   createZoneMap,
   buildProductMask,
+  createCheckerboardPattern,
   getMergedDataURL,
   downloadCanvas,
 } from '@/lib/configurador/canvasUtils';
@@ -87,7 +88,11 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     if (!main || !col || !tpl) return;
     const ctx = main.getContext('2d')!;
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-    ctx.fillStyle = '#FFFFFF';
+    // Cuadros gris/gris oscuro (como Photoshop) para "sin pintar" en vez de
+    // blanco solido — asi se distingue de una zona pintada de blanco a
+    // proposito. Solo es para este lienzo en pantalla; la imagen final
+    // (getMergedDataURL) sigue usando fondo blanco solido.
+    ctx.fillStyle = createCheckerboardPattern(ctx);
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
     ctx.drawImage(col, 0, 0);
     ctx.drawImage(tpl, 0, 0);
@@ -124,9 +129,10 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     templateReadyRef.current = false;
     setTemplateReady(false);
 
-    const colorCtx = colorCanvas.getContext('2d')!;
-    colorCtx.fillStyle = '#FFFFFF';
-    colorCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    // Arranca transparente (no blanco solido): asi una zona explicitamente
+    // pintada de blanco se puede distinguir en pantalla de una zona todavia
+    // sin pintar (que muestra el patron de cuadros de renderComposite).
+    colorCanvas.getContext('2d')!.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
     historyRef.current = [];
 
@@ -168,7 +174,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   // Dibuja en un canvas auxiliar, lo recorta a la silueta del producto
   // (maskCanvasRef) y recién ahí lo compone sobre colorCanvas — así la parte
   // de un trazo que cae fuera de la plantilla nunca llega a pintarse.
-  function paintMasked(draw: (ctx: CanvasRenderingContext2D) => void) {
+  function paintMasked(draw: (ctx: CanvasRenderingContext2D) => void, erase = false) {
     const col = colorCanvasRef.current;
     const scratch = scratchCanvasRef.current;
     if (!col || !scratch) return;
@@ -181,7 +187,18 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
       sctx.drawImage(mask, 0, 0);
       sctx.globalCompositeOperation = 'source-over';
     }
-    col.getContext('2d')!.drawImage(scratch, 0, 0);
+    const colCtx = col.getContext('2d')!;
+    if (erase) {
+      // Borra a transparente (vuelve a "sin pintar", muestra el patron de
+      // cuadros) en vez de pintar blanco encima — si no, el borrador
+      // terminaria "eligiendo blanco" para esa zona en lugar de dejarla sin
+      // decidir.
+      colCtx.globalCompositeOperation = 'destination-out';
+      colCtx.drawImage(scratch, 0, 0);
+      colCtx.globalCompositeOperation = 'source-over';
+    } else {
+      colCtx.drawImage(scratch, 0, 0);
+    }
   }
 
   // ── Drawing events ──────────────────────────────────────────────────────
@@ -224,13 +241,16 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
 
       isDrawingRef.current = true;
       lastPosRef.current = pos;
-      const size = toolRef.current === 'eraser' ? brushRef.current * 2 : brushRef.current;
+      const isEraser = toolRef.current === 'eraser';
+      const size = isEraser ? brushRef.current * 2 : brushRef.current;
       paintMasked(sctx => {
         sctx.beginPath();
-        sctx.fillStyle = toolRef.current === 'eraser' ? '#FFFFFF' : getDrawFill() as string;
+        // Con isEraser el color no importa (solo se usa la forma/alpha vía
+        // destination-out en paintMasked), asi que cualquier tono opaco sirve.
+        sctx.fillStyle = isEraser ? '#000000' : getDrawFill() as string;
         sctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
         sctx.fill();
-      });
+      }, isEraser);
       renderComposite();
     };
 
@@ -240,17 +260,18 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
       const col = colorCanvasRef.current;
       if (!col) return;
       const pos = getPos(e);
-      const size = toolRef.current === 'eraser' ? brushRef.current * 2 : brushRef.current;
+      const isEraser = toolRef.current === 'eraser';
+      const size = isEraser ? brushRef.current * 2 : brushRef.current;
       paintMasked(sctx => {
         sctx.beginPath();
         sctx.moveTo(lastPosRef.current.x, lastPosRef.current.y);
         sctx.lineTo(pos.x, pos.y);
-        sctx.strokeStyle = toolRef.current === 'eraser' ? '#FFFFFF' : getDrawFill() as string;
+        sctx.strokeStyle = isEraser ? '#000000' : getDrawFill() as string;
         sctx.lineWidth  = size;
         sctx.lineCap    = 'round';
         sctx.lineJoin   = 'round';
         sctx.stroke();
-      });
+      }, isEraser);
       lastPosRef.current = pos;
       renderComposite();
     };
@@ -296,9 +317,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     if (!confirm('¿Limpiar el diseño y volver a la plantilla?')) return;
     const col = colorCanvasRef.current;
     if (!col) return;
-    const ctx = col.getContext('2d')!;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    col.getContext('2d')!.clearRect(0, 0, CANVAS_W, CANVAS_H);
     zoneMapRef.current = createZoneMap(CANVAS_W, CANVAS_H);
     renderComposite();
     historyRef.current = [];
