@@ -61,7 +61,22 @@ function ImageModal({ src, onClose }: { src: string; onClose: () => void }) {
         >
           Cerrar ✕
         </button>
-        <img src={src} alt="Producto diseñado" className="w-full rounded-xl shadow-2xl" />
+        {/* Fondo de cuadros: el PNG del diseño tiene transparencia real
+            donde el cliente no pinto nada, para que no se confunda con
+            "eligio blanco a proposito" — sin este fondo, esas zonas se
+            verian negras contra el overlay del modal. */}
+        <div
+          className="rounded-xl shadow-2xl overflow-hidden"
+          style={{
+            backgroundImage:
+              'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
+            backgroundSize: '20px 20px',
+            backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+            backgroundColor: '#f0f0f0',
+          }}
+        >
+          <img src={src} alt="Producto diseñado" className="w-full block" />
+        </div>
       </div>
     </div>
   );

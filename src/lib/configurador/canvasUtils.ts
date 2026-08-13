@@ -313,12 +313,16 @@ export function getMergedDataURL(
   templateCanvas: HTMLCanvasElement,
   productName: string,
 ): string {
+  // Sin relleno blanco de fondo: colorCanvas ya es transparente donde el
+  // cliente no pinto nada (ver CanvasDesigner), asi que el PNG final
+  // conserva esa transparencia real. Esto es lo que la empresa necesita
+  // para fabricar el producto — poder distinguir "el cliente eligio blanco
+  // a proposito" (blanco solido) de "no eligio nada aca" (transparente),
+  // en vez de que ambos casos queden identicos como blanco solido.
   const merged = document.createElement('canvas');
   merged.width  = colorCanvas.width;
   merged.height = colorCanvas.height;
   const mctx = merged.getContext('2d')!;
-  mctx.fillStyle = '#FFFFFF';
-  mctx.fillRect(0, 0, merged.width, merged.height);
   mctx.drawImage(colorCanvas, 0, 0);
   mctx.drawImage(templateCanvas, 0, 0);
   return merged.toDataURL('image/png');
