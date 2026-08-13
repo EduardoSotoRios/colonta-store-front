@@ -36,15 +36,27 @@ export function drawTemplateFromImage(
     // ej. plantillas exportadas sin fondo) se dejan como estan — si no, su
     // RGB en blanco (0,0,0) se leeria como luminosidad 0 y se pintarian
     // negro solido en vez de transparente.
+    // Umbral de tinta mas agresivo que un simple degradado lineal: cualquier
+    // trazo mas oscuro que INK_FLOOR llega a opacidad completa de una, y solo
+    // la franja entre INK_FLOOR y BG_CEILING se usa para el antialiasing
+    // suave del borde. Sin esto, una plantilla con lineas finas (donde el
+    // antialiasing ocupa la mayor parte del ancho del trazo, no solo el
+    // borde) terminaba con casi toda la linea semi-transparente en vez de
+    // solida, y se veia difusa/pixelada aunque el lienzo sea de alta
+    // resolucion.
+    const INK_FLOOR = 110;
+    const BG_CEILING = 160;
     const imgData = tmpCtx.getImageData(0, 0, canW, canH);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] === 0) continue;
       const lum = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-      if (lum > 160) {
+      if (lum > BG_CEILING) {
         data[i + 3] = 0;
+      } else if (lum <= INK_FLOOR) {
+        data[i + 3] = 255;
       } else {
-        data[i + 3] = Math.min(255, Math.round((1 - lum / 255) * 280));
+        data[i + 3] = Math.round((1 - (lum - INK_FLOOR) / (BG_CEILING - INK_FLOOR)) * 255);
       }
     }
     tmpCtx.putImageData(imgData, 0, 0);
