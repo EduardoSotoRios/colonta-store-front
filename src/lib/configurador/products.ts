@@ -31,7 +31,7 @@ export const PRODUCT_THUMBNAILS: Record<ProductId, string> = {
   banano_simple:   '/configurador/banano-simple.png',
   banano_muslera:  '/configurador/banano-mulera.png',
   porta_matt:      '/configurador/porta-matt.png',
-  roll_top:        '/configurador/roll-top.jpg',
+  roll_top:        '/configurador/roll-top.png',
   porta_notebook:  '/configurador/porta-notebook.png',
 };
 
@@ -47,7 +47,7 @@ export const PRODUCT_IMAGES: Record<ProductId, string> = {
   banano_simple:   '/configurador/plantillas/banano.png',
   banano_muslera:  '/configurador/plantillas/banano-simple.png',
   porta_matt:      '/configurador/plantillas/porta-matt.png',
-  roll_top:        '/configurador/plantillas/roll-top.jpg',
+  roll_top:        '/configurador/plantillas/roll-top.png',
   porta_notebook:  '/configurador/plantillas/porta-notebook.png',
 };
 
@@ -66,7 +66,7 @@ export const PRODUCT_LIST: Array<ProductInfo | { id: 'mochila'; name: string; de
   { id: 'banano_simple',  name: 'Banano Simple',  description: 'Sling bag cruzado',     image: '/configurador/banano-simple.png' },
   { id: 'banano_muslera', name: 'Banano Muslera', description: 'Riñonera tipo muslera', image: '/configurador/banano-mulera.png' },
   { id: 'porta_matt',     name: 'Porta Matt',     description: 'Porta colchoneta',      image: '/configurador/porta-matt.png' },
-  { id: 'roll_top',       name: 'Roll Top',       description: 'Cierre enrollable',     image: '/configurador/roll-top.jpg' },
+  { id: 'roll_top',       name: 'Roll Top',       description: 'Cierre enrollable',     image: '/configurador/roll-top.png' },
   { id: 'porta_notebook', name: 'Porta Notebook', description: 'Funda para laptop',     image: '/configurador/porta-notebook.png' },
 ];
 
