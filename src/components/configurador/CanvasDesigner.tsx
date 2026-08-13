@@ -379,7 +379,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
           style={swatchStyle}
           className={`w-full aspect-square rounded-xl border-[3px] transition-transform
             ${agotado ? 'opacity-30 grayscale cursor-not-allowed' : 'hover:scale-110'}
-            ${isSelected ? 'border-[#5B2D8E] scale-110' : 'border-transparent'}`}
+            ${isSelected ? 'border-[#5B2D8E] scale-110' : c.value === '#FFFFFF' ? 'border-gray-300' : 'border-transparent'}`}
         />
         {agotado && (
           <span className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-xl bg-slate-900/80 text-white text-[8px] font-semibold text-center leading-tight py-0.5">

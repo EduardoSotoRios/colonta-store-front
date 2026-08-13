@@ -75,6 +75,7 @@ export const COLORS = [
   { name: 'Azul',           value: '#1565C0' },
   { name: 'Verde Petróleo', value: '#006064' },
   { name: 'Negro',          value: '#1A1A1A' },
+  { name: 'Blanco',         value: '#FFFFFF' },
   { name: 'Naranja',        value: '#E65100' },
   { name: 'Gris',           value: '#78909C' },
   { name: 'Rosa',           value: '#E91E8C' },
