@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const RAILWAY_API = process.env.RAILWAY_API_URL ?? "https://colonta-api-production.up.railway.app";
+const RAILWAY_API = process.env.RAILWAY_API_URL ?? "https://colonta-api-sz8z.onrender.com";
 
 const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
