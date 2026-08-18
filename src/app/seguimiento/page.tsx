@@ -191,15 +191,27 @@ function OrderCard({ order }: { order: Order }) {
                 </p>
                 {(colorName || colors.length > 0) && (
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                    {colors.map((c, i) => (
-                      <span
-                        key={i}
-                        className="inline-block w-4 h-4 rounded-full border border-black/10 shadow-sm"
-                        style={{ backgroundColor: c.startsWith("#") ? c : undefined }}
-                        title={c}
-                      />
-                    ))}
-                    {colorName && <span className="text-xs text-slate-500">{colorName}</span>}
+                    {colors.map((c, i) =>
+                      c.startsWith("#") ? (
+                        <span
+                          key={i}
+                          className="inline-block w-4 h-4 rounded-full border border-black/10 shadow-sm"
+                          style={{ backgroundColor: c }}
+                          title={c}
+                        />
+                      ) : (
+                        <span
+                          key={i}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200"
+                          title={c}
+                        >
+                          {c}
+                        </span>
+                      )
+                    )}
+                    {colorName && !colors.length && (
+                      <span className="text-xs text-slate-500">{colorName}</span>
+                    )}
                   </div>
                 )}
               </div>

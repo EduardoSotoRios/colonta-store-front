@@ -22,15 +22,25 @@ function ItemImage({ item }: { item: Order["items"][number] }) {
 function ColorDots({ colors }: { colors: string[] }) {
   if (!colors?.length) return null;
   return (
-    <span className="inline-flex gap-1 ml-1">
-      {colors.map((c, i) => (
-        <span
-          key={i}
-          className="inline-block w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
-          style={{ backgroundColor: c.startsWith('#') ? c : undefined }}
-          title={c}
-        />
-      ))}
+    <span className="inline-flex gap-1 ml-1 flex-wrap items-center">
+      {colors.map((c, i) =>
+        c.startsWith('#') ? (
+          <span
+            key={i}
+            className="inline-block w-3 h-3 rounded-full border border-black/10 flex-shrink-0"
+            style={{ backgroundColor: c }}
+            title={c}
+          />
+        ) : (
+          <span
+            key={i}
+            className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200"
+            title={c}
+          >
+            {c}
+          </span>
+        )
+      )}
     </span>
   );
 }
