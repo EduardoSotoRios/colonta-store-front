@@ -132,9 +132,15 @@ export default function CartSidebar() {
               : product.imagenes?.find((img: Imagen) => img.principal) ?? product.imagenes?.[0];
             const thumbUrl = matchingImg?.url || product.imageUrl || "/mochila1.png";
 
+            const fallbackColors = item.colorScheme?.colors ?? [];
+            const fallbackNames  = (item.colorScheme?.name ?? '').split(' / ');
             const itemColors: ImagenColor[] = matchingImg?.colores?.length
               ? matchingImg.colores
-              : (item.colorScheme?.colors ?? []).map(name => ({ nombre: name, hex: null }));
+              : fallbackColors.map((c, i) =>
+                  c.startsWith('#')
+                    ? { nombre: fallbackNames[i] ?? '', hex: c }
+                    : { nombre: c, hex: null }
+                );
 
             return (
               <div key={index} className="flex gap-3 p-3 rounded-xl ring-1 ring-black/5 bg-white">
