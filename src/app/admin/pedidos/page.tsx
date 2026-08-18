@@ -155,24 +155,25 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className="text-xs text-slate-500">Color:</span>
               <div className="flex items-center gap-1.5 flex-wrap">
-                {colors.map((c, i) =>
-                  c.startsWith("#") ? (
-                    <span key={i} className="inline-flex items-center gap-1">
+                {colors.length > 0 ? (
+                  colors.map((c, i) =>
+                    c.startsWith("#") ? (
+                      <span key={i} title={colorName}>
+                        <span
+                          className="inline-block w-4 h-4 rounded-full border border-black/10 shrink-0 shadow-sm"
+                          style={{ backgroundColor: c }}
+                        />
+                      </span>
+                    ) : (
                       <span
-                        className="inline-block w-4 h-4 rounded-full border border-black/10 shrink-0 shadow-sm"
-                        style={{ backgroundColor: c }}
-                      />
-                    </span>
-                  ) : (
-                    <span
-                      key={i}
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
-                    >
-                      {c}
-                    </span>
+                        key={i}
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                      >
+                        {c}
+                      </span>
+                    )
                   )
-                )}
-                {colorName && (
+                ) : (
                   <span className="text-xs font-medium text-slate-700">{colorName}</span>
                 )}
               </div>
