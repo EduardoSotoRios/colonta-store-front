@@ -112,7 +112,7 @@ export default function AddToCartButton({
         item.colorScheme = {
           type: "custom",
           name: selectedImage.colores.map((c) => c.nombre).join(" / "),
-          colors: selectedImage.colores.map((c) => c.nombre),
+          colors: selectedImage.colores.map((c) => c.hex ?? c.nombre),
         };
       }
     } else if (selectedColorSchemeId) {

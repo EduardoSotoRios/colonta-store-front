@@ -197,19 +197,17 @@ function OrderCard({ order }: { order: Order }) {
                           key={i}
                           className="inline-block w-4 h-4 rounded-full border border-black/10 shadow-sm"
                           style={{ backgroundColor: c }}
-                          title={c}
                         />
                       ) : (
                         <span
                           key={i}
                           className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200"
-                          title={c}
                         >
                           {c}
                         </span>
                       )
                     )}
-                    {colorName && !colors.length && (
+                    {colorName && (
                       <span className="text-xs text-slate-500">{colorName}</span>
                     )}
                   </div>
