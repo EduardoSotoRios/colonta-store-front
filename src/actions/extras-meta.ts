@@ -98,6 +98,16 @@ export async function subirImagenEstampado(formData: FormData): Promise<string> 
   });
 }
 
+export async function getColoresHexMap(): Promise<Record<string, string>> {
+  const supabase = await createSupabaseAdminClient();
+  const { data } = await supabase.from("colores").select("nombre, hex");
+  const map: Record<string, string> = {};
+  data?.forEach((row) => {
+    if (row.nombre && row.hex) map[row.nombre.toLowerCase()] = row.hex;
+  });
+  return map;
+}
+
 export async function eliminarExtraMeta(extraId: string): Promise<void> {
   const supabase = await createSupabaseAdminClient();
   await Promise.all([

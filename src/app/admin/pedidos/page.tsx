@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { api, type Order, type BlueExpressDelivery } from "@/lib/api";
+import { getColoresHexMap } from "@/actions/extras-meta";
 import Link from "next/link";
 
 type EstadoKey = Order["estado"];
@@ -83,7 +84,13 @@ function ImageModal({ src, onClose }: { src: string; onClose: () => void }) {
 }
 
 // ── Fila de item dentro de un pedido ─────────────────────────────────────────
-function OrderItemRow({ item }: { item: Order["items"][number] }) {
+function OrderItemRow({
+  item,
+  coloresMap,
+}: {
+  item: Order["items"][number];
+  coloresMap: Record<string, string>;
+}) {
   const [expandedSrc, setExpandedSrc] = useState<string | null>(null);
   const isCustom     = Boolean(item.customDesignImageUrl);
   const hasStamp     = Boolean(item.stampImageUrl);
@@ -156,12 +163,13 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
               <span className="text-xs text-slate-500">Color:</span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {colors.length > 0 ? (
-                  colors.map((c, i) =>
-                    c.startsWith("#") ? (
-                      <span key={i} title={colorName}>
+                  colors.map((c, i) => {
+                    const hex = c.startsWith("#") ? c : (coloresMap[c.toLowerCase()] ?? null);
+                    return hex ? (
+                      <span key={i} title={c}>
                         <span
                           className="inline-block w-4 h-4 rounded-full border border-black/10 shrink-0 shadow-sm"
-                          style={{ backgroundColor: c }}
+                          style={{ backgroundColor: hex }}
                         />
                       </span>
                     ) : (
@@ -171,8 +179,8 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
                       >
                         {c}
                       </span>
-                    )
-                  )
+                    );
+                  })
                 ) : (
                   <span className="text-xs font-medium text-slate-700">{colorName}</span>
                 )}
@@ -223,10 +231,12 @@ function OrderItemRow({ item }: { item: Order["items"][number] }) {
 // ── Tarjeta de pedido ─────────────────────────────────────────────────────────
 function OrderCard({
   pedido,
+  coloresMap,
   onStatusChange,
   onTrackingChange,
 }: {
   pedido: Order;
+  coloresMap: Record<string, string>;
   onStatusChange: (id: string, estado: EstadoKey) => Promise<void>;
   onTrackingChange: (id: string, trackingCode: string | null) => Promise<void>;
 }) {
@@ -280,7 +290,7 @@ function OrderCard({
       {/* Productos */}
       <ul className="divide-y">
         {pedido.items.map((item) => (
-          <OrderItemRow key={item.id} item={item} />
+          <OrderItemRow key={item.id} item={item} coloresMap={coloresMap} />
         ))}
       </ul>
 
@@ -374,14 +384,19 @@ export default function PedidosAdminPage() {
   const [pedidos, setPedidos]   = useState<Order[]>([]);
   const [error, setError]       = useState<string | null>(null);
   const [filtro, setFiltro]     = useState<"todos" | EstadoKey>("todos");
+  const [coloresMap, setColoresMap] = useState<Record<string, string>>({});
 
   useEffect(() => { loadPedidos(); }, []);
 
   async function loadPedidos() {
     try {
       setLoading(true);
-      const data = await api.getAllOrdersAdmin();
+      const [data, colores] = await Promise.all([
+        api.getAllOrdersAdmin(),
+        getColoresHexMap(),
+      ]);
       setPedidos(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setColoresMap(colores);
       setError(null);
     } catch (e: any) {
       setError(e?.message ?? "Error al cargar pedidos");
@@ -477,6 +492,7 @@ export default function PedidosAdminPage() {
               <OrderCard
                 key={pedido.id}
                 pedido={pedido}
+                coloresMap={coloresMap}
                 onStatusChange={handleStatusChange}
                 onTrackingChange={handleTrackingChange}
               />
