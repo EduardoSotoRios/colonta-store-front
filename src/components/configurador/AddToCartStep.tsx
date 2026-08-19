@@ -10,6 +10,7 @@ import {
   CUSTOM_ORDER_PRODUCT_MODEL_IDS,
   CUSTOM_ORDER_PRICES,
 } from '@/lib/configurador/customOrderProducts';
+import { CONFIGURADOR_EXTRA_IDS } from '@/lib/configurador/extrasByProduct';
 import type { ProductId } from '@/lib/configurador/products';
 import type { CartItem } from '@/lib/api';
 
@@ -26,7 +27,12 @@ const CLP = (n: number) => new Intl.NumberFormat('es-CL').format(n);
 export default function AddToCartStep({ productId, productName, designDataURL, onAdded, onBack }: AddToCartStepProps) {
   const { user } = useAuth();
   const { addItem } = useCart();
-  const { extras } = useExtrasCatalog();
+  const { extras: allExtras } = useExtrasCatalog();
+  // Estampado aplica a cualquier producto personalizado; los demas extras
+  // (correas, bolsillos, etc.) solo tienen sentido para los productos que
+  // realmente los soportan — ver CONFIGURADOR_EXTRA_IDS.
+  const relevantIds = CONFIGURADOR_EXTRA_IDS[productId] ?? [];
+  const extras = allExtras.filter((e) => esExtraEstampado(e.name) || relevantIds.includes(e.id));
   const [qty, setQty] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
