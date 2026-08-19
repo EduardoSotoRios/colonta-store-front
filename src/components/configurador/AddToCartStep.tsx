@@ -18,13 +18,23 @@ interface AddToCartStepProps {
   productId: ProductId;
   productName: string;
   designDataURL: string;
+  hasReflectiveTape: boolean;
   onAdded: () => void;
   onBack: () => void;
 }
 
 const CLP = (n: number) => new Intl.NumberFormat('es-CL').format(n);
 
-export default function AddToCartStep({ productId, productName, designDataURL, onAdded, onBack }: AddToCartStepProps) {
+// La cinta reflectante ya se define en el paso 2 (Diseña) — al elegirla ahi
+// la plantilla queda horneada dentro de la imagen del diseño. Por eso no
+// tiene sentido ofrecerla tambien como extra seleccionable aca: en vez de
+// dejar que el cliente la elija dos veces (y potencialmente pague dos veces
+// distinto por lo mismo), se excluye cualquier extra "reflectante" de la
+// lista y en su lugar se suma este recargo fijo cuando el diseño la trae.
+const REFLECTIVE_TAPE_SURCHARGE = 2000;
+const esExtraCintaReflectante = (nombre: string) => nombre.toLowerCase().includes('reflectante');
+
+export default function AddToCartStep({ productId, productName, designDataURL, hasReflectiveTape, onAdded, onBack }: AddToCartStepProps) {
   const { user } = useAuth();
   const { addItem } = useCart();
   const { extras: allExtras } = useExtrasCatalog();
@@ -32,7 +42,9 @@ export default function AddToCartStep({ productId, productName, designDataURL, o
   // (correas, bolsillos, etc.) solo tienen sentido para los productos que
   // realmente los soportan — ver CONFIGURADOR_EXTRA_IDS.
   const relevantIds = CONFIGURADOR_EXTRA_IDS[productId] ?? [];
-  const extras = allExtras.filter((e) => esExtraEstampado(e.name) || relevantIds.includes(e.id));
+  const extras = allExtras.filter(
+    (e) => !esExtraCintaReflectante(e.name) && (esExtraEstampado(e.name) || relevantIds.includes(e.id))
+  );
   const [qty, setQty] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -45,11 +57,12 @@ export default function AddToCartStep({ productId, productName, designDataURL, o
   const [stampError, setStampError] = useState<string | null>(null);
 
   const basePrice = CUSTOM_ORDER_PRICES[productId];
+  const tapeSurcharge = hasReflectiveTape ? REFLECTIVE_TAPE_SURCHARGE : 0;
   const extrasTotal = selectedExtras.reduce((sum, id) => {
     const e = extras.find((x) => x.id === id);
     return sum + (e ? Number(e.price) || 0 : 0);
   }, 0);
-  const unitPrice = basePrice + extrasTotal;
+  const unitPrice = basePrice + tapeSurcharge + extrasTotal;
   const priceCL = CLP(basePrice);
   const totalCL = CLP(unitPrice * qty);
 
@@ -155,11 +168,20 @@ export default function AddToCartStep({ productId, productName, designDataURL, o
           <img src={designDataURL} alt="Vista previa del diseño" className="max-h-56 object-contain rounded-lg" />
         </div>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-semibold text-gray-800">{productName} (Diseñado)</p>
-            <p className="text-sm text-gray-500">${priceCL} c/u</p>
+        <div>
+          <p className="font-semibold text-gray-800">{productName} (Diseñado)</p>
+          <p className="text-sm text-gray-500">${priceCL} c/u</p>
+        </div>
+
+        {hasReflectiveTape && (
+          <div className="flex items-center justify-between text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+            <span className="text-slate-700">🎗️ Con cinta reflectante</span>
+            <span className="font-semibold text-slate-800">+${CLP(REFLECTIVE_TAPE_SURCHARGE)}</span>
           </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-700">Cantidad</span>
           <div className="inline-flex items-center rounded-xl border">
             <button
               type="button"

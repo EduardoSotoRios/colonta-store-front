@@ -26,7 +26,7 @@ const TELA_COLORS  = COLORS.filter(c => c.value.startsWith('pattern-'));
 interface CanvasDesignerProps {
   product: ProductId;
   productName: string;
-  onContinue: (dataURL: string) => void;
+  onContinue: (dataURL: string, hasReflectiveTape: boolean) => void;
   onBack: () => void;
 }
 
@@ -357,7 +357,7 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     const col = colorCanvasRef.current;
     const tpl = templateCanvasRef.current;
     if (!col || !tpl) return;
-    onContinue(getMergedDataURL(col, tpl, productName));
+    onContinue(getMergedDataURL(col, tpl, productName), effectiveVariant === 'cinta');
   }
 
   function handleDownload() {

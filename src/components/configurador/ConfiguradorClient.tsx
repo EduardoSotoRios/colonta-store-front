@@ -15,6 +15,7 @@ export default function ConfiguradorClient() {
   const [productId, setProductId]       = useState<ProductId | null>(null);
   const [productName, setProductName]   = useState('');
   const [designDataURL, setDesignDataURL] = useState('');
+  const [hasReflectiveTape, setHasReflectiveTape] = useState(false);
 
   function handleProductSelect(id: ProductId, name: string) {
     setProductId(id);
@@ -23,8 +24,9 @@ export default function ConfiguradorClient() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function handleContinueFromCanvas(dataURL: string) {
+  function handleContinueFromCanvas(dataURL: string, tape: boolean) {
     setDesignDataURL(dataURL);
+    setHasReflectiveTape(tape);
     setStep(3);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -38,6 +40,7 @@ export default function ConfiguradorClient() {
     setProductId(null);
     setProductName('');
     setDesignDataURL('');
+    setHasReflectiveTape(false);
     setStep(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -66,6 +69,7 @@ export default function ConfiguradorClient() {
           productId={productId}
           productName={productName}
           designDataURL={designDataURL}
+          hasReflectiveTape={hasReflectiveTape}
           onAdded={handleAdded}
           onBack={() => setStep(2)}
         />
