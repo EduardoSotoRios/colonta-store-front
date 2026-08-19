@@ -25,7 +25,11 @@ export interface PixelRect { x: number; y: number; w: number; h: number; }
 // exportadas sin fondo) se dejan como estan — si no, su RGB en blanco (0,0,0)
 // se leeria como luminosidad 0 y se pintarian negro solido en vez de
 // transparente.
-function applyInkAlpha(imgData: ImageData, protectRect?: PixelRect): void {
+// Cuando hay protectRect, devuelve una mascara del tamaño del canvas
+// marcando exactamente que pixeles son "el logo" (su tinta + su relleno
+// blanco forzado) — ver drawTemplateFromImageWithTape, que la usa para que
+// la deteccion de cinta no toque esos pixeles.
+function applyInkAlpha(imgData: ImageData, protectRect?: PixelRect): Uint8Array | undefined {
   const data = imgData.data;
   for (let i = 0; i < data.length; i += 4) {
     if (data[i + 3] === 0) continue;
@@ -38,7 +42,7 @@ function applyInkAlpha(imgData: ImageData, protectRect?: PixelRect): void {
       data[i + 3] = Math.round((1 - (lum - INK_FLOOR) / (BG_CEILING - INK_FLOOR)) * 255);
     }
   }
-  if (protectRect) forceLogoWhite(imgData, protectRect);
+  return protectRect ? forceLogoWhite(imgData, protectRect) : undefined;
 }
 
 // El logo "Colonta" viene dibujado como texto blanco con borde negro. El
@@ -53,14 +57,15 @@ function applyInkAlpha(imgData: ImageData, protectRect?: PixelRect): void {
 // alcanzable (encerrado por el contorno de cada letra) es el relleno del
 // texto, que se fuerza a blanco opaco. Asi el resultado sigue el contorno
 // exacto de las letras en vez de pintar un cuadrado blanco parejo.
-function forceLogoWhite(imgData: ImageData, rect: PixelRect): void {
+function forceLogoWhite(imgData: ImageData, rect: PixelRect): Uint8Array {
   const { data, width, height } = imgData;
+  const mask = new Uint8Array(width * height);
   const x0 = Math.max(0, Math.round(rect.x));
   const y0 = Math.max(0, Math.round(rect.y));
   const x1 = Math.min(width, Math.round(rect.x + rect.w));
   const y1 = Math.min(height, Math.round(rect.y + rect.h));
   const rw = x1 - x0, rh = y1 - y0;
-  if (rw <= 0 || rh <= 0) return;
+  if (rw <= 0 || rh <= 0) return mask;
 
   const isInk = (lx: number, ly: number) => {
     const i = ((y0 + ly) * width + (x0 + lx)) * 4;
@@ -88,11 +93,15 @@ function forceLogoWhite(imgData: ImageData, rect: PixelRect): void {
 
   for (let ly = 0; ly < rh; ly++) {
     for (let lx = 0; lx < rw; lx++) {
-      if (outside[ly * rw + lx] || isInk(lx, ly)) continue;
-      const i = ((y0 + ly) * width + (x0 + lx)) * 4;
+      if (outside[ly * rw + lx]) continue; // fondo real, no es parte del logo
+      const gx = x0 + lx, gy = y0 + ly;
+      mask[gy * width + gx] = 1;
+      if (isInk(lx, ly)) continue; // ya esta bien (tinta opaca), no tocar
+      const i = (gy * width + gx) * 4;
       data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
     }
   }
+  return mask;
 }
 
 function fitRect(iw: number, ih: number, canW: number, canH: number, margin = 80) {
@@ -189,7 +198,7 @@ export function drawTemplateFromImageWithTape(
     baseCtx.imageSmoothingQuality = 'high';
     baseCtx.drawImage(normalImg, dx, dy, dw, dh);
     const baseData = baseCtx.getImageData(0, 0, canW, canH);
-    applyInkAlpha(baseData, protectRect);
+    const logoMask = applyInkAlpha(baseData, protectRect);
 
     // Dos copias "aplanadas" sobre blanco (solo para comparar colores): sin
     // esto, si la plantilla normal viene con fondo realmente transparente,
@@ -216,9 +225,20 @@ export function drawTemplateFromImageWithTape(
     tapeCtx.drawImage(tapeImg, dx, dy, dw, dh);
     const tapeData = tapeCtx.getImageData(0, 0, canW, canH).data;
 
+    // El logo tambien esta dibujado dentro de la foto de la cinta (misma
+    // posicion), pero al ser un JPEG el ruido de compresion justo en el
+    // borde de las letras alcanza a superar TAPE_DIFF_THRESHOLD y el logo
+    // terminaba con un borde/halo pintado con esos colores de ruido en vez
+    // de quedar limpio. Esa zona ya la resuelve por completo
+    // applyInkAlpha+forceLogoWhite arriba, asi que la cinta no debe tocarla —
+    // pero solo los pixeles del logo en si (logoMask), no todo protectRect:
+    // la cinta real suele meterse dentro de ese rectangulo de busqueda (el
+    // texto y la franja quedan cerca), y excluir el rectangulo entero le
+    // dejaba un hueco cuadrado a la cinta en vez de la franja continua.
     const out = baseData;
     const outData = out.data;
     for (let i = 0; i < outData.length; i += 4) {
+      if (logoMask && logoMask[i / 4]) continue;
       const diff = Math.abs(flatNormalData[i] - tapeData[i])
                  + Math.abs(flatNormalData[i + 1] - tapeData[i + 1])
                  + Math.abs(flatNormalData[i + 2] - tapeData[i + 2]);
