@@ -44,24 +44,53 @@ function applyInkAlpha(imgData: ImageData, protectRect?: PixelRect): void {
 // El logo "Colonta" viene dibujado como texto blanco con borde negro. El
 // relleno blanco de las letras es identico en color al fondo, asi que el
 // calculo de arriba (que decide transparencia por luminosidad) no puede
-// distinguirlos y termina "borrando" el texto junto con el fondo. Como la
-// posicion del logo es fija dentro de cada plantilla, en vez de adivinar por
-// color forzamos blanco opaco a todo lo que en ese rectangulo no haya quedado
-// reconocido como tinta solida (el contorno negro de las letras) — recrea el
-// "texto blanco con borde negro" tal como esta dibujado en el original en vez
-// de dejarlo transparente.
+// distinguirlos y termina "borrando" el texto junto con el fondo. `rect` solo
+// acota la zona de busqueda (con margen de sobra alrededor del texto) — la
+// forma real que se pinta blanca la decide un flood fill sembrado desde el
+// borde de ese rectangulo, igual que buildProductMask separa "fuera del
+// producto" de "encerrado por tinta": lo alcanzable desde el borde sin cruzar
+// tinta es fondo de verdad (queda como estaba, transparente), y lo NO
+// alcanzable (encerrado por el contorno de cada letra) es el relleno del
+// texto, que se fuerza a blanco opaco. Asi el resultado sigue el contorno
+// exacto de las letras en vez de pintar un cuadrado blanco parejo.
 function forceLogoWhite(imgData: ImageData, rect: PixelRect): void {
   const { data, width, height } = imgData;
   const x0 = Math.max(0, Math.round(rect.x));
   const y0 = Math.max(0, Math.round(rect.y));
   const x1 = Math.min(width, Math.round(rect.x + rect.w));
   const y1 = Math.min(height, Math.round(rect.y + rect.h));
-  for (let y = y0; y < y1; y++) {
-    for (let x = x0; x < x1; x++) {
-      const i = (y * width + x) * 4;
-      if (data[i + 3] < 200) {
-        data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
-      }
+  const rw = x1 - x0, rh = y1 - y0;
+  if (rw <= 0 || rh <= 0) return;
+
+  const isInk = (lx: number, ly: number) => {
+    const i = ((y0 + ly) * width + (x0 + lx)) * 4;
+    return data[i + 3] > 80;
+  };
+
+  const outside = new Uint8Array(rw * rh);
+  const queue: number[] = [];
+  const seed = (lx: number, ly: number) => {
+    const p = ly * rw + lx;
+    if (!outside[p] && !isInk(lx, ly)) { outside[p] = 1; queue.push(p); }
+  };
+  for (let lx = 0; lx < rw; lx++) { seed(lx, 0); seed(lx, rh - 1); }
+  for (let ly = 0; ly < rh; ly++) { seed(0, ly); seed(rw - 1, ly); }
+
+  let qi = 0;
+  while (qi < queue.length) {
+    const p = queue[qi++];
+    const lx = p % rw, ly = (p / rw) | 0;
+    if (lx > 0) seed(lx - 1, ly);
+    if (lx < rw - 1) seed(lx + 1, ly);
+    if (ly > 0) seed(lx, ly - 1);
+    if (ly < rh - 1) seed(lx, ly + 1);
+  }
+
+  for (let ly = 0; ly < rh; ly++) {
+    for (let lx = 0; lx < rw; lx++) {
+      if (outside[ly * rw + lx] || isInk(lx, ly)) continue;
+      const i = ((y0 + ly) * width + (x0 + lx)) * 4;
+      data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
     }
   }
 }
