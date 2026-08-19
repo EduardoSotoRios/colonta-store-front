@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import {
   CANVAS_W, CANVAS_H,
   drawTemplateFromImage,
+  drawTemplateFromImageWithTape,
   floodFill,
   createTexturePattern,
   preloadPatternTextures,
@@ -14,7 +15,7 @@ import {
   getMergedDataURL,
   downloadCanvas,
 } from '@/lib/configurador/canvasUtils';
-import { PRODUCT_IMAGES, COLORS, type ProductId } from '@/lib/configurador/products';
+import { PRODUCT_IMAGES, PRODUCT_IMAGES_CINTA, COLORS, type ProductId } from '@/lib/configurador/products';
 import { getConfiguradorColoresEstado } from '@/lib/configurador/colores-estado';
 
 type Tool = 'pencil' | 'fill' | 'eraser';
@@ -52,6 +53,12 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   // A COLORS `value` like 'pattern-leopardo', or null when painting a plain color.
   const [activePattern, setActivePattern] = useState<string | null>(null);
   const [templateReady, setTemplateReady] = useState(false);
+  const [variant, setVariant] = useState<'normal' | 'cinta'>('normal');
+  const hasCinta = !!PRODUCT_IMAGES_CINTA[product];
+  // Si el producto actual no tiene version con cinta (o se acaba de cambiar
+  // de producto a uno que no la tiene) se ignora el estado 'cinta' que haya
+  // quedado de un producto anterior, sin necesidad de resetearlo aparte.
+  const effectiveVariant: 'normal' | 'cinta' = hasCinta ? variant : 'normal';
   const [toast, setToast]      = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [estadoColores, setEstadoColores] = useState<Record<string, boolean>>({});
@@ -107,6 +114,8 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
   }
 
   // ── Initialize canvas when product changes ─────────────────────────────
+  // Solo depende de `product`: cambiar entre Normal/Con cinta reflectante
+  // para el mismo producto no debe borrar lo que el cliente ya pinto.
   useEffect(() => {
     const colorCanvas    = document.createElement('canvas');
     colorCanvas.width    = CANVAS_W;
@@ -126,8 +135,6 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     zoneMapRef.current = createZoneMap(CANVAS_W, CANVAS_H);
     productMaskRef.current = null;
     maskCanvasRef.current = null;
-    templateReadyRef.current = false;
-    setTemplateReady(false);
 
     // Arranca transparente (no blanco solido): asi una zona explicitamente
     // pintada de blanco se puede distinguir en pantalla de una zona todavia
@@ -135,19 +142,39 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
     colorCanvas.getContext('2d')!.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
     historyRef.current = [];
+    saveHistory();
+  }, [product]);
 
-    const img = new Image();
-    img.src = PRODUCT_IMAGES[product];
-    drawTemplateFromImage(img, templateCanvas, () => {
+  // ── (Re)load the template layer — plantilla normal o con cinta ─────────
+  useEffect(() => {
+    const templateCanvas = templateCanvasRef.current;
+    if (!templateCanvas) return;
+
+    templateReadyRef.current = false;
+    setTemplateReady(false);
+
+    const onTemplateDone = () => {
       const { mask, maskCanvas } = buildProductMask(templateCanvas);
       productMaskRef.current = mask;
       maskCanvasRef.current = maskCanvas;
       renderComposite();
-      saveHistory();
       templateReadyRef.current = true;
       setTemplateReady(true);
-    });
-  }, [product, renderComposite]);
+    };
+
+    const cintaSrc = PRODUCT_IMAGES_CINTA[product];
+    if (effectiveVariant === 'cinta' && cintaSrc) {
+      const normalImg = new Image();
+      normalImg.src = PRODUCT_IMAGES[product];
+      const tapeImg = new Image();
+      tapeImg.src = cintaSrc;
+      drawTemplateFromImageWithTape(normalImg, tapeImg, templateCanvas, onTemplateDone);
+    } else {
+      const img = new Image();
+      img.src = PRODUCT_IMAGES[product];
+      drawTemplateFromImage(img, templateCanvas, onTemplateDone);
+    }
+  }, [product, effectiveVariant, renderComposite]);
 
   // ── Position helper ─────────────────────────────────────────────────────
   function getPos(e: MouseEvent | TouchEvent) {
@@ -510,6 +537,24 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
             <p className="text-xs text-gray-400 mt-0.5">
               <strong>Relleno</strong> colorea áreas grandes · <strong>Lápiz</strong> para detalles
             </p>
+            {hasCinta && (
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 mt-2 w-fit">
+                <button
+                  onClick={() => setVariant('normal')}
+                  className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors
+                    ${variant === 'normal' ? 'bg-white shadow-sm text-[#5B2D8E]' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  Normal
+                </button>
+                <button
+                  onClick={() => setVariant('cinta')}
+                  className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors
+                    ${variant === 'cinta' ? 'bg-white shadow-sm text-[#5B2D8E]' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  Con cinta reflectante
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <button onClick={handleDownload}

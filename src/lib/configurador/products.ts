@@ -51,6 +51,24 @@ export const PRODUCT_IMAGES: Record<ProductId, string> = {
   porta_notebook:  '/configurador/plantillas/porta-notebook.png',
 };
 
+// Version "con cinta reflectante" de la plantilla de dibujo, solo para los
+// productos que la tienen disponible (los demas no aparecen aca y el
+// configurador no muestra la opcion de elegir cinta para ellos). El diseño
+// de linea es identico al de PRODUCT_IMAGES — solo se le agrega una franja
+// de cinta reflectante — asi que CanvasDesigner puede comparar ambas
+// imagenes pixel a pixel para saber exactamente donde va la cinta.
+export const PRODUCT_IMAGES_CINTA: Partial<Record<ProductId, string>> = {
+  mochila_normal:  '/configurador/plantillas-cinta/mochila-normal.jpg',
+  mochila_ligera:  '/configurador/plantillas-cinta/mochila-ligera.jpg',
+  mochila_mini:    '/configurador/plantillas-cinta/mochila-mini.jpg',
+  banano:          '/configurador/plantillas-cinta/banano.jpg',
+  banano_simple:   '/configurador/plantillas-cinta/banano-simple.jpg',
+  bolso:           '/configurador/plantillas-cinta/bolso.jpg',
+  tabaquera:       '/configurador/plantillas-cinta/tabaquera.jpg',
+  roll_top:        '/configurador/plantillas-cinta/roll-top.jpg',
+  porta_notebook:  '/configurador/plantillas-cinta/porta-notebook.jpg',
+};
+
 export const MOCHILA_TYPES: ProductInfo[] = [
   { id: 'mochila_normal', name: 'Normal', description: 'Modelo estándar',         image: '/configurador/mochila.png' },
   { id: 'mochila_ligera', name: 'Ligera', description: 'Ultraliviana y flexible', image: '/configurador/mochila-ligera.png' },

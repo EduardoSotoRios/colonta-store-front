@@ -4,6 +4,49 @@
 export const CANVAS_W = 1360;
 export const CANVAS_H = 1040;
 
+// Umbral de tinta mas agresivo que un simple degradado lineal: cualquier
+// trazo mas oscuro que INK_FLOOR llega a opacidad completa de una, y solo
+// la franja entre INK_FLOOR y BG_CEILING se usa para el antialiasing
+// suave del borde. Sin esto, una plantilla con lineas finas (donde el
+// antialiasing ocupa la mayor parte del ancho del trazo, no solo el
+// borde) terminaba con casi toda la linea semi-transparente en vez de
+// solida, y se veia difusa/pixelada aunque el lienzo sea de alta
+// resolucion.
+const INK_FLOOR = 110;
+const BG_CEILING = 160;
+
+// Make white/light background transparent; keep dark outlines. Los pixeles
+// que ya venian transparentes en el PNG original (alpha=0, ej. plantillas
+// exportadas sin fondo) se dejan como estan — si no, su RGB en blanco (0,0,0)
+// se leeria como luminosidad 0 y se pintarian negro solido en vez de
+// transparente.
+function applyInkAlpha(imgData: ImageData): void {
+  const data = imgData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] === 0) continue;
+    const lum = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    if (lum > BG_CEILING) {
+      data[i + 3] = 0;
+    } else if (lum <= INK_FLOOR) {
+      data[i + 3] = 255;
+    } else {
+      data[i + 3] = Math.round((1 - (lum - INK_FLOOR) / (BG_CEILING - INK_FLOOR)) * 255);
+    }
+  }
+}
+
+function fitRect(iw: number, ih: number, canW: number, canH: number, margin = 80) {
+  const scale = Math.min((canW - margin) / iw, (canH - margin) / ih);
+  const dw = iw * scale, dh = ih * scale;
+  const dx = (canW - dw) / 2, dy = (canH - dh) / 2;
+  return { dw, dh, dx, dy };
+}
+
+function whenImageReady(img: HTMLImageElement, cb: () => void): void {
+  if (img.complete && img.naturalWidth > 0) cb();
+  else img.onload = cb;
+}
+
 export function drawTemplateFromImage(
   img: HTMLImageElement,
   templateCanvas: HTMLCanvasElement,
@@ -18,47 +61,16 @@ export function drawTemplateFromImage(
     tmp.height = templateCanvas.height;
     const tmpCtx = tmp.getContext('2d')!;
 
-    const iw = img.naturalWidth  || 1080;
-    const ih = img.naturalHeight || 1080;
     const canW = templateCanvas.width;
     const canH = templateCanvas.height;
-    const margin = 80;
-    const scale = Math.min((canW - margin) / iw, (canH - margin) / ih);
-    const dw = iw * scale, dh = ih * scale;
-    const dx = (canW - dw) / 2, dy = (canH - dh) / 2;
+    const { dw, dh, dx, dy } = fitRect(img.naturalWidth || 1080, img.naturalHeight || 1080, canW, canH);
 
     tmpCtx.imageSmoothingEnabled = true;
     tmpCtx.imageSmoothingQuality = 'high';
     tmpCtx.drawImage(img, dx, dy, dw, dh);
 
-    // Make white/light background transparent; keep dark outlines.
-    // Los pixeles que ya venian transparentes en el PNG original (alpha=0,
-    // ej. plantillas exportadas sin fondo) se dejan como estan — si no, su
-    // RGB en blanco (0,0,0) se leeria como luminosidad 0 y se pintarian
-    // negro solido en vez de transparente.
-    // Umbral de tinta mas agresivo que un simple degradado lineal: cualquier
-    // trazo mas oscuro que INK_FLOOR llega a opacidad completa de una, y solo
-    // la franja entre INK_FLOOR y BG_CEILING se usa para el antialiasing
-    // suave del borde. Sin esto, una plantilla con lineas finas (donde el
-    // antialiasing ocupa la mayor parte del ancho del trazo, no solo el
-    // borde) terminaba con casi toda la linea semi-transparente en vez de
-    // solida, y se veia difusa/pixelada aunque el lienzo sea de alta
-    // resolucion.
-    const INK_FLOOR = 110;
-    const BG_CEILING = 160;
     const imgData = tmpCtx.getImageData(0, 0, canW, canH);
-    const data = imgData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      if (data[i + 3] === 0) continue;
-      const lum = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-      if (lum > BG_CEILING) {
-        data[i + 3] = 0;
-      } else if (lum <= INK_FLOOR) {
-        data[i + 3] = 255;
-      } else {
-        data[i + 3] = Math.round((1 - (lum - INK_FLOOR) / (BG_CEILING - INK_FLOOR)) * 255);
-      }
-    }
+    applyInkAlpha(imgData);
     tmpCtx.putImageData(imgData, 0, 0);
 
     templateCtx.clearRect(0, 0, templateCanvas.width, templateCanvas.height);
@@ -66,11 +78,101 @@ export function drawTemplateFromImage(
     onDone();
   };
 
-  if (img.complete && img.naturalWidth > 0) {
-    render();
-  } else {
-    img.onload = render;
-  }
+  whenImageReady(img, render);
+}
+
+// Suma de diferencias absolutas por canal (R+G+B, rango 0-765) a partir de la
+// cual un pixel se considera "cinta reflectante" y no fondo/ruido de
+// compresion JPEG. Calibrado comparando plantillas reales: el fondo y las
+// lineas de tinta identicas entre ambas imagenes quedan en 0-15, mientras que
+// la cinta (un celeste/plateado bien distinto del blanco) supera los 50.
+const TAPE_DIFF_THRESHOLD = 40;
+
+// Variante de drawTemplateFromImage para productos con version "con cinta
+// reflectante": dibuja la plantilla normal (mismo algoritmo de siempre) y le
+// superpone, ya opaca y con su color real, la franja de cinta — detectada
+// comparando pixel a pixel contra la plantilla normal, ya que ambas imagenes
+// comparten exactamente el mismo dibujo de lineas y solo difieren en la
+// cinta. Al quedar la cinta "horneada" dentro de templateCanvas (la misma
+// capa que ya se dibuja encima de colorCanvas en cada render), el lapiz y el
+// borrador — que solo tocan colorCanvas — nunca pueden pintarla ni borrarla.
+export function drawTemplateFromImageWithTape(
+  normalImg: HTMLImageElement,
+  tapeImg: HTMLImageElement,
+  templateCanvas: HTMLCanvasElement,
+  onDone: () => void,
+): void {
+  const templateCtx = templateCanvas.getContext('2d')!;
+  templateCtx.clearRect(0, 0, templateCanvas.width, templateCanvas.height);
+
+  const render = () => {
+    const canW = templateCanvas.width;
+    const canH = templateCanvas.height;
+    const { dw, dh, dx, dy } = fitRect(
+      normalImg.naturalWidth || 1080,
+      normalImg.naturalHeight || 1080,
+      canW, canH,
+    );
+
+    // Capa base: la plantilla normal ya procesada (fondo transparente, tinta
+    // opaca), exactamente igual que drawTemplateFromImage.
+    const baseC = document.createElement('canvas');
+    baseC.width = canW; baseC.height = canH;
+    const baseCtx = baseC.getContext('2d')!;
+    baseCtx.imageSmoothingEnabled = true;
+    baseCtx.imageSmoothingQuality = 'high';
+    baseCtx.drawImage(normalImg, dx, dy, dw, dh);
+    const baseData = baseCtx.getImageData(0, 0, canW, canH);
+    applyInkAlpha(baseData);
+
+    // Dos copias "aplanadas" sobre blanco (solo para comparar colores): sin
+    // esto, si la plantilla normal viene con fondo realmente transparente,
+    // su RGB debajo del alpha=0 puede ser cualquier basura y se leeria como
+    // "distinto" del blanco de la foto de la cinta en todo el fondo, no solo
+    // en la cinta.
+    const flatNormal = document.createElement('canvas');
+    flatNormal.width = canW; flatNormal.height = canH;
+    const flatNormalCtx = flatNormal.getContext('2d')!;
+    flatNormalCtx.fillStyle = '#FFFFFF';
+    flatNormalCtx.fillRect(0, 0, canW, canH);
+    flatNormalCtx.imageSmoothingEnabled = true;
+    flatNormalCtx.imageSmoothingQuality = 'high';
+    flatNormalCtx.drawImage(normalImg, dx, dy, dw, dh);
+    const flatNormalData = flatNormalCtx.getImageData(0, 0, canW, canH).data;
+
+    const tapeC = document.createElement('canvas');
+    tapeC.width = canW; tapeC.height = canH;
+    const tapeCtx = tapeC.getContext('2d')!;
+    tapeCtx.fillStyle = '#FFFFFF';
+    tapeCtx.fillRect(0, 0, canW, canH);
+    tapeCtx.imageSmoothingEnabled = true;
+    tapeCtx.imageSmoothingQuality = 'high';
+    tapeCtx.drawImage(tapeImg, dx, dy, dw, dh);
+    const tapeData = tapeCtx.getImageData(0, 0, canW, canH).data;
+
+    const out = baseData;
+    const outData = out.data;
+    for (let i = 0; i < outData.length; i += 4) {
+      const diff = Math.abs(flatNormalData[i] - tapeData[i])
+                 + Math.abs(flatNormalData[i + 1] - tapeData[i + 1])
+                 + Math.abs(flatNormalData[i + 2] - tapeData[i + 2]);
+      if (diff > TAPE_DIFF_THRESHOLD) {
+        outData[i]     = tapeData[i];
+        outData[i + 1] = tapeData[i + 1];
+        outData[i + 2] = tapeData[i + 2];
+        outData[i + 3] = 255;
+      }
+    }
+
+    templateCtx.clearRect(0, 0, templateCanvas.width, templateCanvas.height);
+    templateCtx.putImageData(out, 0, 0);
+    onDone();
+  };
+
+  let pending = 2;
+  const tryRender = () => { if (--pending === 0) render(); };
+  whenImageReady(normalImg, tryRender);
+  whenImageReady(tapeImg, tryRender);
 }
 
 // Image-backed "tela" patterns. Each `value` must match a COLORS entry and
