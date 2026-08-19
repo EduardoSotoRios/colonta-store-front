@@ -76,12 +76,25 @@ export const PRODUCT_IMAGES_CINTA: Partial<Record<ProductId, string>> = {
 // borde negro, y como el relleno blanco es igual de color al fondo, el
 // algoritmo de transparencia normal lo borra junto con el fondo real. Estas
 // coordenadas le dicen a drawTemplateFromImage/WithTape donde forzar blanco
-// opaco en vez de transparente. Se calibran una vez por plantilla (mirando
-// donde cae el texto) y no cambian salvo que se reemplace la imagen.
-// Por ahora solo Porta Notebook — se agregan las demas plantillas a medida
-// que se confirman sus coordenadas.
+// opaco en vez de transparente. Se calibran una vez por plantilla (ubicando
+// el bloque de pixeles "encerrado" por tinta, igual que buildProductMask, y
+// confirmando visualmente que es el texto y no otro elemento chico cercano
+// como una hebilla o una asa) y no cambian salvo que se reemplace la imagen.
+// Porta Matt no tiene entrada: su plantilla no trae el texto blanco con
+// borde negro (el unico elemento chico ahi es un rectangulo negro solido),
+// asi que no sufre este problema.
 export const LOGO_REGIONS: Partial<Record<ProductId, PixelRect>> = {
-  porta_notebook: { x: 630, y: 335, w: 150, h: 65 },
+  porta_notebook:  { x: 630, y: 335, w: 150, h: 65 },
+  tabaquera:       { x: 570, y: 372, w: 220, h: 100 },
+  mochila_normal:  { x: 610, y: 250, w: 150, h: 75 },
+  mochila_ligera:  { x: 600, y: 190, w: 150, h: 75 },
+  mochila_mini:    { x: 600, y: 280, w: 150, h: 75 },
+  banano:          { x: 595, y: 605, w: 135, h: 70 },
+  banano_simple:   { x: 590, y: 512, w: 170, h: 85 },
+  banano_muslera:  { x: 570, y: 582, w: 175, h: 85 },
+  bolso:           { x: 700, y: 745, w: 160, h: 115 },
+  roll_top:        { x: 750, y: 815, w: 115, h: 75 },
+  billetera:       { x: 555, y: 450, w: 235, h: 105 },
 };
 
 export const MOCHILA_TYPES: ProductInfo[] = [
