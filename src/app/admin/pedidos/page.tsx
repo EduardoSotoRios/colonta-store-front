@@ -190,9 +190,29 @@ function OrderItemRow({
 
           {/* Extras */}
           {extras.length > 0 && (
-            <p className="text-xs text-slate-500 mt-1.5">
-              Extras: {extras.map((e) => e.name).join(", ")}
-            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {extras.map((e) => {
+                const isStamp = e.name.toLowerCase().includes("estampado");
+                return (
+                  <span
+                    key={e.id}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
+                      isStamp
+                        ? "bg-orange-50 text-orange-800 border-orange-200"
+                        : "bg-teal-50 text-teal-800 border-teal-200"
+                    }`}
+                  >
+                    <svg className="w-3 h-3 shrink-0 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    {e.name}
+                    {e.price > 0 && (
+                      <span className="ml-0.5 opacity-70">+${fmt(e.price)}</span>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
           )}
 
           {/* Imagen de estampado del cliente */}
