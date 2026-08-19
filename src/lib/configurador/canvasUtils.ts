@@ -83,10 +83,14 @@ export function drawTemplateFromImage(
 
 // Suma de diferencias absolutas por canal (R+G+B, rango 0-765) a partir de la
 // cual un pixel se considera "cinta reflectante" y no fondo/ruido de
-// compresion JPEG. Calibrado comparando plantillas reales: el fondo y las
-// lineas de tinta identicas entre ambas imagenes quedan en 0-15, mientras que
-// la cinta (un celeste/plateado bien distinto del blanco) supera los 50.
-const TAPE_DIFF_THRESHOLD = 40;
+// compresion JPEG. La cinta tiene brillos/reflejos casi blancos que difieren
+// del fondo por muy pocas unidades — con un umbral alto (ej. 40) esas partes
+// claras quedaban indistinguibles del fondo y se volvian transparentes en vez
+// de opacas (se "comia" pedazos de cinta). Comparando las 9 plantillas reales
+// con cinta, el fondo/ruido JPEG se mantiene siempre en 0 en zonas lejos de
+// la cinta, asi que un umbral bajo como este sigue sin generar falsos
+// positivos fuera de la franja.
+const TAPE_DIFF_THRESHOLD = 12;
 
 // Variante de drawTemplateFromImage para productos con version "con cinta
 // reflectante": dibuja la plantilla normal (mismo algoritmo de siempre) y le
