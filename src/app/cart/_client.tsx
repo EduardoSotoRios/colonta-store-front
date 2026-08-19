@@ -5,6 +5,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { getCartItemUnitPrice } from "@/lib/cartPricing";
 import { getCartOffers, type CartOffer } from "@/actions/cart-offers";
+import { useExtrasCatalog } from "@/hooks/useExtrasCatalog";
 import Link from "next/link";
 import type { ProductModel } from "@/lib/api";
 
@@ -152,6 +153,7 @@ function CartItemRow({
 export default function CartPage() {
   const { user } = useAuth();
   const { cart, loading, error, products, addItem, loadCart, updateItem, removeItem, applyCoupon, coupon } = useCart();
+  const { extras: extrasCatalog } = useExtrasCatalog();
   const [couponCode, setCouponCode]   = useState("");
   const [offers,     setOffers]       = useState<CartOffer[]>([]);
 
@@ -221,6 +223,7 @@ export default function CartPage() {
                 {cart.map((item, index) => {
                   if (item.customDesignImageUrl) {
                     const unitPrice = item.unitPrice ?? 0;
+                    const selectedExtras = extrasCatalog.filter(e => item.extras.includes(e.id));
                     return (
                       <div key={index} className="flex flex-col sm:flex-row items-start gap-4 rounded-2xl ring-1 ring-black/5 p-4 bg-white">
                         <div className="w-full sm:w-20 h-48 sm:h-20 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
@@ -228,6 +231,9 @@ export default function CartPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold">🎨 Producto diseñado</p>
+                          {selectedExtras.length > 0 && (
+                            <p className="text-xs text-slate-500 mt-0.5">Extras: {selectedExtras.map(e => e.name).join(", ")}</p>
+                          )}
                           <div className="mt-2 inline-flex items-center rounded-xl border">
                             <button onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)} className="px-3 py-2">–</button>
                             <input className="w-12 text-center py-2 outline-none" value={item.quantity} onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) }, user)} />
@@ -298,6 +304,7 @@ export default function CartPage() {
             {cart.map((item, index) => {
               if (item.customDesignImageUrl) {
                 const unitPrice = item.unitPrice ?? 0;
+                const selectedExtras = extrasCatalog.filter(e => item.extras.includes(e.id));
                 return (
                   <div key={index} className="flex flex-col sm:flex-row items-start gap-4 rounded-2xl ring-1 ring-black/5 p-4 bg-white">
                     <div className="w-full sm:w-20 h-48 sm:h-20 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
@@ -305,6 +312,9 @@ export default function CartPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold">🎨 Producto diseñado</p>
+                      {selectedExtras.length > 0 && (
+                        <p className="text-xs text-slate-500 mt-0.5">Extras: {selectedExtras.map(e => e.name).join(", ")}</p>
+                      )}
                       <div className="mt-2 inline-flex items-center rounded-xl border">
                         <button onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)} className="px-3 py-2">–</button>
                         <input className="w-12 text-center py-2 outline-none" value={item.quantity} onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) }, user)} />

@@ -7,6 +7,7 @@ import { useCart, useCart as useCartStore } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { getCartItemUnitPrice } from "@/lib/cartPricing";
+import { useExtrasCatalog } from "@/hooks/useExtrasCatalog";
 import BlueExpressSelector from "@/components/BlueExpressSelector";
 import type { BlueExpressPoint } from "@/lib/blue-express-points";
 
@@ -24,6 +25,7 @@ export default function CheckoutPage() {
     loadCart,
     applyCoupon,
   } = useCart();
+  const { extras: extrasCatalog } = useExtrasCatalog();
 
   const [step, setStep] = useState<Step>(1);
   const [busy, setBusy] = useState<null | "coupon" | "pay">(null);
@@ -280,9 +282,15 @@ export default function CheckoutPage() {
                     <ul className="space-y-2 text-sm">
                       {cart.map((item, idx) => {
                         if (item.customDesignImageUrl) {
+                          const selectedExtras = extrasCatalog.filter((e) => item.extras.includes(e.id));
                           return (
                             <li key={idx} className="flex justify-between">
-                              <span>🎨 Producto diseñado × {item.quantity}</span>
+                              <span>
+                                🎨 Producto diseñado × {item.quantity}
+                                {selectedExtras.length > 0 && (
+                                  <span className="text-slate-500"> ({selectedExtras.map((e) => e.name).join(", ")})</span>
+                                )}
+                              </span>
                               <span className="font-medium">${fmt((item.unitPrice ?? 0) * item.quantity)}</span>
                             </li>
                           );

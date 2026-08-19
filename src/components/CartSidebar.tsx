@@ -8,6 +8,7 @@ import { useCartUI } from "@/hooks/useCartUI";
 import { getColorEmoji } from "@/lib/colores-map";
 import { getCartItemUnitPrice } from "@/lib/cartPricing";
 import { getCartOffers, type CartOffer } from "@/actions/cart-offers";
+import { useExtrasCatalog } from "@/hooks/useExtrasCatalog";
 import Link from "next/link";
 import type { ProductModel } from "@/lib/api";
 
@@ -32,6 +33,7 @@ export default function CartSidebar() {
   const { user } = useAuth();
   const { cart, products, updateItem, removeItem, addItem } = useCart();
   const { isCartOpen, closeCart } = useCartUI();
+  const { extras: extrasCatalog } = useExtrasCatalog();
 
   const [offers, setOffers] = useState<CartOffer[]>([]);
   const [addingOffer, setAddingOffer] = useState<number | null>(null);
@@ -100,6 +102,7 @@ export default function CartSidebar() {
           {cart.map((item, index) => {
             if (item.customDesignImageUrl) {
               const unitPrice = item.unitPrice ?? 0;
+              const selectedExtras = extrasCatalog.filter(e => item.extras.includes(e.id));
               return (
                 <div key={index} className="flex gap-3 p-3 rounded-xl ring-1 ring-black/5 bg-white">
                   <div className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0">
@@ -107,6 +110,9 @@ export default function CartSidebar() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold leading-tight">🎨 Producto diseñado</p>
+                    {selectedExtras.length > 0 && (
+                      <p className="text-xs text-slate-500 mt-0.5">Extras: {selectedExtras.map(e => e.name).join(", ")}</p>
+                    )}
                     <div className="mt-2 inline-flex items-center rounded-lg border">
                       <button className="px-3 py-1.5" onClick={() => updateItem(index, { quantity: Math.max(1, item.quantity - 1) }, user)}>–</button>
                       <input className="w-12 text-center py-1.5 outline-none" value={item.quantity} onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value) || 1) }, user)} />
