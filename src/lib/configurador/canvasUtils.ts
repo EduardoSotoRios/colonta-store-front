@@ -15,12 +15,17 @@ export const CANVAS_H = 1040;
 const INK_FLOOR = 110;
 const BG_CEILING = 160;
 
+// Rectangulo (en el espacio de pixeles del canvas, CANVAS_W x CANVAS_H) que
+// delimita un logo/texto fijo dentro de una plantilla — ver LOGO_REGIONS en
+// products.ts.
+export interface PixelRect { x: number; y: number; w: number; h: number; }
+
 // Make white/light background transparent; keep dark outlines. Los pixeles
 // que ya venian transparentes en el PNG original (alpha=0, ej. plantillas
 // exportadas sin fondo) se dejan como estan — si no, su RGB en blanco (0,0,0)
 // se leeria como luminosidad 0 y se pintarian negro solido en vez de
 // transparente.
-function applyInkAlpha(imgData: ImageData): void {
+function applyInkAlpha(imgData: ImageData, protectRect?: PixelRect): void {
   const data = imgData.data;
   for (let i = 0; i < data.length; i += 4) {
     if (data[i + 3] === 0) continue;
@@ -31,6 +36,32 @@ function applyInkAlpha(imgData: ImageData): void {
       data[i + 3] = 255;
     } else {
       data[i + 3] = Math.round((1 - (lum - INK_FLOOR) / (BG_CEILING - INK_FLOOR)) * 255);
+    }
+  }
+  if (protectRect) forceLogoWhite(imgData, protectRect);
+}
+
+// El logo "Colonta" viene dibujado como texto blanco con borde negro. El
+// relleno blanco de las letras es identico en color al fondo, asi que el
+// calculo de arriba (que decide transparencia por luminosidad) no puede
+// distinguirlos y termina "borrando" el texto junto con el fondo. Como la
+// posicion del logo es fija dentro de cada plantilla, en vez de adivinar por
+// color forzamos blanco opaco a todo lo que en ese rectangulo no haya quedado
+// reconocido como tinta solida (el contorno negro de las letras) — recrea el
+// "texto blanco con borde negro" tal como esta dibujado en el original en vez
+// de dejarlo transparente.
+function forceLogoWhite(imgData: ImageData, rect: PixelRect): void {
+  const { data, width, height } = imgData;
+  const x0 = Math.max(0, Math.round(rect.x));
+  const y0 = Math.max(0, Math.round(rect.y));
+  const x1 = Math.min(width, Math.round(rect.x + rect.w));
+  const y1 = Math.min(height, Math.round(rect.y + rect.h));
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3] < 200) {
+        data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
+      }
     }
   }
 }
@@ -51,6 +82,7 @@ export function drawTemplateFromImage(
   img: HTMLImageElement,
   templateCanvas: HTMLCanvasElement,
   onDone: () => void,
+  protectRect?: PixelRect,
 ): void {
   const templateCtx = templateCanvas.getContext('2d')!;
   templateCtx.clearRect(0, 0, templateCanvas.width, templateCanvas.height);
@@ -70,7 +102,7 @@ export function drawTemplateFromImage(
     tmpCtx.drawImage(img, dx, dy, dw, dh);
 
     const imgData = tmpCtx.getImageData(0, 0, canW, canH);
-    applyInkAlpha(imgData);
+    applyInkAlpha(imgData, protectRect);
     tmpCtx.putImageData(imgData, 0, 0);
 
     templateCtx.clearRect(0, 0, templateCanvas.width, templateCanvas.height);
@@ -105,6 +137,7 @@ export function drawTemplateFromImageWithTape(
   tapeImg: HTMLImageElement,
   templateCanvas: HTMLCanvasElement,
   onDone: () => void,
+  protectRect?: PixelRect,
 ): void {
   const templateCtx = templateCanvas.getContext('2d')!;
   templateCtx.clearRect(0, 0, templateCanvas.width, templateCanvas.height);
@@ -127,7 +160,7 @@ export function drawTemplateFromImageWithTape(
     baseCtx.imageSmoothingQuality = 'high';
     baseCtx.drawImage(normalImg, dx, dy, dw, dh);
     const baseData = baseCtx.getImageData(0, 0, canW, canH);
-    applyInkAlpha(baseData);
+    applyInkAlpha(baseData, protectRect);
 
     // Dos copias "aplanadas" sobre blanco (solo para comparar colores): sin
     // esto, si la plantilla normal viene con fondo realmente transparente,

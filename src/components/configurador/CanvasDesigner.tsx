@@ -15,7 +15,7 @@ import {
   getMergedDataURL,
   downloadCanvas,
 } from '@/lib/configurador/canvasUtils';
-import { PRODUCT_IMAGES, PRODUCT_IMAGES_CINTA, COLORS, type ProductId } from '@/lib/configurador/products';
+import { PRODUCT_IMAGES, PRODUCT_IMAGES_CINTA, LOGO_REGIONS, COLORS, type ProductId } from '@/lib/configurador/products';
 import { getConfiguradorColoresEstado } from '@/lib/configurador/colores-estado';
 
 type Tool = 'pencil' | 'fill' | 'eraser';
@@ -162,17 +162,18 @@ export default function CanvasDesigner({ product, productName, onContinue, onBac
       setTemplateReady(true);
     };
 
+    const logoRegion = LOGO_REGIONS[product];
     const cintaSrc = PRODUCT_IMAGES_CINTA[product];
     if (effectiveVariant === 'cinta' && cintaSrc) {
       const normalImg = new Image();
       normalImg.src = PRODUCT_IMAGES[product];
       const tapeImg = new Image();
       tapeImg.src = cintaSrc;
-      drawTemplateFromImageWithTape(normalImg, tapeImg, templateCanvas, onTemplateDone);
+      drawTemplateFromImageWithTape(normalImg, tapeImg, templateCanvas, onTemplateDone, logoRegion);
     } else {
       const img = new Image();
       img.src = PRODUCT_IMAGES[product];
-      drawTemplateFromImage(img, templateCanvas, onTemplateDone);
+      drawTemplateFromImage(img, templateCanvas, onTemplateDone, logoRegion);
     }
   }, [product, effectiveVariant, renderComposite]);
 

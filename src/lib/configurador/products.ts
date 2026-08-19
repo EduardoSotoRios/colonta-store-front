@@ -1,3 +1,5 @@
+import type { PixelRect } from './canvasUtils';
+
 export type ProductId =
   | 'mochila_normal'
   | 'mochila_ligera'
@@ -67,6 +69,19 @@ export const PRODUCT_IMAGES_CINTA: Partial<Record<ProductId, string>> = {
   tabaquera:       '/configurador/plantillas-cinta/tabaquera.jpg',
   roll_top:        '/configurador/plantillas-cinta/roll-top.jpg',
   porta_notebook:  '/configurador/plantillas-cinta/porta-notebook.jpg',
+};
+
+// Rectangulo (en pixeles de CANVAS_W x CANVAS_H) que delimita el logo
+// "Colonta" dentro de cada plantilla — viene dibujado como texto blanco con
+// borde negro, y como el relleno blanco es igual de color al fondo, el
+// algoritmo de transparencia normal lo borra junto con el fondo real. Estas
+// coordenadas le dicen a drawTemplateFromImage/WithTape donde forzar blanco
+// opaco en vez de transparente. Se calibran una vez por plantilla (mirando
+// donde cae el texto) y no cambian salvo que se reemplace la imagen.
+// Por ahora solo Porta Notebook — se agregan las demas plantillas a medida
+// que se confirman sus coordenadas.
+export const LOGO_REGIONS: Partial<Record<ProductId, PixelRect>> = {
+  porta_notebook: { x: 630, y: 335, w: 150, h: 65 },
 };
 
 export const MOCHILA_TYPES: ProductInfo[] = [
