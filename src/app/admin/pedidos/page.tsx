@@ -94,7 +94,6 @@ function OrderItemRow({
   extrasImgMap: Record<string, string>;
 }) {
   const [expandedSrc, setExpandedSrc] = useState<string | null>(null);
-  const [openExtraId, setOpenExtraId] = useState<string | null>(null);
   const isCustom     = Boolean(item.customDesignImageUrl);
   const hasStamp     = Boolean(item.stampImageUrl);
   const productImg   = item.customDesignImageUrl || item.productImageUrl;
@@ -193,81 +192,36 @@ function OrderItemRow({
 
           {/* Extras */}
           {extras.length > 0 && (
-            <div className="mt-2 space-y-1.5">
-              <div className="flex flex-wrap gap-1.5">
-                {extras.map((e) => {
-                  const isStamp   = e.name.toLowerCase().includes("estampado");
-                  const imgUrl    = extrasImgMap[e.id];
-                  const isOpen    = openExtraId === e.id;
-                  const hasImg    = Boolean(imgUrl);
-                  return (
-                    <span
-                      key={e.id}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
-                        isStamp
-                          ? "bg-orange-50 text-orange-800 border-orange-200"
-                          : "bg-teal-50 text-teal-800 border-teal-200"
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        title={hasImg ? (isOpen ? "Ocultar imagen" : "Ver imagen del extra") : undefined}
-                        onClick={() => hasImg ? setOpenExtraId(isOpen ? null : e.id) : undefined}
-                        className={`w-3.5 h-3.5 shrink-0 flex items-center justify-center rounded-full transition-colors ${
-                          hasImg
-                            ? isOpen
-                              ? "bg-current opacity-80 text-white cursor-pointer"
-                              : "opacity-60 hover:opacity-100 cursor-pointer"
-                            : "opacity-40 cursor-default"
-                        }`}
-                      >
-                        {isOpen ? (
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        ) : (
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                          </svg>
-                        )}
-                      </button>
-                      {e.name}
-                      {e.price > 0 && (
-                        <span className="ml-0.5 opacity-70">+${fmt(e.price)}</span>
-                      )}
-                    </span>
-                  );
-                })}
-              </div>
-
-              {/* Imagen del extra seleccionado */}
-              {openExtraId && extrasImgMap[openExtraId] && (
-                <div className="flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setExpandedSrc(extrasImgMap[openExtraId])}
-                    className="shrink-0 cursor-zoom-in"
-                    title="Ver imagen ampliada"
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {extras.map((e) => {
+                const isStamp = e.name.toLowerCase().includes("estampado");
+                const imgUrl  = extrasImgMap[e.id];
+                return (
+                  <span
+                    key={e.id}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
+                      isStamp
+                        ? "bg-orange-50 text-orange-800 border-orange-200"
+                        : "bg-teal-50 text-teal-800 border-teal-200"
+                    }`}
                   >
-                    <img
-                      src={extrasImgMap[openExtraId]}
-                      alt={extras.find((e) => e.id === openExtraId)?.name}
-                      className="w-14 h-14 rounded-lg object-contain border border-teal-200 bg-white hover:opacity-80 transition-opacity"
-                    />
-                  </button>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-teal-800">
-                      {extras.find((e) => e.id === openExtraId)?.name}
-                    </p>
                     <button
-                      onClick={() => setExpandedSrc(extrasImgMap[openExtraId])}
-                      className="mt-0.5 text-[11px] text-teal-600 hover:text-teal-800 font-medium underline"
+                      type="button"
+                      title={imgUrl ? "Ver imagen del extra" : undefined}
+                      onClick={() => imgUrl && setExpandedSrc(imgUrl)}
+                      className={`w-3 h-3 shrink-0 ${imgUrl ? "cursor-zoom-in hover:opacity-80" : "opacity-40 cursor-default"}`}
                     >
-                      Ver ampliada →
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
                     </button>
-                  </div>
-                </div>
-              )}
+                    {e.name}
+                    {e.price > 0 && (
+                      <span className="ml-0.5 opacity-70">+${fmt(e.price)}</span>
+                    )}
+                  </span>
+                );
+              })}
             </div>
           )}
 
