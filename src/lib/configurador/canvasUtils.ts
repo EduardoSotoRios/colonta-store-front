@@ -67,9 +67,17 @@ function forceLogoWhite(imgData: ImageData, rect: PixelRect): Uint8Array {
   const rw = x1 - x0, rh = y1 - y0;
   if (rw <= 0 || rh <= 0) return mask;
 
+  // Umbral mas bajo que el "> 80" que usan buildProductMask/floodFill para
+  // el contorno del producto: en plantillas fuente de resolucion muy alta
+  // (ej. 4000x4000), el downscale del navegador (imageSmoothingQuality
+  // 'high') adelgaza tanto el trazo del logo que, en algun punto del
+  // contorno, su alpha cae por debajo de 80 — un solo pixel asi alcanza
+  // para que el flood fill se "escape" por ahi y deje de encerrar el
+  // relleno de las letras. Bajarlo a 40 le da margen sin afectar el resto
+  // del algoritmo (ver forceLogoWhite arriba), que solo se usa aca.
   const isInk = (lx: number, ly: number) => {
     const i = ((y0 + ly) * width + (x0 + lx)) * 4;
-    return data[i + 3] > 80;
+    return data[i + 3] > 40;
   };
 
   const outside = new Uint8Array(rw * rh);

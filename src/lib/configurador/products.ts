@@ -80,9 +80,6 @@ export const PRODUCT_IMAGES_CINTA: Partial<Record<ProductId, string>> = {
 // el bloque de pixeles "encerrado" por tinta, igual que buildProductMask, y
 // confirmando visualmente que es el texto y no otro elemento chico cercano
 // como una hebilla o una asa) y no cambian salvo que se reemplace la imagen.
-// Porta Matt no tiene entrada: su plantilla no trae el texto blanco con
-// borde negro (el unico elemento chico ahi es un rectangulo negro solido),
-// asi que no sufre este problema.
 export const LOGO_REGIONS: Partial<Record<ProductId, PixelRect>> = {
   porta_notebook:  { x: 630, y: 335, w: 150, h: 65 },
   tabaquera:       { x: 570, y: 372, w: 220, h: 100 },
@@ -95,6 +92,7 @@ export const LOGO_REGIONS: Partial<Record<ProductId, PixelRect>> = {
   bolso:           { x: 700, y: 745, w: 160, h: 115 },
   roll_top:        { x: 750, y: 815, w: 115, h: 75 },
   billetera:       { x: 555, y: 450, w: 235, h: 105 },
+  porta_matt:      { x: 670, y: 635, w: 120, h: 65 },
 };
 
 export const MOCHILA_TYPES: ProductInfo[] = [
