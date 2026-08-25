@@ -12,7 +12,10 @@ export type ProductId =
   | 'banano_muslera'
   | 'porta_matt'
   | 'roll_top'
-  | 'porta_notebook';
+  | 'porta_notebook'
+  | 'tote_nomada'
+  | 'banano_pop'
+  | 'bolso_cartera';
 
 export interface ProductInfo {
   id: ProductId;
@@ -35,6 +38,9 @@ export const PRODUCT_THUMBNAILS: Record<ProductId, string> = {
   porta_matt:      '/configurador/porta-matt.png',
   roll_top:        '/configurador/roll-top.png',
   porta_notebook:  '/configurador/porta-notebook.png',
+  tote_nomada:     '/configurador/tote-nomada.png',
+  banano_pop:      '/configurador/banano-pop.png',
+  bolso_cartera:   '/configurador/bolso-cartera.png',
 };
 
 // Plantillas de dibujo que se cargan en el canvas (line art para colorear)
@@ -51,6 +57,9 @@ export const PRODUCT_IMAGES: Record<ProductId, string> = {
   porta_matt:      '/configurador/plantillas/porta-matt.png',
   roll_top:        '/configurador/plantillas/roll-top.png',
   porta_notebook:  '/configurador/plantillas/porta-notebook.png',
+  tote_nomada:     '/configurador/plantillas/tote-nomada.png',
+  banano_pop:      '/configurador/plantillas/banano-pop.png',
+  bolso_cartera:   '/configurador/plantillas/bolso-cartera.png',
 };
 
 // Version "con cinta reflectante" de la plantilla de dibujo, solo para los
@@ -93,6 +102,9 @@ export const LOGO_REGIONS: Partial<Record<ProductId, PixelRect>> = {
   roll_top:        { x: 750, y: 815, w: 115, h: 75 },
   billetera:       { x: 555, y: 450, w: 235, h: 105 },
   porta_matt:      { x: 670, y: 635, w: 120, h: 65 },
+  tote_nomada:     { x: 595, y: 835, w: 130, h: 65 },
+  banano_pop:      { x: 533, y: 670, w: 103, h: 45 },
+  bolso_cartera:   { x: 835, y: 763, w: 120, h: 60 },
 };
 
 export const MOCHILA_TYPES: ProductInfo[] = [
@@ -112,6 +124,9 @@ export const PRODUCT_LIST: Array<ProductInfo | { id: 'mochila'; name: string; de
   { id: 'porta_matt',     name: 'Porta Matt',     description: 'Porta colchoneta',      image: '/configurador/porta-matt.png' },
   { id: 'roll_top',       name: 'Roll Top',       description: 'Cierre enrollable',     image: '/configurador/roll-top.png' },
   { id: 'porta_notebook', name: 'Porta Notebook', description: 'Funda para laptop',     image: '/configurador/porta-notebook.png' },
+  { id: 'tote_nomada',    name: 'Tote Nómada',    description: 'Tote con bolsillos laterales', image: '/configurador/tote-nomada.png' },
+  { id: 'banano_pop',     name: 'Banano Pop',     description: 'Riñonera compacta',     image: '/configurador/banano-pop.png' },
+  { id: 'bolso_cartera',  name: 'Bolso Cartera',  description: 'Bolso cruzado tipo cartera', image: '/configurador/bolso-cartera.png' },
 ];
 
 export const COLORS = [

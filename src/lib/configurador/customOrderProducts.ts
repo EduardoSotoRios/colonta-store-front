@@ -15,6 +15,9 @@ export const CUSTOM_ORDER_PRODUCT_MODEL_IDS: Record<ProductId, string> = {
   porta_matt:      'b98424d1-6a02-4825-b5da-2cb7f5ffe7dd',
   roll_top:        'd87adaaf-1112-4c6d-b4fe-2b3434d3a4aa',
   porta_notebook:  'b71339db-06e0-43ff-8970-1d253106f39f',
+  tote_nomada:     'f666ed10-8df1-4924-8260-1a5d4c9a9dff',
+  banano_pop:      '60f48b6a-fbc9-46b1-9499-f6c0710ce6fb',
+  bolso_cartera:   'd24a367b-f7ff-4b4d-aa02-a4ddca6fd3cc',
 };
 
 // SOLO para mostrar el precio en el carrito antes del pago — el precio real
@@ -34,6 +37,9 @@ export const CUSTOM_ORDER_PRICES: Record<ProductId, number> = {
   porta_matt: 28000,
   roll_top: 32000,
   porta_notebook: 30000,
+  tote_nomada: 30000,
+  banano_pop: 22000,
+  bolso_cartera: 28000,
 };
 
 export const CUSTOM_ORDER_PRODUCT_NAMES: Record<ProductId, string> = {
@@ -49,4 +55,7 @@ export const CUSTOM_ORDER_PRODUCT_NAMES: Record<ProductId, string> = {
   porta_matt: 'Porta Matt (Diseñado)',
   roll_top: 'Roll Top (Diseñado)',
   porta_notebook: 'Porta Notebook (Diseñado)',
+  tote_nomada: 'Tote Nómada (Diseñado)',
+  banano_pop: 'Banano Pop (Diseñado)',
+  bolso_cartera: 'Bolso Cartera (Diseñado)',
 };

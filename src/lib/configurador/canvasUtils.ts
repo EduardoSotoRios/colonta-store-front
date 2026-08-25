@@ -67,24 +67,38 @@ function forceLogoWhite(imgData: ImageData, rect: PixelRect): Uint8Array {
   const rw = x1 - x0, rh = y1 - y0;
   if (rw <= 0 || rh <= 0) return mask;
 
-  // Umbral mas bajo que el "> 80" que usan buildProductMask/floodFill para
-  // el contorno del producto: en plantillas fuente de resolucion muy alta
-  // (ej. 4000x4000), el downscale del navegador (imageSmoothingQuality
-  // 'high') adelgaza tanto el trazo del logo que, en algun punto del
-  // contorno, su alpha cae por debajo de 80 — un solo pixel asi alcanza
-  // para que el flood fill se "escape" por ahi y deje de encerrar el
-  // relleno de las letras. Bajarlo a 40 le da margen sin afectar el resto
-  // del algoritmo (ver forceLogoWhite arriba), que solo se usa aca.
-  const isInk = (lx: number, ly: number) => {
+  // Dos umbrales distintos para dos preguntas distintas — usar uno solo para
+  // ambas fue el bug original:
+  // 1) WALL_THRESHOLD (bajo): que cuenta como "pared" para el flood fill que
+  //    separa fondo real de encerrado. Tiene que ser bajo porque en
+  //    plantillas fuente de resolucion muy alta (ej. 4000x4000), el
+  //    downscale del navegador (imageSmoothingQuality 'high') adelgaza tanto
+  //    el trazo del logo que, en algun punto del contorno, su alpha cae por
+  //    debajo de 80 — un solo pixel asi alcanza para que el flood fill se
+  //    "escape" por ahi.
+  // 2) CONFIDENT_INK_THRESHOLD (alto): que pixel es tinta "de verdad" y hay
+  //    que dejarlo tal cual en vez de forzarlo a blanco. Tiene que ser alto:
+  //    un pixel con alpha bajo (parte del degradado de antialiasing, no
+  //    tinta solida) que quede encerrado SI tiene que forzarse a blanco —
+  //    si se usara el mismo umbral bajo de (1) para esto, esos pixeles
+  //    quedaban semitransparentes en vez de blanco solido, mostrando el
+  //    fondo/pintura por detras a medias (el texto se veia "lavado").
+  const WALL_THRESHOLD = 20;
+  const CONFIDENT_INK_THRESHOLD = 200;
+  const isWall = (lx: number, ly: number) => {
     const i = ((y0 + ly) * width + (x0 + lx)) * 4;
-    return data[i + 3] > 40;
+    return data[i + 3] > WALL_THRESHOLD;
+  };
+  const isConfidentInk = (lx: number, ly: number) => {
+    const i = ((y0 + ly) * width + (x0 + lx)) * 4;
+    return data[i + 3] > CONFIDENT_INK_THRESHOLD;
   };
 
   const outside = new Uint8Array(rw * rh);
   const queue: number[] = [];
   const seed = (lx: number, ly: number) => {
     const p = ly * rw + lx;
-    if (!outside[p] && !isInk(lx, ly)) { outside[p] = 1; queue.push(p); }
+    if (!outside[p] && !isWall(lx, ly)) { outside[p] = 1; queue.push(p); }
   };
   for (let lx = 0; lx < rw; lx++) { seed(lx, 0); seed(lx, rh - 1); }
   for (let ly = 0; ly < rh; ly++) { seed(0, ly); seed(rw - 1, ly); }
@@ -104,7 +118,7 @@ function forceLogoWhite(imgData: ImageData, rect: PixelRect): Uint8Array {
       if (outside[ly * rw + lx]) continue; // fondo real, no es parte del logo
       const gx = x0 + lx, gy = y0 + ly;
       mask[gy * width + gx] = 1;
-      if (isInk(lx, ly)) continue; // ya esta bien (tinta opaca), no tocar
+      if (isConfidentInk(lx, ly)) continue; // tinta solida de verdad, no tocar
       const i = (gy * width + gx) * 4;
       data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
     }
