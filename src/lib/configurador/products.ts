@@ -24,26 +24,9 @@ export interface ProductInfo {
   image: string;
 }
 
-// Iconos usados en los botones del selector (imágenes pequeñas ~100KB)
-export const PRODUCT_THUMBNAILS: Record<ProductId, string> = {
-  mochila_normal:  '/configurador/mochila.png',
-  mochila_ligera:  '/configurador/mochila-ligera.png',
-  mochila_mini:    '/configurador/mochila-mini.png',
-  banano:          '/configurador/banano.png',
-  billetera:       '/configurador/billetera.png',
-  bolso:           '/configurador/bolso.png',
-  tabaquera:       '/configurador/tabaquera.png',
-  banano_simple:   '/configurador/banano-simple.png',
-  banano_muslera:  '/configurador/banano-mulera.png',
-  porta_matt:      '/configurador/porta-matt.png',
-  roll_top:        '/configurador/roll-top.png',
-  porta_notebook:  '/configurador/porta-notebook.png',
-  tote_nomada:     '/configurador/tote-nomada.png',
-  banano_pop:      '/configurador/banano-pop.png',
-  bolso_cartera:   '/configurador/bolso-cartera.png',
-};
-
-// Plantillas de dibujo que se cargan en el canvas (line art para colorear)
+// Plantillas de dibujo que se cargan en el canvas (line art para colorear).
+// Tambien se usan como miniatura en los botones del selector de producto,
+// asi no hace falta mantener un set de imagenes aparte por cada producto.
 export const PRODUCT_IMAGES: Record<ProductId, string> = {
   mochila_normal:  '/configurador/plantillas/mochila-ligera.png',
   mochila_ligera:  '/configurador/plantillas/mochila.png',
@@ -108,25 +91,25 @@ export const LOGO_REGIONS: Partial<Record<ProductId, PixelRect>> = {
 };
 
 export const MOCHILA_TYPES: ProductInfo[] = [
-  { id: 'mochila_normal', name: 'Normal', description: 'Modelo estándar',         image: '/configurador/mochila.png' },
-  { id: 'mochila_ligera', name: 'Ligera', description: 'Ultraliviana y flexible', image: '/configurador/mochila-ligera.png' },
-  { id: 'mochila_mini',   name: 'Mini',   description: 'Compacta y práctica',     image: '/configurador/mochila-mini.png' },
+  { id: 'mochila_normal', name: 'Normal', description: 'Modelo estándar',         image: PRODUCT_IMAGES.mochila_normal },
+  { id: 'mochila_ligera', name: 'Ligera', description: 'Ultraliviana y flexible', image: PRODUCT_IMAGES.mochila_ligera },
+  { id: 'mochila_mini',   name: 'Mini',   description: 'Compacta y práctica',     image: PRODUCT_IMAGES.mochila_mini },
 ];
 
 export const PRODUCT_LIST: Array<ProductInfo | { id: 'mochila'; name: string; description: string; image: string; isMochila: true }> = [
-  { id: 'mochila',        name: 'Mochila',        description: 'Normal, Ligera o Mini', image: '/configurador/mochila.png',       isMochila: true },
-  { id: 'banano',         name: 'Banano',         description: 'Riñonera clásica',      image: '/configurador/banano.png' },
-  { id: 'billetera',      name: 'Billetera',      description: 'Bifold clásica',        image: '/configurador/billetera.png' },
-  { id: 'bolso',          name: 'Bolso Tote',     description: 'Para el día a día',     image: '/configurador/bolso.png' },
-  { id: 'tabaquera',      name: 'Tabaquera',      description: 'Bolso tipo sobre',      image: '/configurador/tabaquera.png' },
-  { id: 'banano_simple',  name: 'Banano Simple',  description: 'Sling bag cruzado',     image: '/configurador/banano-simple.png' },
-  { id: 'banano_muslera', name: 'Banano Muslera', description: 'Riñonera tipo muslera', image: '/configurador/banano-mulera.png' },
-  { id: 'porta_matt',     name: 'Porta Matt',     description: 'Porta colchoneta',      image: '/configurador/porta-matt.png' },
-  { id: 'roll_top',       name: 'Roll Top',       description: 'Cierre enrollable',     image: '/configurador/roll-top.png' },
-  { id: 'porta_notebook', name: 'Porta Notebook', description: 'Funda para laptop',     image: '/configurador/porta-notebook.png' },
-  { id: 'tote_nomada',    name: 'Tote Nómada',    description: 'Tote con bolsillos laterales', image: '/configurador/tote-nomada.png' },
-  { id: 'banano_pop',     name: 'Banano Pop',     description: 'Riñonera compacta',     image: '/configurador/banano-pop.png' },
-  { id: 'bolso_cartera',  name: 'Bolso Cartera',  description: 'Bolso cruzado tipo cartera', image: '/configurador/bolso-cartera.png' },
+  { id: 'mochila',        name: 'Mochila',        description: 'Normal, Ligera o Mini', image: PRODUCT_IMAGES.mochila_normal,   isMochila: true },
+  { id: 'banano',         name: 'Banano',         description: 'Riñonera clásica',      image: PRODUCT_IMAGES.banano },
+  { id: 'billetera',      name: 'Billetera',      description: 'Bifold clásica',        image: PRODUCT_IMAGES.billetera },
+  { id: 'bolso',          name: 'Bolso Tote',     description: 'Para el día a día',     image: PRODUCT_IMAGES.bolso },
+  { id: 'tabaquera',      name: 'Tabaquera',      description: 'Bolso tipo sobre',      image: PRODUCT_IMAGES.tabaquera },
+  { id: 'banano_simple',  name: 'Banano Simple',  description: 'Sling bag cruzado',     image: PRODUCT_IMAGES.banano_simple },
+  { id: 'banano_muslera', name: 'Banano Muslera', description: 'Riñonera tipo muslera', image: PRODUCT_IMAGES.banano_muslera },
+  { id: 'porta_matt',     name: 'Porta Matt',     description: 'Porta colchoneta',      image: PRODUCT_IMAGES.porta_matt },
+  { id: 'roll_top',       name: 'Roll Top',       description: 'Cierre enrollable',     image: PRODUCT_IMAGES.roll_top },
+  { id: 'porta_notebook', name: 'Porta Notebook', description: 'Funda para laptop',     image: PRODUCT_IMAGES.porta_notebook },
+  { id: 'tote_nomada',    name: 'Tote Nómada',    description: 'Tote con bolsillos laterales', image: PRODUCT_IMAGES.tote_nomada },
+  { id: 'banano_pop',     name: 'Banano Pop',     description: 'Riñonera compacta',     image: PRODUCT_IMAGES.banano_pop },
+  { id: 'bolso_cartera',  name: 'Bolso Cartera',  description: 'Bolso cruzado tipo cartera', image: PRODUCT_IMAGES.bolso_cartera },
 ];
 
 export const COLORS = [
