@@ -28,14 +28,15 @@ export interface ProductInfo {
 // independientes de la plantilla de dibujo (PRODUCT_IMAGES) a proposito: la
 // plantilla se reprocesa con un algoritmo de luminosidad para el canvas, asi
 // que si cambia (lineas mas finas, otra resolucion, etc.) no queremos que
-// eso tambien cambie silenciosamente la miniatura del selector. Los
-// productos que no tienen entrada aca (ej. banano_simple) usan la plantilla
-// como respaldo — ver PRODUCT_LIST/MOCHILA_TYPES mas abajo.
+// eso tambien cambie silenciosamente la miniatura del selector. Parcial a
+// proposito: un producto nuevo sin miniatura propia todavia usa la
+// plantilla como respaldo — ver thumbnailFor()/PRODUCT_LIST mas abajo.
 export const PRODUCT_THUMBNAILS: Partial<Record<ProductId, string>> = {
   mochila_normal:  '/configurador/miniaturas/mochila-normal.png',
   mochila_ligera:  '/configurador/miniaturas/mochila-ligera.png',
   mochila_mini:    '/configurador/miniaturas/mochila-mini.png',
   banano:          '/configurador/miniaturas/banano.png',
+  banano_simple:   '/configurador/miniaturas/banano-simple.png',
   billetera:       '/configurador/miniaturas/billetera.png',
   bolso:           '/configurador/miniaturas/bolso.png',
   tabaquera:       '/configurador/miniaturas/tabaquera.png',
