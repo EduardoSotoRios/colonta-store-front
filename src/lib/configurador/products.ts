@@ -84,6 +84,10 @@ export const PRODUCT_IMAGES_CINTA: Partial<Record<ProductId, string>> = {
   tabaquera:       '/configurador/plantillas-cinta/tabaquera.jpg',
   roll_top:        '/configurador/plantillas-cinta/roll-top.jpg',
   porta_notebook:  '/configurador/plantillas-cinta/porta-notebook.jpg',
+  porta_matt:      '/configurador/plantillas-cinta/porta-matt.jpg',
+  tote_nomada:     '/configurador/plantillas-cinta/tote-nomada.jpg',
+  banano_pop:      '/configurador/plantillas-cinta/banano-pop.jpg',
+  bolso_cartera:   '/configurador/plantillas-cinta/bolso-cartera.jpg',
 };
 
 // Rectangulo (en pixeles de CANVAS_W x CANVAS_H) que delimita el logo
