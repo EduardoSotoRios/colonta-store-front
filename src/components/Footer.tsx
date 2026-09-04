@@ -24,14 +24,10 @@ export default function Footer() {
             <h4 className="font-semibold text-white mb-3">Compra segura</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="hover:text-white">
-                  ¿Cómo comprar?
-                </a>
+                <span className="text-white/40 cursor-default">¿Cómo comprar?</span>
               </li>
               <li>
-                <a href="#" className="hover:text-white">
-                  Despacho
-                </a>
+                <span className="text-white/40 cursor-default">Despacho</span>
               </li>
               <li>
                 <a href="/garantia" className="hover:text-white">
@@ -39,9 +35,7 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white">
-                  Métodos de pago
-                </a>
+                <span className="text-white/40 cursor-default">Métodos de pago</span>
               </li>
             </ul>
           </div>
@@ -49,9 +43,7 @@ export default function Footer() {
             <h4 className="font-semibold text-white mb-3">Transparencia</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="hover:text-white">
-                  Privacidad
-                </a>
+                <span className="text-white/40 cursor-default">Privacidad</span>
               </li>
               <li>
                 <a href="/politica-compra" className="hover:text-white">
@@ -59,7 +51,7 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="preguntas-frecuentes" className="hover:text-white">
+                <a href="/preguntas-frecuentes" className="hover:text-white">
                   Cambios y devoluciones
                 </a>
               </li>
