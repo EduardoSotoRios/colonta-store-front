@@ -1,7 +1,14 @@
 // src/middleware.ts
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api").replace(/\/+$/, "");
+// Para fetch en middleware (Node.js server): siempre necesita URL absoluta.
+// Usa RAILWAY_API_URL (la URL real del backend) o el fallback hardcodeado.
+// NUNCA usar NEXT_PUBLIC_API_URL aquí porque puede ser una ruta relativa ("/api").
+const BACKEND = (
+  process.env.RAILWAY_API_URL
+    ? `${process.env.RAILWAY_API_URL}/api`
+    : "https://colonta-api-sz8z.onrender.com/api"
+).replace(/\/+$/, "");
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

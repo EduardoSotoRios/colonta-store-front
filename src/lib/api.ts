@@ -16,18 +16,22 @@ export function setAuthToken(_token: string | null) {
   // Solo mantenemos esta función para compatibilidad con código existente
 }
 
-// Construye URL segura con soporte path con/sin "/"
+// Construye URL segura. Funciona con base absoluta ("https://...") o relativa ("/api").
+// new URL() requiere base absoluta, así que usamos concatenación de strings.
 function buildUrl(path: string, params?: Record<string, any>) {
-  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
-  const url = new URL(cleanPath, API + "/");
+  const cleanPath = path.startsWith("/") ? path : "/" + path;
+  let url = API.replace(/\/+$/, "") + cleanPath;
   if (params) {
+    const sp = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== null && v !== "") {
-        url.searchParams.set(k, String(v));
+        sp.set(k, String(v));
       }
     }
+    const qs = sp.toString();
+    if (qs) url += "?" + qs;
   }
-  return url.toString();
+  return url;
 }
 
 // Limpiar objeto eliminando propiedades undefined y null
