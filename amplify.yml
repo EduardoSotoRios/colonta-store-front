@@ -7,18 +7,11 @@ frontend:
     build:
       commands:
         - npm run build
-        - |
-          printf "SUPABASE_SERVICE_ROLE_KEY=%s\n" "$SUPABASE_SERVICE_ROLE_KEY" > .env.production
-          printf "CLOUDINARY_API_SECRET=%s\n"     "$CLOUDINARY_API_SECRET"     >> .env.production
-          printf "CLOUDINARY_API_KEY=%s\n"        "$CLOUDINARY_API_KEY"        >> .env.production
-          printf "CLOUDINARY_CLOUD_NAME=%s\n"     "$CLOUDINARY_CLOUD_NAME"     >> .env.production
-          printf "ADMIN_VERIFY_PIN=%s\n"          "$ADMIN_VERIFY_PIN"          >> .env.production
-          printf "RAILWAY_API_URL=%s\n"           "$RAILWAY_API_URL"           >> .env.production
+        - node -e "const fs=require('fs');fs.writeFileSync('.next/server-config.json',JSON.stringify({SUPABASE_SERVICE_ROLE_KEY:process.env.SUPABASE_SERVICE_ROLE_KEY,CLOUDINARY_API_SECRET:process.env.CLOUDINARY_API_SECRET,CLOUDINARY_API_KEY:process.env.CLOUDINARY_API_KEY,CLOUDINARY_CLOUD_NAME:process.env.CLOUDINARY_CLOUD_NAME,ADMIN_VERIFY_PIN:process.env.ADMIN_VERIFY_PIN,RAILWAY_API_URL:process.env.RAILWAY_API_URL}));"
   artifacts:
-    baseDirectory: .
+    baseDirectory: .next
     files:
-      - .next/**/*
-      - .env.production
+      - '**/*'
   cache:
     paths:
       - node_modules/**/*
