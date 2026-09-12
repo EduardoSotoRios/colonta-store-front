@@ -13,8 +13,14 @@ const CATEGORIAS = [
 ];
 
 export default async function NuevoProductoPage() {
-  const supabase = await createSupabaseAdminClient();
-  const { data: colores } = await supabase.from("colores").select("id,nombre,hex,activo").order("nombre");
+  let colores: any[] = [];
+  try {
+    const supabase = await createSupabaseAdminClient();
+    const { data } = await supabase.from("colores").select("id,nombre,hex,activo").order("nombre");
+    colores = data ?? [];
+  } catch {
+    // continúa con colores vacío si falla la conexión admin
+  }
 
   return (
     <div className="p-8 max-w-4xl">
@@ -28,7 +34,7 @@ export default async function NuevoProductoPage() {
         producto={null}
         categorias={CATEGORIAS}
         esNuevo={true}
-        colores={colores ?? []}
+        colores={colores}
       />
     </div>
   );

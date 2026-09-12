@@ -23,18 +23,27 @@ export default async function AdminProductosPage({
   const q        = sp.q?.trim() || undefined;
   const categoria = sp.categoria?.trim() || undefined;
 
-  const supabase = await createSupabaseAdminClient();
+  let productos: any[] | null = null;
+  let error: { message: string } | null = null;
 
-  let query = supabase
-    .from("productos_completos")
-    .select("id, nombre, slug, emoji, precio, peso_g, badge, personalizable, activo, categoria_slug, categoria_nombre, producto_imagenes(url, principal)")
-    .order("categoria_id", { ascending: true })
-    .order("orden", { ascending: true });
+  try {
+    const supabase = await createSupabaseAdminClient();
 
-  if (q)         query = query.ilike("nombre", `%${q}%`);
-  if (categoria) query = query.eq("categoria_slug", categoria);
+    let query = supabase
+      .from("productos_completos")
+      .select("id, nombre, slug, emoji, precio, peso_g, badge, personalizable, activo, categoria_slug, categoria_nombre, producto_imagenes(url, principal)")
+      .order("categoria_id", { ascending: true })
+      .order("orden", { ascending: true });
 
-  const { data: productos, error } = await query;
+    if (q)         query = query.ilike("nombre", `%${q}%`);
+    if (categoria) query = query.eq("categoria_slug", categoria);
+
+    const result = await query;
+    productos = result.data;
+    error = result.error;
+  } catch (e: any) {
+    error = { message: e?.message ?? "Error de configuración del servidor. Verifica las variables de entorno." };
+  }
 
   return (
     <div className="p-8">

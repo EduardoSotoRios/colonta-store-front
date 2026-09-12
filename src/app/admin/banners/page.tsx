@@ -4,11 +4,19 @@ import AdminBannersClient from "./AdminBannersClient";
 export const dynamic = "force-dynamic";
 
 export default async function AdminBannersPage() {
-  const supabase = await createSupabaseAdminClient();
-  const { data: banners } = await supabase
-    .from("banners")
-    .select("*")
-    .order("orden", { ascending: true });
+  let banners: any[] = [];
+  let configError: string | null = null;
+
+  try {
+    const supabase = await createSupabaseAdminClient();
+    const { data } = await supabase
+      .from("banners")
+      .select("*")
+      .order("orden", { ascending: true });
+    banners = data ?? [];
+  } catch (e: any) {
+    configError = e?.message ?? "Error de configuración del servidor.";
+  }
 
   return (
     <div className="p-8 max-w-4xl">
@@ -18,7 +26,12 @@ export default async function AdminBannersPage() {
           Gestiona las imágenes del carrusel en la página principal.
         </p>
       </div>
-      <AdminBannersClient banners={banners ?? []} />
+      {configError && (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-4 mb-6 text-red-700 text-sm">
+          Error de configuración: {configError}
+        </div>
+      )}
+      <AdminBannersClient banners={banners} />
     </div>
   );
 }

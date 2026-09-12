@@ -22,21 +22,29 @@ export default async function AdminProductoPage({
   const { id } = await params;
   const esNuevo = id === "nuevo";
 
-  const supabase = await createSupabaseAdminClient();
+  let colores: any[] = [];
+  let producto: any | null = null;
 
-  const [{ data: colores }, productoResult] = await Promise.all([
-    supabase.from("colores").select("id,nombre,hex,activo").order("nombre"),
-    esNuevo
-      ? Promise.resolve({ data: null, error: null })
-      : supabase
-          .from("productos_completos")
-          .select("*, producto_specs(*), producto_caracteristicas(*), producto_imagenes(*)")
-          .eq("id", id)
-          .single(),
-  ]);
+  try {
+    const supabase = await createSupabaseAdminClient();
 
-  if (!esNuevo && (productoResult.error || !productoResult.data)) return notFound();
-  const producto = productoResult.data ?? null;
+    const [{ data: coloresData }, productoResult] = await Promise.all([
+      supabase.from("colores").select("id,nombre,hex,activo").order("nombre"),
+      esNuevo
+        ? Promise.resolve({ data: null, error: null })
+        : supabase
+            .from("productos_completos")
+            .select("*, producto_specs(*), producto_caracteristicas(*), producto_imagenes(*)")
+            .eq("id", id)
+            .single(),
+    ]);
+
+    colores = coloresData ?? [];
+    if (!esNuevo && (productoResult.error || !productoResult.data)) return notFound();
+    producto = productoResult.data ?? null;
+  } catch {
+    if (!esNuevo) return notFound();
+  }
 
   return (
     <div className="p-8 max-w-4xl">
@@ -53,7 +61,7 @@ export default async function AdminProductoPage({
         producto={producto}
         categorias={CATEGORIAS}
         esNuevo={esNuevo}
-        colores={colores ?? []}
+        colores={colores}
       />
     </div>
   );
