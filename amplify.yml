@@ -7,7 +7,6 @@ frontend:
     build:
       commands:
         - npm run build
-        - node -e "const fs=require('fs');fs.writeFileSync('.next/server-config.json',JSON.stringify({SUPABASE_SERVICE_ROLE_KEY:process.env.SUPABASE_SERVICE_ROLE_KEY,CLOUDINARY_API_SECRET:process.env.CLOUDINARY_API_SECRET,CLOUDINARY_API_KEY:process.env.CLOUDINARY_API_KEY,CLOUDINARY_CLOUD_NAME:process.env.CLOUDINARY_CLOUD_NAME,ADMIN_VERIFY_PIN:process.env.ADMIN_VERIFY_PIN,RAILWAY_API_URL:process.env.RAILWAY_API_URL}));"
   artifacts:
     baseDirectory: .next
     files:

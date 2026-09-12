@@ -6,6 +6,18 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
+  // Server-only vars: read at build time (Amplify Console vars are available
+  // during next build) and inlined into the server bundle, so the SSR Lambda
+  // receives them even if runtime env injection fails.
+  env: {
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+    CLOUDINARY_API_SECRET:     process.env.CLOUDINARY_API_SECRET     ?? "",
+    CLOUDINARY_API_KEY:        process.env.CLOUDINARY_API_KEY        ?? "",
+    CLOUDINARY_CLOUD_NAME:     process.env.CLOUDINARY_CLOUD_NAME     ?? "",
+    ADMIN_VERIFY_PIN:          process.env.ADMIN_VERIFY_PIN          ?? "",
+    RAILWAY_API_URL:           process.env.RAILWAY_API_URL           ?? "https://colonta-api-sz8z.onrender.com",
+  },
+
   experimental: {
     serverActions: {
       bodySizeLimit: "8mb",
