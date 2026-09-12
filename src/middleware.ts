@@ -51,11 +51,12 @@ export async function middleware(req: NextRequest) {
     return redirectToLogin(req);
   }
 
-  // Verificar token con el backend
+  // Verificar token con el backend (timeout 8s: Render free puede tardar en despertar)
   try {
     const res = await fetch(`${BACKEND}/auth/me`, {
       headers: { Cookie: `auth_token=${token}` },
       cache: "no-store",
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!res.ok) return redirectToLogin(req);
