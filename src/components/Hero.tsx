@@ -2,12 +2,18 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import HeroCarousel from "@/components/HeroCarousel";
 
 export default async function Hero() {
-  const supabase = await createSupabaseServerClient();
-  const { data: banners } = await supabase
-    .from("banners")
-    .select("id,url,titulo,subtitulo,cta_texto,cta_href,cta2_texto,cta2_href")
-    .eq("activo", true)
-    .order("orden", { ascending: true });
+  let banners: any[] | null = null;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const result = await supabase
+      .from("banners")
+      .select("id,url,titulo,subtitulo,cta_texto,cta_href,cta2_texto,cta2_href")
+      .eq("activo", true)
+      .order("orden", { ascending: true });
+    if (!result.error) banners = result.data;
+  } catch {
+    banners = null;
+  }
 
   // Fallback al banner estático si no hay banners en BD
   const slides = banners && banners.length > 0

@@ -6,16 +6,21 @@ const IMG_SELECT = "id,url,alt,principal,orden";
 const PROD_SELECT = `id,nombre,precio,badge,orden,categoria_slug, producto_imagenes(${IMG_SELECT})`;
 
 export default async function ProductsSection() {
-  const supabase = await createSupabaseServerClient();
+  let data: any[] | null = null;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const result = await supabase
+      .from("productos_completos")
+      .select(PROD_SELECT)
+      .eq("activo", true)
+      .order("orden", { ascending: true })
+      .limit(8);
+    if (!result.error) data = result.data;
+  } catch {
+    return null;
+  }
 
-  const { data, error } = await supabase
-    .from("productos_completos")
-    .select(PROD_SELECT)
-    .eq("activo", true)
-    .order("orden", { ascending: true })
-    .limit(8);
-
-  if (error || !data) return null;
+  if (!data) return null;
 
   function safeUrl(url: string | null | undefined): string | null {
     if (!url || /^https?:\/\/localhost/i.test(url)) return null;
