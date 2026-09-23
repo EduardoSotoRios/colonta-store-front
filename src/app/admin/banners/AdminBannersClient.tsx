@@ -66,7 +66,7 @@ function BannerForm({
   return (
     <form action={onSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-red-700 text-sm">
+        <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-red-700 text-sm whitespace-pre-line">
           {error}
         </div>
       )}
@@ -167,12 +167,17 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
 
+  // En producción, Next.js oculta el mensaje real de errores no controlados
+  // explícitamente (queda algo genérico tipo "An error occurred in the
+  // Server Components render..."), así que no podemos confiar en detectar
+  // la causa por texto. Mostramos el mensaje que llegó (si es útil) y
+  // agregamos siempre el recordatorio de la migración pendiente, que es la
+  // causa más probable de cualquier error acá mientras no se haya corrido.
   function mensajeError(err: unknown): string {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("botones") && (msg.includes("does not exist") || msg.includes("schema cache"))) {
-      return "Falta correr la migración de base de datos (columna 'botones'). Ejecuta el SQL que te compartimos en el editor de Supabase antes de guardar botones.";
-    }
-    return msg;
+    const generico = !msg || msg.toLowerCase().includes("server components render");
+    const hint = "Si no lo has hecho, corre la migración SQL (columna 'botones') en el editor de Supabase antes de guardar botones — es la causa más común de este error.";
+    return generico ? hint : `${msg}\n\n${hint}`;
   }
 
   return (
