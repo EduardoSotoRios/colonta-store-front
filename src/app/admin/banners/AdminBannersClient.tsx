@@ -31,11 +31,13 @@ function BannerForm({
   onSubmit,
   onCancel,
   submitLabel,
+  error,
 }: {
   initial: typeof EMPTY;
   onSubmit: (fd: FormData) => void;
   onCancel: () => void;
   submitLabel: string;
+  error: string | null;
 }) {
   const [url, setUrl]         = useState(initial.url);
   const [subiendo, setSubiendo] = useState(false);
@@ -63,6 +65,11 @@ function BannerForm({
 
   return (
     <form action={onSubmit} className="space-y-4">
+      {error && (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
       <div>
         <label className="text-sm font-semibold block mb-1">Imagen de fondo *</label>
         <div className="flex gap-2">
@@ -157,9 +164,25 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
   const [showNew, setShowNew] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [formError, setFormError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+
+  function mensajeError(err: unknown): string {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("botones") && (msg.includes("does not exist") || msg.includes("schema cache"))) {
+      return "Falta correr la migración de base de datos (columna 'botones'). Ejecuta el SQL que te compartimos en el editor de Supabase antes de guardar botones.";
+    }
+    return msg;
+  }
 
   return (
     <div className="space-y-6">
+      {listError && (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+          {listError}
+        </div>
+      )}
+
       {/* Nuevo banner */}
       <div className="bg-white rounded-2xl ring-1 ring-black/5 p-6">
         {showNew ? (
@@ -168,10 +191,16 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
             <BannerForm
               initial={EMPTY}
               submitLabel="Crear banner"
-              onCancel={() => setShowNew(false)}
+              error={formError}
+              onCancel={() => { setShowNew(false); setFormError(null); }}
               onSubmit={(fd) => startTransition(async () => {
-                await crearBanner(fd);
-                setShowNew(false);
+                setFormError(null);
+                try {
+                  await crearBanner(fd);
+                  setShowNew(false);
+                } catch (err) {
+                  setFormError(mensajeError(err));
+                }
               })}
             />
           </>
@@ -198,10 +227,16 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                 <BannerForm
                   initial={banner}
                   submitLabel="Guardar cambios"
-                  onCancel={() => setEditId(null)}
+                  error={editId === banner.id ? formError : null}
+                  onCancel={() => { setEditId(null); setFormError(null); }}
                   onSubmit={(fd) => startTransition(async () => {
-                    await actualizarBanner(banner.id, fd);
-                    setEditId(null);
+                    setFormError(null);
+                    try {
+                      await actualizarBanner(banner.id, fd);
+                      setEditId(null);
+                    } catch (err) {
+                      setFormError(mensajeError(err));
+                    }
                   })}
                 />
               </div>
@@ -240,13 +275,20 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                 {/* Acciones */}
                 <div className="flex flex-col gap-2 shrink-0">
                   <button
-                    onClick={() => setEditId(banner.id)}
+                    onClick={() => { setEditId(banner.id); setFormError(null); }}
                     className="px-3 py-1.5 rounded-lg border text-xs font-semibold hover:bg-slate-50"
                   >
                     Editar
                   </button>
                   <button
-                    onClick={() => startTransition(() => toggleBanner(banner.id, !banner.activo))}
+                    onClick={() => startTransition(async () => {
+                      setListError(null);
+                      try {
+                        await toggleBanner(banner.id, !banner.activo);
+                      } catch (err) {
+                        setListError(mensajeError(err));
+                      }
+                    })}
                     disabled={isPending}
                     className="px-3 py-1.5 rounded-lg border text-xs font-semibold hover:bg-slate-50"
                   >
@@ -255,7 +297,14 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                   <button
                     onClick={() => {
                       if (confirm("¿Eliminar este banner?")) {
-                        startTransition(() => eliminarBanner(banner.id));
+                        startTransition(async () => {
+                          setListError(null);
+                          try {
+                            await eliminarBanner(banner.id);
+                          } catch (err) {
+                            setListError(mensajeError(err));
+                          }
+                        });
                       }
                     }}
                     disabled={isPending}
