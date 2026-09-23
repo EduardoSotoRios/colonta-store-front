@@ -1,27 +1,30 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { crearBanner, actualizarBanner, toggleBanner, eliminarBanner } from "./actions";
+import { crearBanner, actualizarBanner, toggleBanner, eliminarBanner, subirImagenBanner } from "./actions";
+
+type Boton = { texto: string; href: string };
 
 type Banner = {
   id: number;
   url: string;
   titulo: string | null;
   subtitulo: string | null;
-  cta_texto: string | null;
-  cta_href: string | null;
-  cta2_texto: string | null;
-  cta2_href: string | null;
+  botones: Boton[] | null;
   orden: number;
   activo: boolean;
 };
 
 const EMPTY: Omit<Banner, "id" | "activo"> = {
   url: "", titulo: "", subtitulo: "",
-  cta_texto: "", cta_href: "",
-  cta2_texto: "", cta2_href: "",
+  botones: [],
   orden: 99,
 };
+
+let nextRowKey = 0;
+function newRowKey() {
+  return `row-${nextRowKey++}`;
+}
 
 function BannerForm({
   initial,
@@ -34,21 +37,52 @@ function BannerForm({
   onCancel: () => void;
   submitLabel: string;
 }) {
+  const [url, setUrl]         = useState(initial.url);
+  const [subiendo, setSubiendo] = useState(false);
+  const [rows, setRows] = useState<{ key: string; texto: string; href: string }[]>(
+    (initial.botones && initial.botones.length > 0 ? initial.botones : [{ texto: "", href: "" }])
+      .map((b) => ({ key: newRowKey(), texto: b.texto, href: b.href }))
+  );
+
+  async function handleArchivoSeleccionado(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendo(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const nuevaUrl = await subirImagenBanner(fd);
+      setUrl(nuevaUrl);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error al subir imagen");
+    } finally {
+      setSubiendo(false);
+      e.target.value = "";
+    }
+  }
+
   return (
     <form action={onSubmit} className="space-y-4">
       <div>
-        <label className="text-sm font-semibold block mb-1">URL de imagen *</label>
-        <input
-          name="url"
-          required
-          defaultValue={initial.url}
-          placeholder="https://..."
-          className="w-full border rounded-xl px-3 py-2 text-sm"
-        />
+        <label className="text-sm font-semibold block mb-1">Imagen de fondo *</label>
+        <div className="flex gap-2">
+          <input
+            name="url"
+            required
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https:// (o sube un archivo →)"
+            className="flex-1 border rounded-xl px-3 py-2 text-sm"
+          />
+          <label className={`shrink-0 px-3 py-2 rounded-xl border text-sm font-semibold cursor-pointer hover:bg-slate-50 ${subiendo ? "opacity-50 pointer-events-none" : ""}`}>
+            {subiendo ? "Subiendo…" : "Subir archivo"}
+            <input type="file" accept="image/*" className="hidden" onChange={handleArchivoSeleccionado} disabled={subiendo} />
+          </label>
+        </div>
       </div>
 
-      {initial.url && (
-        <img src={initial.url} alt="Preview" className="h-28 rounded-xl object-cover border" />
+      {url && (
+        <img src={url} alt="Preview" className="h-28 rounded-xl object-cover border" />
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -67,25 +101,43 @@ function BannerForm({
         <textarea name="subtitulo" defaultValue={initial.subtitulo ?? ""} rows={2} className="w-full border rounded-xl px-3 py-2 text-sm" />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-semibold block mb-1">Botón principal — texto</label>
-          <input name="cta_texto" defaultValue={initial.cta_texto ?? ""} placeholder="Ver colección" className="w-full border rounded-xl px-3 py-2 text-sm" />
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-sm font-semibold block">Botones</label>
+          <button
+            type="button"
+            onClick={() => setRows((p) => [...p, { key: newRowKey(), texto: "", href: "" }])}
+            className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 font-semibold"
+          >
+            + Agregar botón
+          </button>
         </div>
-        <div>
-          <label className="text-sm font-semibold block mb-1">Botón principal — enlace</label>
-          <input name="cta_href" defaultValue={initial.cta_href ?? ""} placeholder="/mochilas" className="w-full border rounded-xl px-3 py-2 text-sm" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-semibold block mb-1">Botón secundario — texto</label>
-          <input name="cta2_texto" defaultValue={initial.cta2_texto ?? ""} placeholder="Dale tu sello" className="w-full border rounded-xl px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="text-sm font-semibold block mb-1">Botón secundario — enlace</label>
-          <input name="cta2_href" defaultValue={initial.cta2_href ?? ""} placeholder="/personalizar" className="w-full border rounded-xl px-3 py-2 text-sm" />
+        <div className="space-y-2">
+          {rows.map((row, i) => (
+            <div key={row.key} className="flex gap-2 items-center">
+              <input
+                name="boton_texto"
+                defaultValue={row.texto}
+                placeholder={i === 0 ? "Ver colección" : "Texto del botón"}
+                className="flex-1 border rounded-xl px-3 py-2 text-sm"
+              />
+              <input
+                name="boton_href"
+                defaultValue={row.href}
+                placeholder={i === 0 ? "/mochilas" : "/pagina"}
+                className="flex-1 border rounded-xl px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setRows((p) => p.filter((r) => r.key !== row.key))}
+                className="text-red-400 hover:text-red-600 px-2 text-lg leading-none shrink-0"
+                aria-label="Quitar botón"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {rows.length === 0 && <p className="text-sm text-slate-400">Sin botones.</p>}
         </div>
       </div>
 
@@ -169,6 +221,11 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                       </p>
                       {banner.subtitulo && (
                         <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{banner.subtitulo}</p>
+                      )}
+                      {banner.botones && banner.botones.length > 0 && (
+                        <p className="text-xs text-slate-400 mt-1">
+                          Botones: {banner.botones.map((b) => b.texto).join(", ")}
+                        </p>
                       )}
                       <p className="text-xs text-slate-400 mt-1">Orden: {banner.orden}</p>
                     </div>
