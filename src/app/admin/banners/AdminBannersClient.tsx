@@ -30,12 +30,34 @@ function BannerForm({
   submitLabel,
 }: {
   initial: typeof EMPTY;
-  onSubmit: (fd: FormData) => void;
+  onSubmit: (fd: FormData) => Promise<void>;
   onCancel: () => void;
   submitLabel: string;
 }) {
+  const [urlPreview, setUrlPreview] = useState(initial.url);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (fd: FormData) => {
+    setError(null);
+    setSaving(true);
+    try {
+      await onSubmit(fd);
+    } catch (e: any) {
+      setError(e?.message ?? "Error al guardar el banner.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <form action={onSubmit} className="space-y-4">
+    <form action={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <div>
         <label className="text-sm font-semibold block mb-1">URL de imagen *</label>
         <input
@@ -44,11 +66,12 @@ function BannerForm({
           defaultValue={initial.url}
           placeholder="https://..."
           className="w-full border rounded-xl px-3 py-2 text-sm"
+          onChange={e => setUrlPreview(e.target.value)}
         />
       </div>
 
-      {initial.url && (
-        <img src={initial.url} alt="Preview" className="h-28 rounded-xl object-cover border" />
+      {urlPreview && (
+        <img src={urlPreview} alt="Preview" className="h-28 rounded-xl object-cover border" />
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -90,11 +113,11 @@ function BannerForm({
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded-xl border text-sm font-semibold hover:bg-slate-50">
+        <button type="button" onClick={onCancel} disabled={saving} className="px-4 py-2 rounded-xl border text-sm font-semibold hover:bg-slate-50 disabled:opacity-50">
           Cancelar
         </button>
-        <button type="submit" className="px-4 py-2 rounded-xl bg-colonta-primary text-white text-sm font-semibold hover:opacity-90">
-          {submitLabel}
+        <button type="submit" disabled={saving} className="px-4 py-2 rounded-xl bg-colonta-primary text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60">
+          {saving ? "Guardando…" : submitLabel}
         </button>
       </div>
     </form>
@@ -117,10 +140,10 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
               initial={EMPTY}
               submitLabel="Crear banner"
               onCancel={() => setShowNew(false)}
-              onSubmit={(fd) => startTransition(async () => {
+              onSubmit={async (fd) => {
                 await crearBanner(fd);
-                setShowNew(false);
-              })}
+                startTransition(() => setShowNew(false));
+              }}
             />
           </>
         ) : (
@@ -147,10 +170,10 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                   initial={banner}
                   submitLabel="Guardar cambios"
                   onCancel={() => setEditId(null)}
-                  onSubmit={(fd) => startTransition(async () => {
+                  onSubmit={async (fd) => {
                     await actualizarBanner(banner.id, fd);
-                    setEditId(null);
-                  })}
+                    startTransition(() => setEditId(null));
+                  }}
                 />
               </div>
             ) : (
