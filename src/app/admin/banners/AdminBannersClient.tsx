@@ -3,28 +3,25 @@
 import { useState, useTransition } from "react";
 import { crearBanner, actualizarBanner, toggleBanner, eliminarBanner, subirImagenBanner } from "./actions";
 
-type Boton = { texto: string; href: string };
-
 type Banner = {
   id: number;
   url: string;
   titulo: string | null;
   subtitulo: string | null;
-  botones: Boton[] | null;
+  cta_texto: string | null;
+  cta_href: string | null;
+  cta2_texto: string | null;
+  cta2_href: string | null;
   orden: number;
   activo: boolean;
 };
 
 const EMPTY: Omit<Banner, "id" | "activo"> = {
   url: "", titulo: "", subtitulo: "",
-  botones: [],
+  cta_texto: "", cta_href: "",
+  cta2_texto: "", cta2_href: "",
   orden: 99,
 };
-
-let nextRowKey = 0;
-function newRowKey() {
-  return `row-${nextRowKey++}`;
-}
 
 function BannerForm({
   initial,
@@ -42,10 +39,6 @@ function BannerForm({
   const [url, setUrl] = useState(initial.url);
   const [subiendo, setSubiendo] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [rows, setRows] = useState<{ key: string; texto: string; href: string }[]>(
-    (initial.botones && initial.botones.length > 0 ? initial.botones : [{ texto: "", href: "" }])
-      .map((b) => ({ key: newRowKey(), texto: b.texto, href: b.href }))
-  );
 
   async function handleArchivoSeleccionado(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -80,6 +73,7 @@ function BannerForm({
           {error}
         </div>
       )}
+
       <div>
         <label className="text-sm font-semibold block mb-1">Imagen de fondo *</label>
         <div className="flex gap-2">
@@ -118,43 +112,25 @@ function BannerForm({
         <textarea name="subtitulo" defaultValue={initial.subtitulo ?? ""} rows={2} className="w-full border rounded-xl px-3 py-2 text-sm" />
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="text-sm font-semibold block">Botones</label>
-          <button
-            type="button"
-            onClick={() => setRows((p) => [...p, { key: newRowKey(), texto: "", href: "" }])}
-            className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 font-semibold"
-          >
-            + Agregar botón
-          </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-semibold block mb-1">Botón principal — texto</label>
+          <input name="cta_texto" defaultValue={initial.cta_texto ?? ""} placeholder="Ver colección" className="w-full border rounded-xl px-3 py-2 text-sm" />
         </div>
-        <div className="space-y-2">
-          {rows.map((row, i) => (
-            <div key={row.key} className="flex gap-2 items-center">
-              <input
-                name="boton_texto"
-                defaultValue={row.texto}
-                placeholder={i === 0 ? "Ver colección" : "Texto del botón"}
-                className="flex-1 border rounded-xl px-3 py-2 text-sm"
-              />
-              <input
-                name="boton_href"
-                defaultValue={row.href}
-                placeholder={i === 0 ? "/mochilas" : "/pagina"}
-                className="flex-1 border rounded-xl px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => setRows((p) => p.filter((r) => r.key !== row.key))}
-                className="text-red-400 hover:text-red-600 px-2 text-lg leading-none shrink-0"
-                aria-label="Quitar botón"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-          {rows.length === 0 && <p className="text-sm text-slate-400">Sin botones.</p>}
+        <div>
+          <label className="text-sm font-semibold block mb-1">Botón principal — enlace</label>
+          <input name="cta_href" defaultValue={initial.cta_href ?? ""} placeholder="/mochilas" className="w-full border rounded-xl px-3 py-2 text-sm" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-semibold block mb-1">Botón secundario — texto</label>
+          <input name="cta2_texto" defaultValue={initial.cta2_texto ?? ""} placeholder="Dale tu sello" className="w-full border rounded-xl px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="text-sm font-semibold block mb-1">Botón secundario — enlace</label>
+          <input name="cta2_href" defaultValue={initial.cta2_href ?? ""} placeholder="/personalizar" className="w-full border rounded-xl px-3 py-2 text-sm" />
         </div>
       </div>
 
@@ -179,9 +155,7 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
 
   function mensajeError(err: unknown): string {
     const msg = err instanceof Error ? err.message : String(err);
-    const generico = !msg || msg.toLowerCase().includes("server components render");
-    const hint = "Si no lo has hecho, corre la migración SQL (columna 'botones') en el editor de Supabase antes de guardar botones — es la causa más común de este error.";
-    return generico ? hint : `${msg}\n\n${hint}`;
+    return msg || "Error al guardar el banner.";
   }
 
   return (
@@ -202,15 +176,15 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
               submitLabel="Crear banner"
               error={formError}
               onCancel={() => { setShowNew(false); setFormError(null); }}
-              onSubmit={(fd) => startTransition(async () => {
+              onSubmit={async (fd) => {
                 setFormError(null);
                 try {
                   await crearBanner(fd);
-                  setShowNew(false);
+                  startTransition(() => setShowNew(false));
                 } catch (err) {
                   setFormError(mensajeError(err));
                 }
-              }) as unknown as Promise<void>}
+              }}
             />
           </>
         ) : (
@@ -236,17 +210,17 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                 <BannerForm
                   initial={banner}
                   submitLabel="Guardar cambios"
-                  error={editId === banner.id ? formError : null}
+                  error={formError}
                   onCancel={() => { setEditId(null); setFormError(null); }}
-                  onSubmit={(fd) => startTransition(async () => {
+                  onSubmit={async (fd) => {
                     setFormError(null);
                     try {
                       await actualizarBanner(banner.id, fd);
-                      setEditId(null);
+                      startTransition(() => setEditId(null));
                     } catch (err) {
                       setFormError(mensajeError(err));
                     }
-                  }) as unknown as Promise<void>}
+                  }}
                 />
               </div>
             ) : (
@@ -266,9 +240,9 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                       {banner.subtitulo && (
                         <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{banner.subtitulo}</p>
                       )}
-                      {banner.botones && banner.botones.length > 0 && (
+                      {(banner.cta_texto || banner.cta2_texto) && (
                         <p className="text-xs text-slate-400 mt-1">
-                          Botones: {banner.botones.map((b) => b.texto).join(", ")}
+                          Botones: {[banner.cta_texto, banner.cta2_texto].filter(Boolean).join(", ")}
                         </p>
                       )}
                       <p className="text-xs text-slate-400 mt-1">Orden: {banner.orden}</p>

@@ -7,7 +7,7 @@ export default async function Hero() {
     const supabase = await createSupabaseServerClient();
     const result = await supabase
       .from("banners")
-      .select("id,url,titulo,subtitulo,botones")
+      .select("id,url,titulo,subtitulo,cta_texto,cta_href,cta2_texto,cta2_href")
       .eq("activo", true)
       .order("orden", { ascending: true });
     if (!result.error) banners = result.data;
@@ -23,10 +23,10 @@ export default async function Hero() {
         url: "/hero.png",
         titulo: "¡Cree en ti y cambia todo!",
         subtitulo: "Mochilas y accesorios hechos para acompañarte en tus viajes, tu día a día y tus aventuras. Personaliza la tuya y llévala a todas partes.",
-        botones: [
-          { texto: "Ver colección completa", href: "/mochilas" },
-          { texto: "Dale tu sello", href: "/personalizar" },
-        ],
+        cta_texto: "Ver colección completa",
+        cta_href: "/mochilas",
+        cta2_texto: "Dale tu sello",
+        cta2_href: "/personalizar",
       }];
 
   return <HeroCarousel banners={slides} />;

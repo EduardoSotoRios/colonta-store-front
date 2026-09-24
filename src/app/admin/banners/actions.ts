@@ -10,17 +10,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-// Los botones vienen del form como pares de inputs con el mismo name
-// (boton_texto / boton_href, uno por fila) — FormData.getAll conserva el
-// orden en que aparecen en el DOM, así que basta con "ziparlos".
-function leerBotones(formData: FormData): { texto: string; href: string }[] {
-  const textos = formData.getAll("boton_texto") as string[];
-  const hrefs  = formData.getAll("boton_href") as string[];
-  return textos
-    .map((texto, i) => ({ texto: texto.trim(), href: (hrefs[i] ?? "").trim() }))
-    .filter((b) => b.texto && b.href);
-}
-
 export async function subirImagenBanner(formData: FormData): Promise<string> {
   const file = formData.get("file") as File;
   if (!file || !file.size) throw new Error("No se seleccionó archivo");
@@ -45,12 +34,15 @@ export async function subirImagenBanner(formData: FormData): Promise<string> {
 export async function crearBanner(formData: FormData) {
   const supabase = await createSupabaseAdminClient();
   const { error } = await supabase.from("banners").insert({
-    url:       formData.get("url") as string,
-    titulo:    (formData.get("titulo") as string)    || null,
-    subtitulo: (formData.get("subtitulo") as string) || null,
-    botones:   leerBotones(formData),
-    orden:     Number(formData.get("orden") ?? 99),
-    activo:    true,
+    url:        formData.get("url") as string,
+    titulo:     (formData.get("titulo") as string)    || null,
+    subtitulo:  (formData.get("subtitulo") as string) || null,
+    cta_texto:  (formData.get("cta_texto") as string) || null,
+    cta_href:   (formData.get("cta_href") as string)  || null,
+    cta2_texto: (formData.get("cta2_texto") as string)|| null,
+    cta2_href:  (formData.get("cta2_href") as string) || null,
+    orden:      Number(formData.get("orden") ?? 99),
+    activo:     true,
   });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/banners");
@@ -60,11 +52,14 @@ export async function crearBanner(formData: FormData) {
 export async function actualizarBanner(id: number, formData: FormData) {
   const supabase = await createSupabaseAdminClient();
   const { error } = await supabase.from("banners").update({
-    url:       formData.get("url") as string,
-    titulo:    (formData.get("titulo") as string)    || null,
-    subtitulo: (formData.get("subtitulo") as string) || null,
-    botones:   leerBotones(formData),
-    orden:     Number(formData.get("orden") ?? 99),
+    url:        formData.get("url") as string,
+    titulo:     (formData.get("titulo") as string)    || null,
+    subtitulo:  (formData.get("subtitulo") as string) || null,
+    cta_texto:  (formData.get("cta_texto") as string) || null,
+    cta_href:   (formData.get("cta_href") as string)  || null,
+    cta2_texto: (formData.get("cta2_texto") as string)|| null,
+    cta2_href:  (formData.get("cta2_href") as string) || null,
+    orden:      Number(formData.get("orden") ?? 99),
   }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/banners");

@@ -2,14 +2,15 @@
 
 import { useEffect, useState, useCallback } from "react";
 
-type Boton = { texto: string; href: string };
-
 type Banner = {
   id: number;
   url: string;
   titulo: string | null;
   subtitulo: string | null;
-  botones: Boton[] | null;
+  cta_texto: string | null;
+  cta_href: string | null;
+  cta2_texto: string | null;
+  cta2_href: string | null;
 };
 
 export default function HeroCarousel({ banners }: { banners: Banner[] }) {
@@ -61,28 +62,25 @@ export default function HeroCarousel({ banners }: { banners: Banner[] }) {
           {banner.subtitulo && (
             <p className="mt-5 text-white max-w-xl">{banner.subtitulo}</p>
           )}
-          {banner.botones && banner.botones.length > 0 && (
+          {(banner.cta_texto || banner.cta2_texto) && (
             <div className="mt-8 flex flex-wrap gap-3">
-              {banner.botones.map((boton, i) =>
-                i === 0 ? (
-                  <a
-                    key={i}
-                    href={boton.href}
-                    className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-white hover:opacity-90"
-                    style={{ backgroundColor: "var(--colonta-primary)" }}
-                  >
-                    {boton.texto}
-                  </a>
-                ) : (
-                  <a
-                    key={i}
-                    href={boton.href}
-                    className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-[var(--colonta-primary)] border bg-white/80"
-                    style={{ borderColor: "var(--colonta-primary)" }}
-                  >
-                    {boton.texto}
-                  </a>
-                )
+              {banner.cta_texto && banner.cta_href && (
+                <a
+                  href={banner.cta_href}
+                  className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-white hover:opacity-90"
+                  style={{ backgroundColor: "var(--colonta-primary)" }}
+                >
+                  {banner.cta_texto}
+                </a>
+              )}
+              {banner.cta2_texto && banner.cta2_href && (
+                <a
+                  href={banner.cta2_href}
+                  className="inline-flex items-center justify-center px-5 py-3 rounded-xl font-semibold text-[var(--colonta-primary)] border bg-white/80"
+                  style={{ borderColor: "var(--colonta-primary)" }}
+                >
+                  {banner.cta2_texto}
+                </a>
               )}
             </div>
           )}
