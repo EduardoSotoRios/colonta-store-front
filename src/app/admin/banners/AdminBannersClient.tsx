@@ -1,50 +1,73 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { crearBanner, actualizarBanner, toggleBanner, eliminarBanner } from "./actions";
+import { crearBanner, actualizarBanner, toggleBanner, eliminarBanner, subirImagenBanner } from "./actions";
+
+type Boton = { texto: string; href: string };
 
 type Banner = {
   id: number;
   url: string;
   titulo: string | null;
   subtitulo: string | null;
-  cta_texto: string | null;
-  cta_href: string | null;
-  cta2_texto: string | null;
-  cta2_href: string | null;
+  botones: Boton[] | null;
   orden: number;
   activo: boolean;
 };
 
 const EMPTY: Omit<Banner, "id" | "activo"> = {
   url: "", titulo: "", subtitulo: "",
-  cta_texto: "", cta_href: "",
-  cta2_texto: "", cta2_href: "",
+  botones: [],
   orden: 99,
 };
+
+let nextRowKey = 0;
+function newRowKey() {
+  return `row-${nextRowKey++}`;
+}
 
 function BannerForm({
   initial,
   onSubmit,
   onCancel,
   submitLabel,
+  error,
 }: {
   initial: typeof EMPTY;
   onSubmit: (fd: FormData) => Promise<void>;
   onCancel: () => void;
   submitLabel: string;
+  error: string | null;
 }) {
-  const [urlPreview, setUrlPreview] = useState(initial.url);
-  const [error, setError] = useState<string | null>(null);
+  const [url, setUrl] = useState(initial.url);
+  const [subiendo, setSubiendo] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [rows, setRows] = useState<{ key: string; texto: string; href: string }[]>(
+    (initial.botones && initial.botones.length > 0 ? initial.botones : [{ texto: "", href: "" }])
+      .map((b) => ({ key: newRowKey(), texto: b.texto, href: b.href }))
+  );
+
+  async function handleArchivoSeleccionado(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendo(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const nuevaUrl = await subirImagenBanner(fd);
+      setUrl(nuevaUrl);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error al subir imagen");
+    } finally {
+      setSubiendo(false);
+      e.target.value = "";
+    }
+  }
 
   const handleSubmit = async (fd: FormData) => {
-    setError(null);
     setSaving(true);
     try {
       await onSubmit(fd);
-    } catch (e: any) {
-      setError(e?.message ?? "Error al guardar el banner.");
     } finally {
       setSaving(false);
     }
@@ -53,25 +76,30 @@ function BannerForm({
   return (
     <form action={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-red-700 text-sm whitespace-pre-line">
           {error}
         </div>
       )}
-
       <div>
-        <label className="text-sm font-semibold block mb-1">URL de imagen *</label>
-        <input
-          name="url"
-          required
-          defaultValue={initial.url}
-          placeholder="https://..."
-          className="w-full border rounded-xl px-3 py-2 text-sm"
-          onChange={e => setUrlPreview(e.target.value)}
-        />
+        <label className="text-sm font-semibold block mb-1">Imagen de fondo *</label>
+        <div className="flex gap-2">
+          <input
+            name="url"
+            required
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https:// (o sube un archivo →)"
+            className="flex-1 border rounded-xl px-3 py-2 text-sm"
+          />
+          <label className={`shrink-0 px-3 py-2 rounded-xl border text-sm font-semibold cursor-pointer hover:bg-slate-50 ${subiendo ? "opacity-50 pointer-events-none" : ""}`}>
+            {subiendo ? "Subiendo…" : "Subir archivo"}
+            <input type="file" accept="image/*" className="hidden" onChange={handleArchivoSeleccionado} disabled={subiendo} />
+          </label>
+        </div>
       </div>
 
-      {urlPreview && (
-        <img src={urlPreview} alt="Preview" className="h-28 rounded-xl object-cover border" />
+      {url && (
+        <img src={url} alt="Preview" className="h-28 rounded-xl object-cover border" />
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -90,25 +118,43 @@ function BannerForm({
         <textarea name="subtitulo" defaultValue={initial.subtitulo ?? ""} rows={2} className="w-full border rounded-xl px-3 py-2 text-sm" />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-semibold block mb-1">Botón principal — texto</label>
-          <input name="cta_texto" defaultValue={initial.cta_texto ?? ""} placeholder="Ver colección" className="w-full border rounded-xl px-3 py-2 text-sm" />
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-sm font-semibold block">Botones</label>
+          <button
+            type="button"
+            onClick={() => setRows((p) => [...p, { key: newRowKey(), texto: "", href: "" }])}
+            className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 font-semibold"
+          >
+            + Agregar botón
+          </button>
         </div>
-        <div>
-          <label className="text-sm font-semibold block mb-1">Botón principal — enlace</label>
-          <input name="cta_href" defaultValue={initial.cta_href ?? ""} placeholder="/mochilas" className="w-full border rounded-xl px-3 py-2 text-sm" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-semibold block mb-1">Botón secundario — texto</label>
-          <input name="cta2_texto" defaultValue={initial.cta2_texto ?? ""} placeholder="Dale tu sello" className="w-full border rounded-xl px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="text-sm font-semibold block mb-1">Botón secundario — enlace</label>
-          <input name="cta2_href" defaultValue={initial.cta2_href ?? ""} placeholder="/personalizar" className="w-full border rounded-xl px-3 py-2 text-sm" />
+        <div className="space-y-2">
+          {rows.map((row, i) => (
+            <div key={row.key} className="flex gap-2 items-center">
+              <input
+                name="boton_texto"
+                defaultValue={row.texto}
+                placeholder={i === 0 ? "Ver colección" : "Texto del botón"}
+                className="flex-1 border rounded-xl px-3 py-2 text-sm"
+              />
+              <input
+                name="boton_href"
+                defaultValue={row.href}
+                placeholder={i === 0 ? "/mochilas" : "/pagina"}
+                className="flex-1 border rounded-xl px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setRows((p) => p.filter((r) => r.key !== row.key))}
+                className="text-red-400 hover:text-red-600 px-2 text-lg leading-none shrink-0"
+                aria-label="Quitar botón"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {rows.length === 0 && <p className="text-sm text-slate-400">Sin botones.</p>}
         </div>
       </div>
 
@@ -128,9 +174,24 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
   const [showNew, setShowNew] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [formError, setFormError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+
+  function mensajeError(err: unknown): string {
+    const msg = err instanceof Error ? err.message : String(err);
+    const generico = !msg || msg.toLowerCase().includes("server components render");
+    const hint = "Si no lo has hecho, corre la migración SQL (columna 'botones') en el editor de Supabase antes de guardar botones — es la causa más común de este error.";
+    return generico ? hint : `${msg}\n\n${hint}`;
+  }
 
   return (
     <div className="space-y-6">
+      {listError && (
+        <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+          {listError}
+        </div>
+      )}
+
       {/* Nuevo banner */}
       <div className="bg-white rounded-2xl ring-1 ring-black/5 p-6">
         {showNew ? (
@@ -139,11 +200,17 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
             <BannerForm
               initial={EMPTY}
               submitLabel="Crear banner"
-              onCancel={() => setShowNew(false)}
-              onSubmit={async (fd) => {
-                await crearBanner(fd);
-                startTransition(() => setShowNew(false));
-              }}
+              error={formError}
+              onCancel={() => { setShowNew(false); setFormError(null); }}
+              onSubmit={(fd) => startTransition(async () => {
+                setFormError(null);
+                try {
+                  await crearBanner(fd);
+                  setShowNew(false);
+                } catch (err) {
+                  setFormError(mensajeError(err));
+                }
+              }) as unknown as Promise<void>}
             />
           </>
         ) : (
@@ -169,11 +236,17 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                 <BannerForm
                   initial={banner}
                   submitLabel="Guardar cambios"
-                  onCancel={() => setEditId(null)}
-                  onSubmit={async (fd) => {
-                    await actualizarBanner(banner.id, fd);
-                    startTransition(() => setEditId(null));
-                  }}
+                  error={editId === banner.id ? formError : null}
+                  onCancel={() => { setEditId(null); setFormError(null); }}
+                  onSubmit={(fd) => startTransition(async () => {
+                    setFormError(null);
+                    try {
+                      await actualizarBanner(banner.id, fd);
+                      setEditId(null);
+                    } catch (err) {
+                      setFormError(mensajeError(err));
+                    }
+                  }) as unknown as Promise<void>}
                 />
               </div>
             ) : (
@@ -193,6 +266,11 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                       {banner.subtitulo && (
                         <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{banner.subtitulo}</p>
                       )}
+                      {banner.botones && banner.botones.length > 0 && (
+                        <p className="text-xs text-slate-400 mt-1">
+                          Botones: {banner.botones.map((b) => b.texto).join(", ")}
+                        </p>
+                      )}
                       <p className="text-xs text-slate-400 mt-1">Orden: {banner.orden}</p>
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold shrink-0 ${
@@ -206,13 +284,20 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                 {/* Acciones */}
                 <div className="flex flex-col gap-2 shrink-0">
                   <button
-                    onClick={() => setEditId(banner.id)}
+                    onClick={() => { setEditId(banner.id); setFormError(null); }}
                     className="px-3 py-1.5 rounded-lg border text-xs font-semibold hover:bg-slate-50"
                   >
                     Editar
                   </button>
                   <button
-                    onClick={() => startTransition(() => toggleBanner(banner.id, !banner.activo))}
+                    onClick={() => startTransition(async () => {
+                      setListError(null);
+                      try {
+                        await toggleBanner(banner.id, !banner.activo);
+                      } catch (err) {
+                        setListError(mensajeError(err));
+                      }
+                    })}
                     disabled={isPending}
                     className="px-3 py-1.5 rounded-lg border text-xs font-semibold hover:bg-slate-50"
                   >
@@ -221,7 +306,14 @@ export default function AdminBannersClient({ banners }: { banners: Banner[] }) {
                   <button
                     onClick={() => {
                       if (confirm("¿Eliminar este banner?")) {
-                        startTransition(() => eliminarBanner(banner.id));
+                        startTransition(async () => {
+                          setListError(null);
+                          try {
+                            await eliminarBanner(banner.id);
+                          } catch (err) {
+                            setListError(mensajeError(err));
+                          }
+                        });
                       }
                     }}
                     disabled={isPending}
