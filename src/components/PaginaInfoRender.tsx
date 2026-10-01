@@ -3,20 +3,63 @@ import type { ReactNode } from "react";
 
 export type SeccionInfo = { titulo: string; cuerpo: string };
 
-// Soporta **negrita** y respeta los saltos de línea como párrafos separados,
-// sin usar dangerouslySetInnerHTML (el texto viene de un admin, pero esta
-// página la ve cualquier visitante, así que evitamos insertar HTML crudo).
+// Negrita inline con **texto**, sin dangerouslySetInnerHTML (el texto viene
+// de un admin, pero esta página la ve cualquier visitante).
+function renderInline(texto: string): ReactNode {
+  return texto.split(/(\*\*[^*]+\*\*)/g).map((trozo, j) =>
+    trozo.startsWith("**") && trozo.endsWith("**")
+      ? <strong key={j}>{trozo.slice(2, -2)}</strong>
+      : trozo
+  );
+}
+
+// Cada línea del cuerpo se interpreta según cómo empieza:
+//   "1. texto"  -> paso numerado (círculo morado con el número adentro)
+//   "* texto"   -> nota pequeña en caja gris
+//   "> texto"   -> bloque destacado (caja con fondo del color de marca)
+//   cualquier otra cosa -> párrafo normal
+// Esto reproduce los mismos elementos visuales que antes estaban
+// hardcodeados en las páginas, pero ahora el admin los controla escribiendo.
 function renderCuerpo(cuerpo: string): ReactNode {
-  const parrafos = cuerpo.split(/\n+/).filter((p) => p.trim().length > 0);
-  return parrafos.map((parrafo, i) => (
-    <p key={i} className="text-slate-700 mb-3 last:mb-0">
-      {parrafo.split(/(\*\*[^*]+\*\*)/g).map((trozo, j) =>
-        trozo.startsWith("**") && trozo.endsWith("**")
-          ? <strong key={j}>{trozo.slice(2, -2)}</strong>
-          : trozo
-      )}
-    </p>
-  ));
+  const lineas = cuerpo.split(/\n+/).filter((l) => l.trim().length > 0);
+
+  return lineas.map((linea, i) => {
+    const pasoMatch = linea.match(/^(\d+)\.\s+(.*)$/);
+    if (pasoMatch) {
+      return (
+        <div key={i} className="flex gap-4 mb-3 last:mb-0">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-colonta-primary text-white flex items-center justify-center font-bold">
+            {pasoMatch[1]}
+          </div>
+          <p className="text-slate-700 pt-1">{renderInline(pasoMatch[2])}</p>
+        </div>
+      );
+    }
+
+    const notaMatch = linea.match(/^\*\s+(.*)$/);
+    if (notaMatch) {
+      return (
+        <div key={i} className="mb-3 last:mb-0 p-4 bg-slate-50 rounded-xl">
+          <p className="text-sm text-slate-600"><strong>*</strong> {renderInline(notaMatch[1])}</p>
+        </div>
+      );
+    }
+
+    const destacadoMatch = linea.match(/^>\s+(.*)$/);
+    if (destacadoMatch) {
+      return (
+        <div key={i} className="mb-3 last:mb-0 p-4 bg-colonta-primary/10 rounded-xl border border-colonta-primary/20">
+          <p className="text-slate-700">{renderInline(destacadoMatch[1])}</p>
+        </div>
+      );
+    }
+
+    return (
+      <p key={i} className="text-slate-700 mb-3 last:mb-0">
+        {renderInline(linea)}
+      </p>
+    );
+  });
 }
 
 export default function PaginaInfoRender({

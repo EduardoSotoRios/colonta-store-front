@@ -22,7 +22,7 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
           "2. Nuestro equipo revisará tu caso en un máximo de **5 días hábiles** para confirmar si se trata de un defecto de fabricación.\n" +
           "3. Una vez que validemos el defecto de fabricación, podrás elegir entre cambiar el producto, repararlo o recibir la devolución de tu dinero.\n" +
           "* El costo del retiro queda sujeto a evaluación, te informaremos al término de esta.\n" +
-          "**Nuestro compromiso** es darte una respuesta en un máximo de **10 días hábiles** desde que aceptamos tu solicitud. Queremos que tu experiencia sea fácil y sin complicaciones.",
+          "> **Nuestro compromiso** es darte una respuesta en un máximo de **10 días hábiles** desde que aceptamos tu solicitud. Queremos que tu experiencia sea fácil y sin complicaciones.",
       },
       {
         titulo: "CAMBIOS",
@@ -34,7 +34,7 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
           "2. Nuestro equipo revisará tu caso en un máximo de **5 días hábiles** para confirmar si se trata de un defecto de fabricación.\n" +
           "3. Una vez que validemos el defecto de fabricación, podrás elegir entre cambiar el producto, repararlo o recibir la devolución de tu dinero.\n" +
           "* El costo del retiro queda sujeto a evaluación, te informaremos al término de esta.\n" +
-          "**Nuestro compromiso** es darte una respuesta en un máximo de **10 días hábiles** desde que aceptamos tu solicitud. Queremos que tu experiencia sea fácil y sin complicaciones.",
+          "> **Nuestro compromiso** es darte una respuesta en un máximo de **10 días hábiles** desde que aceptamos tu solicitud. Queremos que tu experiencia sea fácil y sin complicaciones.",
       },
       {
         titulo: "DEVOLUCIONES",
@@ -59,7 +59,7 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
           "Si tu Colonta ha presentado alguna falla técnica externa, podemos repararla para que siga acompañándote por mucho tiempo más. Queremos que disfrutes de su compañía y que juntos prolonguemos su vida útil, siempre buscando la solución más conveniente para ti.\n" +
           "Contáctanos por WhatsApp contándonos que necesitas reparar, probablemente te pediremos imágenes, te daremos alternativas y costos para que tomes la mejor opción para ti.\n" +
           "Algunas veces reparar tu Colonta no es tan conveniente, y te recomendaremos la opción de reutilización, reciclaje o recuperación (retiramos tu Colonta para darle una segunda vida en otros productos).\n" +
-          "\"Gracias por confiar en Colonta. Cada pieza está hecha con amor y dedicación, queremos que la disfrutes plenamente. Si alguna vez necesitas un cambio, devolución o reparación, recuerda que estamos aquí para acompañarte en cada paso. Tu satisfacción y confianza son parte esencial de nuestra esencia.\"",
+          "> \"Gracias por confiar en Colonta. Cada pieza está hecha con amor y dedicación, queremos que la disfrutes plenamente. Si alguna vez necesitas un cambio, devolución o reparación, recuerda que estamos aquí para acompañarte en cada paso. Tu satisfacción y confianza son parte esencial de nuestra esencia.\"",
       },
     ],
   },
@@ -127,8 +127,8 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
       {
         titulo: "",
         cuerpo:
-          "En Colonta cada producto es más que un objeto, es una pieza que acompaña tu camino, hecha con dedicación, responsabilidad medioambiental y respeto. Nuestros Términos y Condiciones buscan simplemente dar claridad y confianza para que tu experiencia de compra sea transparente, segura y alineada con los valores que nos inspiran.\n" +
-          "Al elegir Colonta, no solo recibes un producto, sino también el cariño y la intención con que ha sido creado. Gracias por confiar en nosotras y ser parte de esta comunidad que valora lo auténtico, lo consciente y lo hecho con el corazón.",
+          "> En Colonta cada producto es más que un objeto, es una pieza que acompaña tu camino, hecha con dedicación, responsabilidad medioambiental y respeto. Nuestros Términos y Condiciones buscan simplemente dar claridad y confianza para que tu experiencia de compra sea transparente, segura y alineada con los valores que nos inspiran.\n" +
+          "> Al elegir Colonta, no solo recibes un producto, sino también el cariño y la intención con que ha sido creado. Gracias por confiar en nosotras y ser parte de esta comunidad que valora lo auténtico, lo consciente y lo hecho con el corazón.",
       },
     ],
   },

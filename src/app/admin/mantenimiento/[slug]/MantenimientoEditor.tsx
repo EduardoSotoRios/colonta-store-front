@@ -135,9 +135,13 @@ export default function MantenimientoEditor({
               </button>
             </div>
 
-            <p className="text-xs text-slate-400">
-              Usa **palabra** para poner texto en negrita. Cada línea nueva es un párrafo distinto.
-            </p>
+            <div className="text-xs text-slate-400 space-y-0.5">
+              <p>Cada línea nueva es un párrafo distinto. Formato disponible:</p>
+              <p><code className="bg-slate-100 px-1 rounded">**palabra**</code> → negrita</p>
+              <p><code className="bg-slate-100 px-1 rounded">1. texto</code> → paso numerado (círculo)</p>
+              <p><code className="bg-slate-100 px-1 rounded">* texto</code> → nota pequeña en caja gris</p>
+              <p><code className="bg-slate-100 px-1 rounded">&gt; texto</code> → bloque destacado de color</p>
+            </div>
 
             <div className="space-y-4">
               {rows.map((row, i) => (
