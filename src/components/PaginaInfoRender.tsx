@@ -17,8 +17,9 @@ function renderInline(texto: string): ReactNode {
 //   "1. texto"      -> paso numerado (círculo morado con el número adentro)
 //   "- texto" (o •, ➢, ➤, ▪, ▫, ‣, ●, ○, –, —, con o sin espacio después)
 //                   -> ítem de lista morado, mostrando el MISMO símbolo que
-//                      se haya escrito (ej. escribir "➢ texto" muestra una
-//                      flecha "➢", escribir "• texto" muestra un punto "•")
+//                      se haya escrito (ej. "• texto" muestra un punto "•"),
+//                      excepto "-" que se muestra como flecha "➢" — es el
+//                      atajo para quien no sepa escribir ese carácter.
 //   "* texto"             -> ABRE una caja gris. Si la misma línea también
 //                            termina en "*" (ej. "* texto *"), la caja se
 //                            abre y cierra ahí mismo (nota de una sola línea).
@@ -123,7 +124,7 @@ function renderCuerpo(cuerpo: string): ReactNode {
     if (b.tipo === "bullet") {
       return (
         <div key={i} className="flex gap-3 mb-2 last:mb-0">
-          <span className="text-colonta-primary font-bold">{b.simbolo === "-" ? "•" : b.simbolo}</span>
+          <span className="text-colonta-primary font-bold">{b.simbolo === "-" ? "➢" : b.simbolo}</span>
           <p className="text-slate-700 flex-1">{renderInline(b.texto)}</p>
         </div>
       );

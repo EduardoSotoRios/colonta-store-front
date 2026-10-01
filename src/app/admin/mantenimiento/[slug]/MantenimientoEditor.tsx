@@ -139,7 +139,7 @@ export default function MantenimientoEditor({
               <p>Cada línea nueva es un párrafo distinto. Formato disponible:</p>
               <p><code className="bg-slate-100 px-1 rounded">**palabra**</code> → negrita</p>
               <p><code className="bg-slate-100 px-1 rounded">1. texto</code> → paso numerado (círculo)</p>
-              <p><code className="bg-slate-100 px-1 rounded">- texto</code> → punto de lista (ítem con viñeta)</p>
+              <p><code className="bg-slate-100 px-1 rounded">- texto</code> → ítem de lista con flecha morada (➢)</p>
               <p>
                 <code className="bg-slate-100 px-1 rounded">* texto</code> abre una caja gris, y{" "}
                 <code className="bg-slate-100 px-1 rounded">texto *</code> la cierra. Las líneas de
