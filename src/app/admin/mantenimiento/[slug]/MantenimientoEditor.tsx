@@ -140,8 +140,21 @@ export default function MantenimientoEditor({
               <p><code className="bg-slate-100 px-1 rounded">**palabra**</code> → negrita</p>
               <p><code className="bg-slate-100 px-1 rounded">1. texto</code> → paso numerado (círculo)</p>
               <p><code className="bg-slate-100 px-1 rounded">- texto</code> → punto de lista (ítem con viñeta)</p>
-              <p><code className="bg-slate-100 px-1 rounded">* texto</code> → nota en caja gris (varias seguidas comparten la misma caja)</p>
-              <p><code className="bg-slate-100 px-1 rounded">&gt; texto</code> → bloque destacado de color (varios seguidos comparten la misma caja)</p>
+              <p>
+                <code className="bg-slate-100 px-1 rounded">* texto</code> abre una caja gris, y{" "}
+                <code className="bg-slate-100 px-1 rounded">texto *</code> la cierra. Las líneas de
+                en medio no necesitan nada especial. Para una sola línea, poné el <code className="bg-slate-100 px-1 rounded">*</code> al
+                principio y al final de esa misma línea.
+              </p>
+              <p>
+                Igual pero con <code className="bg-slate-100 px-1 rounded">&gt;</code> para un
+                bloque destacado de color en vez de caja gris.
+              </p>
+              <p className="pt-1">
+                Si necesitas que una línea empiece justo con un número+punto, un guión, o un{" "}
+                <code className="bg-slate-100 px-1 rounded">*</code>/<code className="bg-slate-100 px-1 rounded">&gt;</code> sin
+                que se interprete como formato, reordena la frase para que no quede al principio de la línea.
+              </p>
             </div>
 
             <div className="space-y-4">

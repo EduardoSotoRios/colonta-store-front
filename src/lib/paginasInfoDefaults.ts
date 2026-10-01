@@ -21,8 +21,8 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
           "1. Escríbenos explicando la situación y adjuntando tu comprobante de compra (lo enviamos a tu mail al momento de concretar la compra).\n" +
           "2. Nuestro equipo revisará tu caso en un máximo de **5 días hábiles** para confirmar si se trata de un defecto de fabricación.\n" +
           "3. Una vez que validemos el defecto de fabricación, podrás elegir entre cambiar el producto, repararlo o recibir la devolución de tu dinero.\n" +
-          "* El costo del retiro queda sujeto a evaluación, te informaremos al término de esta.\n" +
-          "> **Nuestro compromiso** es darte una respuesta en un máximo de **10 días hábiles** desde que aceptamos tu solicitud. Queremos que tu experiencia sea fácil y sin complicaciones.",
+          "* El costo del retiro queda sujeto a evaluación, te informaremos al término de esta. *\n" +
+          "> **Nuestro compromiso** es darte una respuesta en un máximo de **10 días hábiles** desde que aceptamos tu solicitud. Queremos que tu experiencia sea fácil y sin complicaciones. >",
       },
       {
         titulo: "CAMBIOS",
@@ -33,8 +33,8 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
           "1. Escríbenos explicando la situación y adjuntando tu comprobante de compra (lo enviamos a tu mail al momento de concretar la compra).\n" +
           "2. Nuestro equipo revisará tu caso en un máximo de **5 días hábiles** para confirmar si se trata de un defecto de fabricación.\n" +
           "3. Una vez que validemos el defecto de fabricación, podrás elegir entre cambiar el producto, repararlo o recibir la devolución de tu dinero.\n" +
-          "* El costo del retiro queda sujeto a evaluación, te informaremos al término de esta.\n" +
-          "> **Nuestro compromiso** es darte una respuesta en un máximo de **10 días hábiles** desde que aceptamos tu solicitud. Queremos que tu experiencia sea fácil y sin complicaciones.",
+          "* El costo del retiro queda sujeto a evaluación, te informaremos al término de esta. *\n" +
+          "> **Nuestro compromiso** es darte una respuesta en un máximo de **10 días hábiles** desde que aceptamos tu solicitud. Queremos que tu experiencia sea fácil y sin complicaciones. >",
       },
       {
         titulo: "DEVOLUCIONES",
@@ -50,7 +50,7 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
           "2. Nuestro equipo revisará tu caso en un máximo de **2 días hábiles** y te confirmaremos, por el mismo medio los pasos para coordinar el retiro o envío del producto de vuelta.\n" +
           "3. Una vez recibido el producto en nuestras instalaciones, verificaremos en un plazo máximo de **2 días** que cumpla con los requisitos de devolución. Luego realizaremos el reembolso a la cuenta que nos indiques.\n" +
           "* No podemos hacer devoluciones en efectivo de las compras realizadas mediante la página web.\n" +
-          "* El costo del retiro queda sujeto a evaluación, te informaremos al término de esta.",
+          "El costo del retiro queda sujeto a evaluación, te informaremos al término de esta. *",
       },
       {
         titulo: "REPARACIONES",
@@ -59,7 +59,7 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
           "Si tu Colonta ha presentado alguna falla técnica externa, podemos repararla para que siga acompañándote por mucho tiempo más. Queremos que disfrutes de su compañía y que juntos prolonguemos su vida útil, siempre buscando la solución más conveniente para ti.\n" +
           "Contáctanos por WhatsApp contándonos que necesitas reparar, probablemente te pediremos imágenes, te daremos alternativas y costos para que tomes la mejor opción para ti.\n" +
           "Algunas veces reparar tu Colonta no es tan conveniente, y te recomendaremos la opción de reutilización, reciclaje o recuperación (retiramos tu Colonta para darle una segunda vida en otros productos).\n" +
-          "> \"Gracias por confiar en Colonta. Cada pieza está hecha con amor y dedicación, queremos que la disfrutes plenamente. Si alguna vez necesitas un cambio, devolución o reparación, recuerda que estamos aquí para acompañarte en cada paso. Tu satisfacción y confianza son parte esencial de nuestra esencia.\"",
+          "> \"Gracias por confiar en Colonta. Cada pieza está hecha con amor y dedicación, queremos que la disfrutes plenamente. Si alguna vez necesitas un cambio, devolución o reparación, recuerda que estamos aquí para acompañarte en cada paso. Tu satisfacción y confianza son parte esencial de nuestra esencia.\" >",
       },
     ],
   },
@@ -128,7 +128,7 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
         titulo: "",
         cuerpo:
           "> En Colonta cada producto es más que un objeto, es una pieza que acompaña tu camino, hecha con dedicación, responsabilidad medioambiental y respeto. Nuestros Términos y Condiciones buscan simplemente dar claridad y confianza para que tu experiencia de compra sea transparente, segura y alineada con los valores que nos inspiran.\n" +
-          "> Al elegir Colonta, no solo recibes un producto, sino también el cariño y la intención con que ha sido creado. Gracias por confiar en nosotras y ser parte de esta comunidad que valora lo auténtico, lo consciente y lo hecho con el corazón.",
+          "Al elegir Colonta, no solo recibes un producto, sino también el cariño y la intención con que ha sido creado. Gracias por confiar en nosotras y ser parte de esta comunidad que valora lo auténtico, lo consciente y lo hecho con el corazón. >",
       },
     ],
   },

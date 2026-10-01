@@ -14,18 +14,23 @@ function renderInline(texto: string): ReactNode {
 }
 
 // Cada línea del cuerpo se interpreta según cómo empieza:
-//   "1. texto"    -> paso numerado (círculo morado con el número adentro)
+//   "1. texto"            -> paso numerado (círculo morado con el número adentro)
 //   "• texto" / "- texto" -> ítem de lista con punto morado
-//   "* texto"     -> nota en caja gris
-//   "> texto"     -> bloque destacado (caja con fondo del color de marca)
-//   cualquier otra cosa -> párrafo normal
+//   "* texto"             -> ABRE una caja gris. Si la misma línea también
+//                            termina en "*" (ej. "* texto *"), la caja se
+//                            abre y cierra ahí mismo (nota de una sola línea).
+//                            Si no, las líneas siguientes se van agregando
+//                            tal cual (sin necesitar "*" de nuevo) hasta que
+//                            una línea TERMINE en "*", que la cierra.
+//   "> texto" ... "texto >" -> lo mismo que arriba pero para el bloque
+//                            destacado de color.
+//   cualquier otra cosa    -> párrafo normal
 // Esto reproduce los mismos elementos visuales que antes estaban
 // hardcodeados en las páginas, pero ahora el admin los controla escribiendo.
 //
-// Las notas y los destacados originalmente podían tener más de una línea
-// dentro de UNA sola caja (ej. dos notas "*" compartiendo el mismo fondo
-// gris) — por eso acá se agrupan las líneas consecutivas del mismo tipo
-// antes de renderizar, en vez de crear una caja nueva por cada línea.
+// Si una caja se abre y nunca se cierra explícitamente, se cierra sola al
+// llegar a otro paso/punto/caja, o al final del texto de la sección — para
+// que un "*" sin su cierre no se trague el resto del texto sin avisar.
 type Bloque =
   | { tipo: "paso"; numero: string; texto: string }
   | { tipo: "bullet"; texto: string }
@@ -33,31 +38,63 @@ type Bloque =
   | { tipo: "destacado"; textos: string[] }
   | { tipo: "parrafo"; texto: string };
 
-function clasificarLinea(linea: string) {
-  const paso = linea.match(/^(\d+)\.\s+(.*)$/);
-  if (paso) return { tipo: "paso" as const, numero: paso[1], texto: paso[2] };
-  const bullet = linea.match(/^[•\-]\s+(.*)$/);
-  if (bullet) return { tipo: "bullet" as const, texto: bullet[1] };
-  const nota = linea.match(/^\*\s+(.*)$/);
-  if (nota) return { tipo: "nota" as const, texto: nota[1] };
-  const destacado = linea.match(/^>\s+(.*)$/);
-  if (destacado) return { tipo: "destacado" as const, texto: destacado[1] };
-  return { tipo: "parrafo" as const, texto: linea };
-}
-
 function agruparBloques(lineas: string[]): Bloque[] {
   const bloques: Bloque[] = [];
-  for (const linea of lineas) {
-    const c = clasificarLinea(linea);
-    const ultimo = bloques[bloques.length - 1];
-    if ((c.tipo === "nota" || c.tipo === "destacado") && ultimo?.tipo === c.tipo) {
-      ultimo.textos.push(c.texto);
-    } else if (c.tipo === "nota" || c.tipo === "destacado") {
-      bloques.push({ tipo: c.tipo, textos: [c.texto] });
-    } else {
-      bloques.push(c);
+  // marcador determina el tipo: "*" -> nota, ">" -> destacado.
+  let cajaMarcador: "*" | ">" | null = null;
+  let cajaTextos: string[] = [];
+
+  const cerrarCaja = () => {
+    if (cajaMarcador) {
+      bloques.push({ tipo: cajaMarcador === "*" ? "nota" : "destacado", textos: cajaTextos });
+      cajaMarcador = null;
+      cajaTextos = [];
     }
+  };
+
+  const procesarLineaNueva = (linea: string) => {
+    const paso = linea.match(/^(\d+)\.\s+(.*)$/);
+    if (paso) { bloques.push({ tipo: "paso", numero: paso[1], texto: paso[2] }); return; }
+
+    const bullet = linea.match(/^[•➢\-]\s+(.*)$/);
+    if (bullet) { bloques.push({ tipo: "bullet", texto: bullet[1] }); return; }
+
+    const notaUnaLinea = linea.match(/^\*\s+(.+)\*$/);
+    if (notaUnaLinea) { bloques.push({ tipo: "nota", textos: [notaUnaLinea[1].trim()] }); return; }
+    const notaAbre = linea.match(/^\*\s+(.*)$/);
+    if (notaAbre) { cajaMarcador = "*"; cajaTextos = [notaAbre[1]]; return; }
+
+    const destacadoUnaLinea = linea.match(/^>\s+(.+)>$/);
+    if (destacadoUnaLinea) { bloques.push({ tipo: "destacado", textos: [destacadoUnaLinea[1].trim()] }); return; }
+    const destacadoAbre = linea.match(/^>\s+(.*)$/);
+    if (destacadoAbre) { cajaMarcador = ">"; cajaTextos = [destacadoAbre[1]]; return; }
+
+    bloques.push({ tipo: "parrafo", texto: linea });
+  };
+
+  for (const linea of lineas) {
+    if (cajaMarcador) {
+      if (linea.endsWith(cajaMarcador)) {
+        const texto = linea.slice(0, -1).trim(); // el marcador ("*" o ">") siempre mide 1
+        if (texto) cajaTextos.push(texto);
+        cerrarCaja();
+        continue;
+      }
+      // Otra estructura (paso, punto, u otra caja) empieza sin que se haya
+      // cerrado la actual -> la cerramos con lo que llevaba y seguimos.
+      const esOtraEstructura = /^(\d+)\.\s+|^[•➢\-]\s+|^\*\s+|^>\s+/.test(linea);
+      if (esOtraEstructura) {
+        cerrarCaja();
+        procesarLineaNueva(linea);
+      } else {
+        cajaTextos.push(linea);
+      }
+      continue;
+    }
+    procesarLineaNueva(linea);
   }
+  cerrarCaja();
+
   return bloques;
 }
 
