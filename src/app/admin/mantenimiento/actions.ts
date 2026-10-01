@@ -53,3 +53,26 @@ export async function restaurarPaginaContenido(slug: PaginaInfoSlug) {
   revalidatePath(`/admin/mantenimiento/${slug}`);
   revalidatePath(rutaDe(slug));
 }
+
+// Mantención global del sitio: bloquea todas las páginas públicas para
+// cualquier visitante salvo el propio admin (ver middleware.ts — /admin y
+// /login quedan siempre afuera del bloqueo, pase lo que pase acá).
+export async function getMantenimientoGlobal(): Promise<boolean> {
+  const supabase = await createSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("site_settings")
+    .select("mantenimiento")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data?.mantenimiento === true;
+}
+
+export async function setMantenimientoGlobal(activo: boolean) {
+  const supabase = await createSupabaseAdminClient();
+  const { error } = await supabase
+    .from("site_settings")
+    .upsert({ id: 1, mantenimiento: activo, actualizado_en: new Date().toISOString() });
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/mantenimiento");
+}

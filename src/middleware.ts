@@ -10,15 +10,42 @@ const BACKEND = (
     : "https://colonta-api-sz8z.onrender.com/api"
 ).replace(/\/+$/, "");
 
+// El modo mantención activable desde Admin > Mantenimiento se guarda en
+// Supabase (tabla site_settings), no en una variable de entorno — así el
+// admin lo prende/apaga al instante sin redeploy. Esta consulta tiene que
+// "fallar abierta": si Supabase no responde o hay cualquier error, se trata
+// como que NO está en mantención, para que un problema de red nunca termine
+// bloqueando el sitio entero para todo el mundo.
+async function mantencionActivaEnBD(): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return false;
+  try {
+    const res = await fetch(`${url}/rest/v1/site_settings?select=mantenimiento&id=eq.1`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return false;
+    const rows = await res.json();
+    return rows?.[0]?.mantenimiento === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Modo mantención: redirigir a /mantencion salvo admins o preview bypass
+  // Modo mantención: redirigir a /mantencion salvo admins o preview bypass.
+  // /admin y /login quedan SIEMPRE afuera de este bloqueo (ver condición de
+  // abajo) — así el admin nunca puede quedar encerrado afuera del panel por
+  // este mecanismo, sin importar qué tan mal salga algo.
   if (
-    process.env.MAINTENANCE_MODE === "true" &&
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/api/") &&
-    pathname !== "/login"
+    pathname !== "/login" &&
+    (process.env.MAINTENANCE_MODE === "true" || (await mantencionActivaEnBD()))
   ) {
     const previewKey = req.nextUrl.searchParams.get("preview");
     const previewCookie = req.cookies.get("preview_bypass")?.value;

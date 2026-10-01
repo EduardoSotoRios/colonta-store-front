@@ -1,17 +1,21 @@
 import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { PAGINAS_INFO } from "@/lib/paginasInfo";
+import { getMantenimientoGlobal } from "./actions";
+import MantenimientoGlobalToggle from "./MantenimientoGlobalToggle";
 
 export const dynamic = "force-dynamic";
 
 export default async function MantenimientoPage() {
   let editadas = new Set<string>();
+  let mantencionActiva = false;
   let configError: string | null = null;
 
   try {
     const supabase = await createSupabaseAdminClient();
     const { data } = await supabase.from("paginas_contenido").select("slug");
     editadas = new Set((data ?? []).map((r) => r.slug));
+    mantencionActiva = await getMantenimientoGlobal();
   } catch (e: any) {
     configError = e?.message ?? "Error de configuración del servidor.";
   }
@@ -30,6 +34,8 @@ export default async function MantenimientoPage() {
           Error de configuración: {configError}
         </div>
       )}
+
+      <MantenimientoGlobalToggle activoInicial={mantencionActiva} />
 
       <div className="space-y-3">
         {PAGINAS_INFO.map((p) => (
