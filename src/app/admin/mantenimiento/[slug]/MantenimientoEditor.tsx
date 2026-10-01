@@ -44,9 +44,13 @@ export default function MantenimientoEditor({
 
   function mensajeError(err: unknown): string {
     const msg = err instanceof Error ? err.message : String(err);
-    const generico = !msg || msg.toLowerCase().includes("server components render");
-    const hint = "Si no lo has hecho, corre la migración SQL de la tabla 'paginas_contenido' en el editor de Supabase antes de guardar.";
-    return generico ? hint : `${msg}\n\n${hint}`;
+    if (!msg || msg.toLowerCase().includes("server components render")) {
+      return "Ocurrió un error al guardar. Si la migración SQL de 'paginas_contenido' no se ha corrido en Supabase, esa suele ser la causa.";
+    }
+    if (msg.toLowerCase().includes("was not found on the server")) {
+      return "La página quedó con una versión vieja cargada (el sitio se actualizó mientras la tenías abierta). Recarga la página (F5) y vuelve a intentar guardar.";
+    }
+    return msg;
   }
 
   async function handleSubmit(fd: FormData) {
