@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PAGINAS_INFO, type PaginaInfoSlug } from "@/lib/paginasInfo";
+import { PAGINAS_INFO_DEFAULTS } from "@/lib/paginasInfoDefaults";
 import { getPaginaContenido } from "../actions";
 import MantenimientoEditor from "./MantenimientoEditor";
 
@@ -15,13 +16,20 @@ export default async function EditarPaginaInfoPage({
   const pagina = PAGINAS_INFO.find((p) => p.slug === slug);
   if (!pagina) notFound();
 
-  let contenido = null;
+  let contenidoGuardado = null;
   let configError: string | null = null;
   try {
-    contenido = await getPaginaContenido(slug as PaginaInfoSlug);
+    contenidoGuardado = await getPaginaContenido(slug as PaginaInfoSlug);
   } catch (e: any) {
     configError = e?.message ?? "Error de configuración del servidor.";
   }
+
+  // Si el admin nunca guardó nada para esta página, precargamos el editor
+  // con el texto que hoy se ve en vivo (para que pueda partir editando eso
+  // en vez de un formulario vacío). "personalizada" indica si lo que se ve
+  // abajo es contenido real guardado en la base, o solo el de referencia.
+  const personalizada = contenidoGuardado !== null;
+  const contenido = contenidoGuardado ?? PAGINAS_INFO_DEFAULTS[slug as PaginaInfoSlug];
 
   return (
     <div className="p-8 max-w-3xl">
@@ -48,7 +56,7 @@ export default async function EditarPaginaInfoPage({
         </div>
       )}
 
-      <MantenimientoEditor slug={pagina.slug} contenido={contenido} />
+      <MantenimientoEditor slug={pagina.slug} contenido={contenido} personalizada={personalizada} />
     </div>
   );
 }

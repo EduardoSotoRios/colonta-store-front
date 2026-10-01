@@ -5,7 +5,7 @@ import { guardarPaginaContenido, restaurarPaginaContenido } from "../actions";
 import type { PaginaInfoSlug } from "@/lib/paginasInfo";
 
 type Seccion = { titulo: string; cuerpo: string };
-type Contenido = { titulo: string; subtitulo: string | null; secciones: Seccion[] } | null;
+type Contenido = { titulo: string; subtitulo: string | null; secciones: Seccion[] };
 
 let nextRowKey = 0;
 function newRowKey() {
@@ -15,16 +15,18 @@ function newRowKey() {
 export default function MantenimientoEditor({
   slug,
   contenido,
+  personalizada,
 }: {
   slug: PaginaInfoSlug;
   contenido: Contenido;
+  personalizada: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [guardado, setGuardado] = useState(false);
 
   const [rows, setRows] = useState<{ key: string; titulo: string; cuerpo: string }[]>(
-    (contenido?.secciones && contenido.secciones.length > 0
+    (contenido.secciones.length > 0
       ? contenido.secciones
       : [{ titulo: "", cuerpo: "" }]
     ).map((s) => ({ key: newRowKey(), titulo: s.titulo, cuerpo: s.cuerpo }))
@@ -70,10 +72,11 @@ export default function MantenimientoEditor({
         </div>
       )}
 
-      {!contenido && (
+      {!personalizada && (
         <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-amber-800 text-sm">
-          Esta página todavía muestra su contenido original (no ha sido personalizada desde acá).
-          Si guardas cambios, reemplazarás ese contenido por el que escribas en este formulario.
+          Esta página todavía muestra su contenido original — lo de abajo es ese mismo texto, precargado
+          para que puedas probar editarlo. Si guardas, reemplazarás el contenido original por lo que haya
+          en este formulario.
         </div>
       )}
 
@@ -83,7 +86,7 @@ export default function MantenimientoEditor({
             <label className="text-sm font-semibold block mb-1">Título de la página</label>
             <input
               name="titulo"
-              defaultValue={contenido?.titulo ?? ""}
+              defaultValue={contenido.titulo}
               required
               className="w-full border rounded-xl px-3 py-2 text-sm"
             />
@@ -92,7 +95,7 @@ export default function MantenimientoEditor({
             <label className="text-sm font-semibold block mb-1">Subtítulo (opcional)</label>
             <input
               name="subtitulo"
-              defaultValue={contenido?.subtitulo ?? ""}
+              defaultValue={contenido.subtitulo ?? ""}
               className="w-full border rounded-xl px-3 py-2 text-sm"
             />
           </div>
@@ -150,7 +153,7 @@ export default function MantenimientoEditor({
           <button
             type="button"
             onClick={handleRestaurar}
-            disabled={isPending || !contenido}
+            disabled={isPending || !personalizada}
             className="px-4 py-2.5 rounded-xl font-semibold text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-40"
           >
             Restaurar contenido original
