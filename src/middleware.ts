@@ -34,6 +34,29 @@ async function mantencionActivaEnBD(): Promise<boolean> {
   }
 }
 
+// Mientras el sitio está en mantención, el admin autenticado sigue viendo
+// las páginas públicas normalmente (no solo /admin). Acá, al revés que en
+// mantencionActivaEnBD, si no se puede confirmar que es admin (sin cookie,
+// backend caído, timeout) se trata como que NO es admin — el peor caso es
+// que vea la pantalla de mantención, pero /admin sigue sin bloquearse nunca
+// (ver abajo), así que jamás pierde acceso real al panel.
+async function esAdminAutenticado(req: NextRequest): Promise<boolean> {
+  const token = req.cookies.get("auth_token")?.value;
+  if (!token) return false;
+  try {
+    const res = await fetch(`${BACKEND}/auth/me`, {
+      headers: { Cookie: `auth_token=${token}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return false;
+    const user = await res.json();
+    return user?.rol === "admin";
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -47,6 +70,11 @@ export async function middleware(req: NextRequest) {
     pathname !== "/login" &&
     (process.env.MAINTENANCE_MODE === "true" || (await mantencionActivaEnBD()))
   ) {
+    // El admin autenticado ve el sitio tal cual, incluso en páginas públicas.
+    if (await esAdminAutenticado(req)) {
+      return NextResponse.next();
+    }
+
     const previewKey = req.nextUrl.searchParams.get("preview");
     const previewCookie = req.cookies.get("preview_bypass")?.value;
     const secret = process.env.MAINTENANCE_PREVIEW_KEY;

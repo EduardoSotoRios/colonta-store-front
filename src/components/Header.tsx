@@ -24,10 +24,28 @@ export default function Header() {
   const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [mantenimientoActivo, setMantenimientoActivo] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Indicador para el admin: avatar rojo si el sitio está en mantención.
+  // Se revisa periódicamente porque el header no se vuelve a montar al
+  // navegar entre páginas (vive en el layout raíz).
+  useEffect(() => {
+    if (user?.rol !== "admin") { setMantenimientoActivo(false); return; }
+    let cancelado = false;
+    const revisar = () => {
+      fetch("/api/mantenimiento-estado")
+        .then((r) => r.json())
+        .then((d) => { if (!cancelado) setMantenimientoActivo(d.activo === true); })
+        .catch(() => {});
+    };
+    revisar();
+    const id = setInterval(revisar, 30000);
+    return () => { cancelado = true; clearInterval(id); };
+  }, [user?.rol]);
 
   useEffect(() => {
     loadCart(user);
@@ -128,8 +146,11 @@ export default function Header() {
             <div className="relative flex-shrink-0" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full bg-colonta-primary text-white font-semibold hover:opacity-90 transition-opacity text-xs md:text-sm"
+                className={`inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full text-white font-semibold hover:opacity-90 transition-opacity text-xs md:text-sm ${
+                  mantenimientoActivo ? "bg-red-500" : "bg-colonta-primary"
+                }`}
                 aria-label="Menú de usuario"
+                title={mantenimientoActivo ? "Sitio en modo mantención" : undefined}
               >
                 {getUserInitials(user.nombre)}
               </button>
