@@ -14,8 +14,11 @@ function renderInline(texto: string): ReactNode {
 }
 
 // Cada línea del cuerpo se interpreta según cómo empieza:
-//   "1. texto"            -> paso numerado (círculo morado con el número adentro)
-//   "• texto" / "- texto" -> ítem de lista con punto morado
+//   "1. texto"      -> paso numerado (círculo morado con el número adentro)
+//   "- texto" (o •, ➢, ➤, ▪, ▫, ‣, ●, ○, –, —, con o sin espacio después)
+//                   -> ítem de lista con punto morado (el símbolo que se
+//                      muestra siempre es el mismo punto "•", sin importar
+//                      cuál de estos caracteres se haya usado para activarlo)
 //   "* texto"             -> ABRE una caja gris. Si la misma línea también
 //                            termina en "*" (ej. "* texto *"), la caja se
 //                            abre y cierra ahí mismo (nota de una sola línea).
@@ -56,7 +59,7 @@ function agruparBloques(lineas: string[]): Bloque[] {
     const paso = linea.match(/^(\d+)\.\s+(.*)$/);
     if (paso) { bloques.push({ tipo: "paso", numero: paso[1], texto: paso[2] }); return; }
 
-    const bullet = linea.match(/^[•➢\-]\s+(.*)$/);
+    const bullet = linea.match(/^[•➢➤▪▫‣●○\-–—]\s*(.*)$/);
     if (bullet) { bloques.push({ tipo: "bullet", texto: bullet[1] }); return; }
 
     const notaUnaLinea = linea.match(/^\*\s+(.+)\*$/);
@@ -82,7 +85,7 @@ function agruparBloques(lineas: string[]): Bloque[] {
       }
       // Otra estructura (paso, punto, u otra caja) empieza sin que se haya
       // cerrado la actual -> la cerramos con lo que llevaba y seguimos.
-      const esOtraEstructura = /^(\d+)\.\s+|^[•➢\-]\s+|^\*\s+|^>\s+/.test(linea);
+      const esOtraEstructura = /^(\d+)\.\s+|^[•➢➤▪▫‣●○\-–—]\s*|^\*\s+|^>\s+/.test(linea);
       if (esOtraEstructura) {
         cerrarCaja();
         procesarLineaNueva(linea);
@@ -130,7 +133,7 @@ function renderCuerpo(cuerpo: string): ReactNode {
       return (
         <div key={i} className="mb-3 last:mb-0 p-4 bg-slate-50 rounded-xl space-y-2">
           {b.textos.map((t, j) => (
-            <p key={j} className="text-sm text-slate-600"><strong>*</strong> {renderInline(t)}</p>
+            <p key={j} className="text-sm text-slate-600">{renderInline(t)}</p>
           ))}
         </div>
       );
