@@ -1,6 +1,25 @@
 import Link from "next/link";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import PaginaInfoRender from "@/components/PaginaInfoRender";
 
-export default function PoliticaCompraPage() {
+export default async function PoliticaCompraPage() {
+  let contenido: { titulo: string; subtitulo: string | null; secciones: { titulo: string; cuerpo: string }[] } | null = null;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase
+      .from("paginas_contenido")
+      .select("titulo,subtitulo,secciones")
+      .eq("slug", "politica-compra")
+      .maybeSingle();
+    contenido = data;
+  } catch {
+    contenido = null;
+  }
+
+  if (contenido) {
+    return <PaginaInfoRender titulo={contenido.titulo} subtitulo={contenido.subtitulo} secciones={contenido.secciones} />;
+  }
+
   return (
     <main className="min-h-screen bg-slate-50">
       <section className="bg-colonta-primary text-white">
