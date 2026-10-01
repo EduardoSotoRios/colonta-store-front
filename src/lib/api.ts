@@ -402,6 +402,7 @@ export type ProductModel = {
   peso_g?: number | null;
   badge?: string | null;
   personalizable?: boolean;
+  precioOferta?: number | null;
   specs?: Array<{ label: string; valor: string }>;
   caracteristicas?: string[];
   imagenes?: Array<{
@@ -507,6 +508,7 @@ function mapSupabaseProduct(row: any, coloresMap: ColoresMap): ProductModel {
     peso_g:           row.peso_g ? Number(row.peso_g) : null,
     badge:            row.badge ?? null,
     personalizable:   Boolean(row.personalizable),
+    precioOferta:     row.precio_oferta ? Number(row.precio_oferta) : null,
     specs: (row.producto_specs ?? [])
       .sort((a: any, b: any) => a.orden - b.orden)
       .map((s: any) => ({ label: s.label, valor: s.valor })),

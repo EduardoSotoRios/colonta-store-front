@@ -8,6 +8,7 @@ type PriceFilterProps = {
   categories: string[];  // nombres legibles: ["Mochilas", "Bananos", ...]
   minPrice?: number;
   maxPrice?: number;
+  oferta?: boolean;
 };
 
 // Mapa nombre legible → slug para la URL
@@ -24,7 +25,7 @@ const SLUG_A_NOMBRE: Record<string, string> = Object.fromEntries(
   Object.entries(NOMBRE_A_SLUG).map(([nombre, slug]) => [slug, nombre])
 );
 
-export default function PriceFilter({ categories, minPrice = 0, maxPrice = 100000 }: PriceFilterProps) {
+export default function PriceFilter({ categories, minPrice = 0, maxPrice = 100000, oferta: ofertaInitial = false }: PriceFilterProps) {
   const router   = useRouter();
   const pathname = usePathname();
   const sp       = useSearchParams();
@@ -42,6 +43,7 @@ export default function PriceFilter({ categories, minPrice = 0, maxPrice = 10000
   const [sort, setSort] = useState<"" | "price_asc" | "price_desc">(
     (sp.get("sort") as any) ?? ""
   );
+  const [soloOferta, setSoloOferta] = useState(sp.get("oferta") === "1" || ofertaInitial);
 
   useEffect(() => {
     if (maxPrice !== undefined) {
@@ -49,11 +51,12 @@ export default function PriceFilter({ categories, minPrice = 0, maxPrice = 10000
     }
   }, [maxPrice]);
 
-  function aplicarFiltros(overrides: { q?: string; max?: number; category?: string; sort?: string } = {}) {
+  function aplicarFiltros(overrides: { q?: string; max?: number; category?: string; sort?: string; oferta?: boolean } = {}) {
     const qVal        = overrides.q        !== undefined ? overrides.q        : q;
     const maxVal      = overrides.max      !== undefined ? overrides.max      : maxPriceValue;
     const categoryVal = overrides.category !== undefined ? overrides.category : category;
     const sortVal     = overrides.sort     !== undefined ? overrides.sort     : sort;
+    const ofertaVal   = overrides.oferta   !== undefined ? overrides.oferta   : soloOferta;
 
     const params = new URLSearchParams();
     if (qVal.trim())         params.set("q",       qVal.trim());
@@ -62,7 +65,8 @@ export default function PriceFilter({ categories, minPrice = 0, maxPrice = 10000
       // Enviar siempre como nombre legible — la página lo convierte a slug
       params.set("category", categoryVal.trim());
     }
-    if (sortVal) params.set("sort", sortVal);
+    if (sortVal)   params.set("sort",   sortVal);
+    if (ofertaVal) params.set("oferta", "1");
 
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
@@ -91,11 +95,17 @@ export default function PriceFilter({ categories, minPrice = 0, maxPrice = 10000
     aplicarFiltros({ max: maxPriceValue });
   }
 
+  function handleOferta(value: boolean) {
+    setSoloOferta(value);
+    aplicarFiltros({ oferta: value });
+  }
+
   function clearAll() {
     setQ("");
     setMaxPriceValue(maxPrice);
     setCategory("");
     setSort("");
+    setSoloOferta(false);
     router.push(pathname);
   }
 
@@ -107,10 +117,10 @@ export default function PriceFilter({ categories, minPrice = 0, maxPrice = 10000
 
   return (
     <div className="rounded-2xl ring-1 ring-black/5 bg-white p-4">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
 
         {/* Búsqueda */}
-        <div className="md:col-span-2">
+        <div className="lg:col-span-2">
           <input
             className="w-full border rounded-xl px-3 py-2 text-sm"
             placeholder="Buscar productos..."
@@ -141,6 +151,18 @@ export default function PriceFilter({ categories, minPrice = 0, maxPrice = 10000
           <option value="price_asc">Precio: menor a mayor</option>
           <option value="price_desc">Precio: mayor a menor</option>
         </select>
+
+        {/* En oferta */}
+        <button
+          onClick={() => handleOferta(!soloOferta)}
+          className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl font-semibold border transition-colors ${
+            soloOferta
+              ? "bg-red-500 border-red-500 text-white"
+              : "hover:bg-slate-50"
+          }`}
+        >
+          🏷️ En oferta
+        </button>
 
         {/* Limpiar */}
         <button

@@ -291,8 +291,15 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Precio (CLP)</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Precio normal (CLP)</label>
               <input name="precio" type="number" min="0" defaultValue={producto?.precio ?? ""} className={inputCls} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Precio oferta (CLP)
+                <span className="ml-1 font-normal text-slate-400 normal-case">— dejar vacío para sin oferta</span>
+              </label>
+              <input name="precio_oferta" type="number" min="0" defaultValue={producto?.precio_oferta ?? ""} className={inputCls} placeholder="Sin oferta" />
             </div>
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Peso (gramos)</label>

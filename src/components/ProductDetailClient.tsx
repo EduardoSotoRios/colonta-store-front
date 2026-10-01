@@ -62,9 +62,21 @@ export default function ProductDetailClient({ product, imagenes }: Props) {
           )}
 
           {Number(product.basePrice) > 0 && (
-            <p className="mt-3 text-2xl font-extrabold">
-              ${new Intl.NumberFormat("es-CL").format(Number(product.basePrice))}
-            </p>
+            product.precioOferta ? (
+              <div className="mt-3 flex items-baseline gap-3">
+                <p className="text-2xl font-extrabold text-red-600">
+                  ${new Intl.NumberFormat("es-CL").format(product.precioOferta)}
+                </p>
+                <p className="text-lg text-slate-400 line-through">
+                  ${new Intl.NumberFormat("es-CL").format(Number(product.basePrice))}
+                </p>
+                <span className="text-xs font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">OFERTA</span>
+              </div>
+            ) : (
+              <p className="mt-3 text-2xl font-extrabold">
+                ${new Intl.NumberFormat("es-CL").format(Number(product.basePrice))}
+              </p>
+            )
           )}
         </div>
 
