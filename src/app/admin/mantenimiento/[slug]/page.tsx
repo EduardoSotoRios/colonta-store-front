@@ -32,7 +32,7 @@ export default async function EditarPaginaInfoPage({
   const contenido = contenidoGuardado ?? PAGINAS_INFO_DEFAULTS[slug as PaginaInfoSlug];
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-8">
       <div className="mb-8">
         <Link href="/admin/mantenimiento" className="text-sm text-slate-500 hover:text-colonta-primary">
           ← Mantenimiento
