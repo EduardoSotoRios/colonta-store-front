@@ -41,10 +41,10 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
         cuerpo:
           "Quiero regresar mi Colonta\n" +
           "Si tu Colonta escogida no cumplió tus expectativas puedes devolverla en un plazo máximo de **10 días** desde que la recibiste, te contamos cuales son los requisitos:\n" +
-          "• Queremos que tu experiencia sea excelente, por eso, para gestionar una devolución, el producto debe estar **sin uso, limpio, con etiquetas y embalajes originales, en perfecto estado**.\n" +
-          "• Si el producto ha sido usado o probado, solo podremos ofrecer la devolución del dinero si se trata de un **defecto de fabricación confirmado** por nuestro Servicio Técnico.\n" +
-          "• Recuerda: después de los **10 días** desde que recibes tu pedido, no podemos hacer devoluciones ni cambios por razones de gustos o preferencias personales.\n" +
-          "• Todos los plazos empiezan a contarse desde el momento en que recibes tu producto, así tendrás todo claro y sin sorpresas.\n" +
+          "➢ Queremos que tu experiencia sea excelente, por eso, para gestionar una devolución, el producto debe estar **sin uso, limpio, con etiquetas y embalajes originales, en perfecto estado**.\n" +
+          "➢ Si el producto ha sido usado o probado, solo podremos ofrecer la devolución del dinero si se trata de un **defecto de fabricación confirmado** por nuestro Servicio Técnico.\n" +
+          "➢ Recuerda: después de los **10 días** desde que recibes tu pedido, no podemos hacer devoluciones ni cambios por razones de gustos o preferencias personales.\n" +
+          "➢ Todos los plazos empiezan a contarse desde el momento en que recibes tu producto, así tendrás todo claro y sin sorpresas.\n" +
           "Queremos que tu experiencia con Colonta sea siempre positiva. Si necesitas solicitar la devolución de tu dinero, estaremos encantados de ayudarte en el proceso:\n" +
           "1. Contáctanos contándonos el motivo de tu devolución. Te pediremos completar un pequeño formulario y adjuntar tu comprobante de compra para poder gestionar tu solicitud.\n" +
           "2. Nuestro equipo revisará tu caso en un máximo de **2 días hábiles** y te confirmaremos, por el mismo medio los pasos para coordinar el retiro o envío del producto de vuelta.\n" +

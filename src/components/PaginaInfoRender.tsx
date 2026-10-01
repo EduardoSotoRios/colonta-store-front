@@ -16,9 +16,9 @@ function renderInline(texto: string): ReactNode {
 // Cada línea del cuerpo se interpreta según cómo empieza:
 //   "1. texto"      -> paso numerado (círculo morado con el número adentro)
 //   "- texto" (o •, ➢, ➤, ▪, ▫, ‣, ●, ○, –, —, con o sin espacio después)
-//                   -> ítem de lista con punto morado (el símbolo que se
-//                      muestra siempre es el mismo punto "•", sin importar
-//                      cuál de estos caracteres se haya usado para activarlo)
+//                   -> ítem de lista morado, mostrando el MISMO símbolo que
+//                      se haya escrito (ej. escribir "➢ texto" muestra una
+//                      flecha "➢", escribir "• texto" muestra un punto "•")
 //   "* texto"             -> ABRE una caja gris. Si la misma línea también
 //                            termina en "*" (ej. "* texto *"), la caja se
 //                            abre y cierra ahí mismo (nota de una sola línea).
@@ -36,7 +36,7 @@ function renderInline(texto: string): ReactNode {
 // que un "*" sin su cierre no se trague el resto del texto sin avisar.
 type Bloque =
   | { tipo: "paso"; numero: string; texto: string }
-  | { tipo: "bullet"; texto: string }
+  | { tipo: "bullet"; simbolo: string; texto: string }
   | { tipo: "nota"; textos: string[] }
   | { tipo: "destacado"; textos: string[] }
   | { tipo: "parrafo"; texto: string };
@@ -59,8 +59,8 @@ function agruparBloques(lineas: string[]): Bloque[] {
     const paso = linea.match(/^(\d+)\.\s+(.*)$/);
     if (paso) { bloques.push({ tipo: "paso", numero: paso[1], texto: paso[2] }); return; }
 
-    const bullet = linea.match(/^[•➢➤▪▫‣●○\-–—]\s*(.*)$/);
-    if (bullet) { bloques.push({ tipo: "bullet", texto: bullet[1] }); return; }
+    const bullet = linea.match(/^([•➢➤▪▫‣●○\-–—])\s*(.*)$/);
+    if (bullet) { bloques.push({ tipo: "bullet", simbolo: bullet[1], texto: bullet[2] }); return; }
 
     const notaUnaLinea = linea.match(/^\*\s+(.+)\*$/);
     if (notaUnaLinea) { bloques.push({ tipo: "nota", textos: [notaUnaLinea[1].trim()] }); return; }
@@ -123,7 +123,7 @@ function renderCuerpo(cuerpo: string): ReactNode {
     if (b.tipo === "bullet") {
       return (
         <div key={i} className="flex gap-3 mb-2 last:mb-0">
-          <span className="text-colonta-primary">•</span>
+          <span className="text-colonta-primary font-bold">{b.simbolo === "-" ? "•" : b.simbolo}</span>
           <p className="text-slate-700 flex-1">{renderInline(b.texto)}</p>
         </div>
       );
