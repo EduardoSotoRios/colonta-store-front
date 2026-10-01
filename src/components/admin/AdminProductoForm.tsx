@@ -69,6 +69,7 @@ const COLOR_KEYS   = ["color", "color_secundario", "color_terciario", "color_cua
 export default function AdminProductoForm({ producto, categorias, esNuevo, colores }: Props) {
   const [isPending, startTransition] = useTransition();
   const [guardado, setGuardado]      = useState(false);
+  const [saving, setSaving]          = useState(false);
   const [error, setError]            = useState<string | null>(null);
 
   const coloresMap = new Map(colores.map((c) => [c.id, c]));
@@ -142,20 +143,23 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setSaving(true);
     const fd = new FormData(e.currentTarget);
     fd.set("specs",           JSON.stringify(specs));
     fd.set("caracteristicas", JSON.stringify(caracs));
-    startTransition(async () => {
-      try {
-        if (esNuevo) {
-          await crearProducto(fd);
-        } else {
-          await actualizarProducto(producto.id, fd);
-          setGuardado(true);
-          setTimeout(() => setGuardado(false), 2000);
-        }
-      } catch (err: any) { setError(err.message); }
-    });
+    try {
+      if (esNuevo) {
+        await crearProducto(fd);
+      } else {
+        await actualizarProducto(producto.id, fd);
+        setGuardado(true);
+        setTimeout(() => setGuardado(false), 2000);
+      }
+    } catch (err: any) {
+      setError(err?.message || String(err) || "Error al guardar el producto.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleEliminar() {
@@ -391,9 +395,9 @@ export default function AdminProductoForm({ producto, categorias, esNuevo, color
               </button>
             )}
           </div>
-          <button type="submit" disabled={isPending}
+          <button type="submit" disabled={saving || isPending}
             className="px-6 py-2.5 rounded-xl font-semibold text-white bg-colonta-primary hover:opacity-90 disabled:opacity-50">
-            {isPending ? "Guardando..." : guardado ? "✓ Guardado" : esNuevo ? "Crear producto" : "Guardar cambios"}
+            {saving ? "Guardando..." : guardado ? "✓ Guardado" : esNuevo ? "Crear producto" : "Guardar cambios"}
           </button>
         </div>
       </form>
