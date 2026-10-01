@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PaginaInfoRender from "@/components/PaginaInfoRender";
 
+export const dynamic = "force-dynamic";
+
 export default async function PreguntasFrecuentesPage() {
   let contenido: { titulo: string; subtitulo: string | null; secciones: { titulo: string; cuerpo: string }[] } | null = null;
   try {
