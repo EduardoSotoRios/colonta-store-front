@@ -21,7 +21,10 @@ function renderInline(texto: string): ReactNode {
 // Esto reproduce los mismos elementos visuales que antes estaban
 // hardcodeados en las páginas, pero ahora el admin los controla escribiendo.
 function renderCuerpo(cuerpo: string): ReactNode {
-  const lineas = cuerpo.split(/\n+/).filter((l) => l.trim().length > 0);
+  // \r?\n: los textarea en Windows guardan \r\n, y un \r colgante al final
+  // de cada línea rompía silenciosamente el match de los patrones de abajo
+  // en todas las líneas salvo la última.
+  const lineas = cuerpo.split(/\r?\n+/).map((l) => l.trim()).filter((l) => l.length > 0);
 
   return lineas.map((linea, i) => {
     const pasoMatch = linea.match(/^(\d+)\.\s+(.*)$/);
