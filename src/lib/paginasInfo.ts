@@ -5,6 +5,7 @@ export const PAGINAS_INFO = [
   { slug: "garantia",             nombre: "Garantía",              ruta: "/garantia" },
   { slug: "politica-compra",      nombre: "Términos y Condiciones", ruta: "/politica-compra" },
   { slug: "preguntas-frecuentes", nombre: "Preguntas Frecuentes",   ruta: "/preguntas-frecuentes" },
+  { slug: "como-comprar",         nombre: "¿Cómo comprar?",        ruta: "/como-comprar" },
 ] as const;
 
 export type PaginaInfoSlug = typeof PAGINAS_INFO[number]["slug"];

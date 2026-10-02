@@ -24,7 +24,9 @@ export default function Footer() {
             <h4 className="font-semibold text-white mb-3">Compra segura</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <span className="text-white/40 cursor-default">¿Cómo comprar?</span>
+                <a href="/como-comprar" className="hover:text-white">
+                  ¿Cómo comprar?
+                </a>
               </li>
               <li>
                 <span className="text-white/40 cursor-default">Despacho</span>

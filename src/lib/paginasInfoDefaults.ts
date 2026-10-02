@@ -199,4 +199,26 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
       },
     ],
   },
+  // Página nueva (no existía antes), sin diseño original que preservar —
+  // este es el borrador inicial, pensado para que el admin lo ajuste desde
+  // Mantenimiento.
+  "como-comprar": {
+    titulo: "¿Cómo comprar?",
+    subtitulo: "Guía rápida para comprar en Colonta",
+    secciones: [
+      {
+        titulo: "PASO A PASO",
+        cuerpo:
+          "1. Elige tu mochila en el catálogo y revisa los colores y detalles disponibles.\n" +
+          "2. Si quieres, personalízala con tu nombre o un diseño propio desde la sección Personalizar.\n" +
+          "3. Agrégala al carrito y revisa que la cantidad y el color sean los correctos.\n" +
+          "4. Ve al checkout y completa tus datos de envío y contacto.\n" +
+          "5. Paga de forma segura con Webpay.\n" +
+          "6. Te enviaremos un correo con la confirmación y el número de tu pedido.\n" +
+          "7. Sigue el estado de tu pedido en cualquier momento desde la sección Seguimiento.\n" +
+          "* Si tienes dudas durante el proceso, puedes escribirnos por WhatsApp y te ayudamos a completar tu compra. *\n" +
+          "> Hacemos envíos a todo Chile y aceptamos pagos con Webpay. >",
+      },
+    ],
+  },
 };
