@@ -8,6 +8,7 @@ export const PAGINAS_INFO = [
   { slug: "como-comprar",         nombre: "¿Cómo comprar?",        ruta: "/como-comprar" },
   { slug: "despacho",             nombre: "Despacho",              ruta: "/despacho" },
   { slug: "metodos-pago",         nombre: "Métodos de pago",       ruta: "/metodos-pago" },
+  { slug: "privacidad",           nombre: "Privacidad",            ruta: "/privacidad" },
 ] as const;
 
 export type PaginaInfoSlug = typeof PAGINAS_INFO[number]["slug"];

@@ -49,7 +49,9 @@ export default function Footer() {
             <h4 className="font-semibold text-white mb-3">Transparencia</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <span className="text-white/40 cursor-default">Privacidad</span>
+                <a href="/privacidad" className="hover:text-white">
+                  Privacidad
+                </a>
               </li>
               <li>
                 <a href="/politica-compra" className="hover:text-white">

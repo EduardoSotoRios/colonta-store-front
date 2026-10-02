@@ -251,4 +251,24 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
       },
     ],
   },
+  // A diferencia de las otras 3 páginas nuevas, este borrador SÍ reutiliza
+  // texto real ya existente (la sección "Protección de datos y privacidad"
+  // de política-compra), no contenido inventado.
+  privacidad: {
+    titulo: "Privacidad",
+    subtitulo: "Cómo cuidamos tu información personal",
+    secciones: [
+      {
+        titulo: "PROTECCIÓN DE DATOS Y PRIVACIDAD",
+        cuerpo:
+          "En Colonta cuidamos de tu confianza tanto como de nuestros productos. Sabemos que tu información personal es valiosa y por eso nos comprometemos a protegerla con responsabilidad y respeto.\n" +
+          "- Los datos que nos entregues al momento de comprar (como tu nombre, dirección, correo electrónico o teléfono) serán utilizados únicamente para gestionar tu pedido, despacharlo correctamente y mantenerte informado sobre tu compra.\n" +
+          "- No compartiremos tu información con terceros, salvo con las empresas de transporte que realizan la entrega y únicamente para cumplir con el envío.\n" +
+          "- Podrás solicitar en cualquier momento la modificación o eliminación de tus datos personales de nuestros registros escribiéndonos a nuestro correo de contacto.\n" +
+          "- Si decides suscribirte a nuestro boletín o lista de novedades, recibirás información sobre lanzamientos, promociones y contenido especial de Colonta. Siempre tendrás la opción de darte de baja fácilmente si así lo deseas.\n" +
+          "- Nos comprometemos a resguardar tu información utilizando plataformas de pago y sistemas seguros que protegen tus transacciones.\n" +
+          "> No compartimos información confidencial de tus compras ni de tu cuenta privada con ninguna entidad ni persona natural. >",
+      },
+    ],
+  },
 };
