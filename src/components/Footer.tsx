@@ -29,7 +29,9 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <span className="text-white/40 cursor-default">Despacho</span>
+                <a href="/despacho" className="hover:text-white">
+                  Despacho
+                </a>
               </li>
               <li>
                 <a href="/garantia" className="hover:text-white">
@@ -37,7 +39,9 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <span className="text-white/40 cursor-default">Métodos de pago</span>
+                <a href="/metodos-pago" className="hover:text-white">
+                  Métodos de pago
+                </a>
               </li>
             </ul>
           </div>

@@ -221,4 +221,34 @@ export const PAGINAS_INFO_DEFAULTS: Record<PaginaInfoSlug, PaginaInfoDefault> = 
       },
     ],
   },
+  despacho: {
+    titulo: "Despacho",
+    subtitulo: "Cómo llegan tus productos a tu puerta",
+    secciones: [
+      {
+        titulo: "ENVÍOS Y TIEMPOS DE ENTREGA",
+        cuerpo:
+          "Hacemos envíos a todo Chile a través de Blue Express.\n" +
+          "Nuestro plazo de fabricación es de un máximo de **2 semanas**; te avisaremos el plazo estimado por WhatsApp y correo dentro de las primeras 24 horas después de tu compra.\n" +
+          "El costo y tiempo estimado de envío dependen de tu ubicación y del punto Blue Express que elijas — se calculan automáticamente al momento de pagar, antes de confirmar tu compra.\n" +
+          "Una vez despachado tu pedido, te enviaremos un correo de seguimiento para que puedas revisar su estado en cualquier momento desde la sección Seguimiento.\n" +
+          "* No podemos responsabilizarnos por retrasos ocasionados por factores externos al envío (clima, feriados, transportista), pero siempre hacemos lo posible por mantenerte informado y ayudarte si surge un inconveniente. *\n" +
+          "> Si tu pedido llega dañado o incompleto, contáctanos de inmediato — buscaremos la solución más rápida para ti. >",
+      },
+    ],
+  },
+  "metodos-pago": {
+    titulo: "Métodos de pago",
+    subtitulo: "Formas seguras de pagar tu compra",
+    secciones: [
+      {
+        titulo: "CÓMO PUEDES PAGAR",
+        cuerpo:
+          "- Tarjetas de crédito y débito a través de **Webpay**, la pasarela de pago segura más usada en Chile.\n" +
+          "- Cupones de descuento: ingresa tu código en el paso de pago, en el campo \"Cupón de descuento\".\n" +
+          "- GiftCard: si tienes una, actívala en el mismo paso ingresando su código.\n" +
+          "* Si tu pago es rechazado o cancelado, puedes intentarlo nuevamente desde el checkout sin perder los productos de tu carrito. *",
+      },
+    ],
+  },
 };
