@@ -1,7 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export type SeccionInfo = { titulo: string; cuerpo: string };
+// "tipo" es opcional para que el contenido viejo guardado antes de esta
+// función (sin ese campo) se siga tratando como sección de texto.
+export type SeccionInfo = {
+  tipo?: "texto" | "imagen";
+  titulo?: string | null;
+  cuerpo?: string | null;
+  url?: string | null;
+};
 
 // Negrita inline con **texto**, sin dangerouslySetInnerHTML (el texto viene
 // de un admin, pero esta página la ve cualquier visitante).
@@ -183,8 +190,21 @@ export default function PaginaInfoRender({
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           {secciones.map((s, i) => (
             <div key={i} className="rounded-2xl ring-1 ring-black/5 p-6 md:p-8 bg-white">
-              {s.titulo && <h2 className="text-2xl font-extrabold mb-4 text-slate-900">{s.titulo}</h2>}
-              {renderCuerpo(s.cuerpo)}
+              {s.tipo === "imagen" ? (
+                s.url && (
+                  <figure>
+                    <img src={s.url} alt={s.titulo || ""} className="w-full rounded-xl object-cover" />
+                    {s.titulo && (
+                      <figcaption className="text-sm text-slate-500 mt-3 text-center">{s.titulo}</figcaption>
+                    )}
+                  </figure>
+                )
+              ) : (
+                <>
+                  {s.titulo && <h2 className="text-2xl font-extrabold mb-4 text-slate-900">{s.titulo}</h2>}
+                  {renderCuerpo(s.cuerpo ?? "")}
+                </>
+              )}
             </div>
           ))}
         </div>

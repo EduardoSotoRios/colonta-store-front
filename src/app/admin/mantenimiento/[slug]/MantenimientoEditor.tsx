@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { guardarPaginaContenido, restaurarPaginaContenido } from "../actions";
+import { guardarPaginaContenido, restaurarPaginaContenido, subirImagenSeccion } from "../actions";
 import type { PaginaInfoSlug } from "@/lib/paginasInfo";
 import PaginaInfoRender from "@/components/PaginaInfoRender";
 
-type Seccion = { titulo: string; cuerpo: string };
-type Contenido = { titulo: string; subtitulo: string | null; secciones: Seccion[] };
+// El contenido guardado (o los valores por defecto) puede traer bloques
+// de texto viejos sin "tipo" — se tratan como "texto" al armar las filas.
+type SeccionEntrada = { tipo?: "texto" | "imagen"; titulo?: string; cuerpo?: string; url?: string };
+type Contenido = { titulo: string; subtitulo: string | null; secciones: SeccionEntrada[] };
+
+const TAMANO_MAXIMO_IMAGEN = 8 * 1024 * 1024; // igual al límite configurado para Server Actions
+
+// Fila es siempre el mismo objeto plano (texto e imagen comparten forma)
+// para no pelear con el angostamiento de tipos de TS en un union mutable.
+type Fila = { key: string; tipo: "texto" | "imagen"; titulo: string; cuerpo: string; url: string };
 
 let nextRowKey = 0;
 function newRowKey() {
@@ -31,15 +39,42 @@ export default function MantenimientoEditor({
   // mientras se escribe, no solo después de guardar.
   const [titulo, setTitulo] = useState(contenido.titulo);
   const [subtitulo, setSubtitulo] = useState(contenido.subtitulo ?? "");
-  const [rows, setRows] = useState<{ key: string; titulo: string; cuerpo: string }[]>(
+  const [rows, setRows] = useState<Fila[]>(
     (contenido.secciones.length > 0
       ? contenido.secciones
       : [{ titulo: "", cuerpo: "" }]
-    ).map((s) => ({ key: newRowKey(), titulo: s.titulo, cuerpo: s.cuerpo }))
+    ).map((s) => ({
+      key: newRowKey(),
+      tipo: s.tipo === "imagen" ? "imagen" : "texto",
+      titulo: s.titulo ?? "",
+      cuerpo: s.cuerpo ?? "",
+      url: s.url ?? "",
+    }))
   );
 
-  function actualizarFila(key: string, campo: "titulo" | "cuerpo", valor: string) {
+  function actualizarFila(key: string, campo: "titulo" | "cuerpo" | "url", valor: string) {
     setRows((p) => p.map((r) => (r.key === key ? { ...r, [campo]: valor } : r)));
+  }
+
+  const [subiendoImagen, setSubiendoImagen] = useState<Record<string, boolean>>({});
+
+  async function handleArchivoSeleccionado(key: string, file: File | undefined) {
+    if (!file) return;
+    if (file.size > TAMANO_MAXIMO_IMAGEN) {
+      alert("La imagen es muy pesada (máx. 8 MB). Comprímela o elige otra.");
+      return;
+    }
+    setSubiendoImagen((p) => ({ ...p, [key]: true }));
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const url = await subirImagenSeccion(fd);
+      actualizarFila(key, "url", url);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error al subir la imagen");
+    } finally {
+      setSubiendoImagen((p) => ({ ...p, [key]: false }));
+    }
   }
 
   // Reordenar secciones arrastrando — dragKey es la que se está moviendo.
@@ -97,7 +132,7 @@ export default function MantenimientoEditor({
     }
   }
 
-  const seccionesPreview = rows.map((r) => ({ titulo: r.titulo, cuerpo: r.cuerpo }));
+  const seccionesPreview = rows.map((r) => ({ tipo: r.tipo, titulo: r.titulo, cuerpo: r.cuerpo, url: r.url }));
 
   return (
     <div className="space-y-4">
@@ -141,15 +176,24 @@ export default function MantenimientoEditor({
           </div>
 
           <div className="bg-white rounded-2xl ring-1 ring-black/5 p-6 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="font-bold text-slate-800">Secciones</h2>
-              <button
-                type="button"
-                onClick={() => setRows((p) => [...p, { key: newRowKey(), titulo: "", cuerpo: "" }])}
-                className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 font-semibold"
-              >
-                + Agregar sección
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRows((p) => [...p, { key: newRowKey(), tipo: "texto", titulo: "", cuerpo: "", url: "" }])}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 font-semibold"
+                >
+                  + Agregar sección
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRows((p) => [...p, { key: newRowKey(), tipo: "imagen", titulo: "", cuerpo: "", url: "" }])}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 font-semibold"
+                >
+                  + Agregar imagen
+                </button>
+              </div>
             </div>
 
             <div className="text-xs text-slate-400 space-y-0.5">
@@ -171,6 +215,10 @@ export default function MantenimientoEditor({
                 Si necesitas que una línea empiece justo con un número+punto, un guión, o un{" "}
                 <code className="bg-slate-100 px-1 rounded">*</code>/<code className="bg-slate-100 px-1 rounded">&gt;</code> sin
                 que se interprete como formato, reordena la frase para que no quede al principio de la línea.
+              </p>
+              <p className="pt-1">
+                "+ Agregar imagen" crea un bloque de foto que se puede ordenar junto con las secciones
+                de texto (arrastrando o con las flechas ↑/↓), igual que cualquier otra sección.
               </p>
             </div>
 
@@ -198,7 +246,7 @@ export default function MantenimientoEditor({
                       <span className="cursor-grab active:cursor-grabbing select-none text-slate-300 hover:text-slate-500" title="Arrastrar para reordenar">
                         ⠿
                       </span>
-                      Sección {i + 1}
+                      {row.tipo === "imagen" ? "Imagen" : "Sección"} {i + 1}
                     </span>
                     <div className="flex items-center gap-3">
                       <button
@@ -228,21 +276,67 @@ export default function MantenimientoEditor({
                       </button>
                     </div>
                   </div>
-                  <input
-                    name="seccion_titulo"
-                    value={row.titulo}
-                    onChange={(e) => actualizarFila(row.key, "titulo", e.target.value)}
-                    placeholder="Título de la sección (ej: Garantía)"
-                    className="w-full border rounded-xl px-3 py-2 text-sm font-semibold"
-                  />
-                  <textarea
-                    name="seccion_cuerpo"
-                    value={row.cuerpo}
-                    onChange={(e) => actualizarFila(row.key, "cuerpo", e.target.value)}
-                    rows={5}
-                    placeholder="Texto de la sección..."
-                    className="w-full border rounded-xl px-3 py-2 text-sm"
-                  />
+                  <input type="hidden" name="seccion_tipo" value={row.tipo} />
+                  {row.tipo === "imagen" ? (
+                    <>
+                      <input type="hidden" name="seccion_cuerpo" value="" />
+                      <input
+                        name="seccion_titulo"
+                        value={row.titulo}
+                        onChange={(e) => actualizarFila(row.key, "titulo", e.target.value)}
+                        placeholder="Descripción de la imagen (opcional)"
+                        className="w-full border rounded-xl px-3 py-2 text-sm font-semibold"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          name="seccion_url"
+                          value={row.url}
+                          onChange={(e) => actualizarFila(row.key, "url", e.target.value)}
+                          placeholder="https:// (o sube un archivo →)"
+                          className="flex-1 border rounded-xl px-3 py-2 text-sm"
+                        />
+                        <label
+                          className={`shrink-0 px-3 py-2 rounded-xl border text-sm font-semibold cursor-pointer hover:bg-slate-50 ${
+                            subiendoImagen[row.key] ? "opacity-50 pointer-events-none" : ""
+                          }`}
+                        >
+                          {subiendoImagen[row.key] ? "Subiendo…" : "Subir archivo"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={subiendoImagen[row.key]}
+                            onChange={(e) => {
+                              handleArchivoSeleccionado(row.key, e.target.files?.[0]);
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                      </div>
+                      {row.url && (
+                        <img src={row.url} alt="" className="max-h-48 rounded-xl border object-contain" />
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <input type="hidden" name="seccion_url" value="" />
+                      <input
+                        name="seccion_titulo"
+                        value={row.titulo}
+                        onChange={(e) => actualizarFila(row.key, "titulo", e.target.value)}
+                        placeholder="Título de la sección (ej: Garantía)"
+                        className="w-full border rounded-xl px-3 py-2 text-sm font-semibold"
+                      />
+                      <textarea
+                        name="seccion_cuerpo"
+                        value={row.cuerpo}
+                        onChange={(e) => actualizarFila(row.key, "cuerpo", e.target.value)}
+                        rows={5}
+                        placeholder="Texto de la sección..."
+                        className="w-full border rounded-xl px-3 py-2 text-sm"
+                      />
+                    </>
+                  )}
                 </div>
               ))}
               {rows.length === 0 && <p className="text-sm text-slate-400">Sin secciones.</p>}

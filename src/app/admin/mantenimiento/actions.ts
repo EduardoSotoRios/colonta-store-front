@@ -3,6 +3,7 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { PAGINAS_INFO, type PaginaInfoSlug } from "@/lib/paginasInfo";
+import { cloudinary } from "@/lib/cloudinary";
 
 function rutaDe(slug: string): string {
   return PAGINAS_INFO.find((p) => p.slug === slug)?.ruta ?? "/";
@@ -19,15 +20,51 @@ export async function getPaginaContenido(slug: PaginaInfoSlug) {
   return data;
 }
 
-// Las secciones vienen del form como pares de inputs con el mismo name
-// (seccion_titulo / seccion_cuerpo, uno por bloque) — igual que los
-// botones del editor de banners.
-function leerSecciones(formData: FormData): { titulo: string; cuerpo: string }[] {
+type BloqueGuardado =
+  | { tipo: "texto"; titulo: string; cuerpo: string }
+  | { tipo: "imagen"; titulo: string; url: string };
+
+// Cada bloque (sección de texto o imagen) llega como un ítem más en 4
+// arrays paralelos del mismo FormData (uno por nombre, uno por bloque,
+// en el mismo orden) — el editor siempre manda los 4 campos por bloque,
+// aunque algunos queden vacíos, para que los índices no se desalineen.
+function leerSecciones(formData: FormData): BloqueGuardado[] {
+  const tipos = formData.getAll("seccion_tipo") as string[];
   const titulos = formData.getAll("seccion_titulo") as string[];
   const cuerpos = formData.getAll("seccion_cuerpo") as string[];
-  return titulos
-    .map((titulo, i) => ({ titulo: titulo.trim(), cuerpo: (cuerpos[i] ?? "").trim() }))
-    .filter((s) => s.titulo || s.cuerpo);
+  const urls = formData.getAll("seccion_url") as string[];
+  return tipos
+    .map((tipoCrudo, i): BloqueGuardado => {
+      const titulo = (titulos[i] ?? "").trim();
+      if (tipoCrudo === "imagen") {
+        return { tipo: "imagen", titulo, url: (urls[i] ?? "").trim() };
+      }
+      return { tipo: "texto", titulo, cuerpo: (cuerpos[i] ?? "").trim() };
+    })
+    .filter((s) => (s.tipo === "imagen" ? !!s.url : s.titulo || s.cuerpo));
+}
+
+// Sube la imagen de un bloque a Cloudinary (mismo patrón que banners/
+// productos) y devuelve la URL final para guardarla en la sección.
+export async function subirImagenSeccion(formData: FormData): Promise<string> {
+  const file = formData.get("file") as File;
+  if (!file || !file.size) throw new Error("No se seleccionó archivo");
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const publicId = `colonta/paginas/${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      { public_id: publicId, resource_type: "image", overwrite: false },
+      (err, res) => { if (err || !res) reject(err); else resolve(res); }
+    ).end(buffer);
+  });
+
+  return cloudinary.url(result.public_id, {
+    fetch_format: "auto",
+    quality: "auto",
+    secure: true,
+  });
 }
 
 export async function guardarPaginaContenido(slug: PaginaInfoSlug, formData: FormData) {

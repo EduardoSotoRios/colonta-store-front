@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import PaginaInfoRender from "@/components/PaginaInfoRender";
+import PaginaInfoRender, { type SeccionInfo } from "@/components/PaginaInfoRender";
 
 export const dynamic = "force-dynamic";
 
 export default async function PoliticaCompraPage() {
-  let contenido: { titulo: string; subtitulo: string | null; secciones: { titulo: string; cuerpo: string }[] } | null = null;
+  let contenido: { titulo: string; subtitulo: string | null; secciones: SeccionInfo[] } | null = null;
   try {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase
