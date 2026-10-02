@@ -143,17 +143,29 @@ export default function Header() {
           {!hydrated ? (
             <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-slate-100 animate-pulse flex-shrink-0" />
           ) : user ? (
-            <div className="relative flex-shrink-0" ref={userMenuRef}>
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className={`inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full text-white font-semibold hover:opacity-90 transition-opacity text-xs md:text-sm ${
-                  mantenimientoActivo ? "bg-red-500" : "bg-colonta-primary"
-                }`}
-                aria-label="Menú de usuario"
-                title={mantenimientoActivo ? "Sitio en modo mantención" : undefined}
-              >
-                {getUserInitials(user.nombre)}
-              </button>
+            <>
+              {mantenimientoActivo && (
+                <>
+                  <span className="hidden sm:inline-flex whitespace-nowrap rounded-lg bg-red-50 border-2 border-red-400 px-2.5 py-1.5 text-[11px] md:text-xs font-bold text-red-700 shadow-sm flex-shrink-0">
+                    Modo mantenimiento activado
+                  </span>
+                  <span
+                    className="sm:hidden inline-flex items-center justify-center w-9 h-9 rounded-full bg-red-50 border-2 border-red-400 text-red-700 shadow-sm flex-shrink-0 font-bold"
+                    title="Modo mantenimiento activado"
+                    aria-label="Modo mantenimiento activado"
+                  >
+                    ⚠
+                  </span>
+                </>
+              )}
+              <div className="relative flex-shrink-0" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full bg-colonta-primary text-white font-semibold hover:opacity-90 transition-opacity text-xs md:text-sm"
+                  aria-label="Menú de usuario"
+                >
+                  {getUserInitials(user.nombre)}
+                </button>
               {userMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl ring-1 ring-black/5 py-2 z-50">
                   <div className="px-4 py-2 border-b">
@@ -173,7 +185,8 @@ export default function Header() {
                   </button>
                 </div>
               )}
-            </div>
+              </div>
+            </>
           ) : (
             <Link
               href="/login"
