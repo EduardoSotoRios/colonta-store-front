@@ -42,6 +42,23 @@ export default function MantenimientoEditor({
     setRows((p) => p.map((r) => (r.key === key ? { ...r, [campo]: valor } : r)));
   }
 
+  // Reordenar secciones arrastrando — dragKey es la que se está moviendo.
+  const [dragKey, setDragKey] = useState<string | null>(null);
+  const [overKey, setOverKey] = useState<string | null>(null);
+
+  function moverSeccion(desdeKey: string, haciaKey: string) {
+    if (desdeKey === haciaKey) return;
+    setRows((p) => {
+      const desde = p.findIndex((r) => r.key === desdeKey);
+      const hacia = p.findIndex((r) => r.key === haciaKey);
+      if (desde === -1 || hacia === -1) return p;
+      const copia = [...p];
+      const [movida] = copia.splice(desde, 1);
+      copia.splice(hacia, 0, movida);
+      return copia;
+    });
+  }
+
   function mensajeError(err: unknown): string {
     const msg = err instanceof Error ? err.message : String(err);
     if (!msg || msg.toLowerCase().includes("server components render")) {
@@ -159,16 +176,57 @@ export default function MantenimientoEditor({
 
             <div className="space-y-4">
               {rows.map((row, i) => (
-                <div key={row.key} className="border border-slate-200 rounded-xl p-4 space-y-2">
+                <div
+                  key={row.key}
+                  draggable
+                  onDragStart={() => setDragKey(row.key)}
+                  onDragOver={(e) => { e.preventDefault(); if (dragKey && dragKey !== row.key) setOverKey(row.key); }}
+                  onDragLeave={() => setOverKey((k) => (k === row.key ? null : k))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragKey) moverSeccion(dragKey, row.key);
+                    setDragKey(null);
+                    setOverKey(null);
+                  }}
+                  onDragEnd={() => { setDragKey(null); setOverKey(null); }}
+                  className={`border-2 rounded-xl p-4 space-y-2 transition-colors ${
+                    overKey === row.key ? "border-colonta-primary bg-colonta-primary/5" : "border-slate-200"
+                  } ${dragKey === row.key ? "opacity-40" : ""}`}
+                >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-slate-400">Sección {i + 1}</span>
-                    <button
-                      type="button"
-                      onClick={() => setRows((p) => p.filter((r) => r.key !== row.key))}
-                      className="text-red-400 hover:text-red-600 text-xs font-semibold"
-                    >
-                      Quitar
-                    </button>
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                      <span className="cursor-grab active:cursor-grabbing select-none text-slate-300 hover:text-slate-500" title="Arrastrar para reordenar">
+                        ⠿
+                      </span>
+                      Sección {i + 1}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => i > 0 && moverSeccion(row.key, rows[i - 1].key)}
+                        disabled={i === 0}
+                        className="text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 text-xs"
+                        title="Mover arriba"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => i < rows.length - 1 && moverSeccion(row.key, rows[i + 1].key)}
+                        disabled={i === rows.length - 1}
+                        className="text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 text-xs"
+                        title="Mover abajo"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRows((p) => p.filter((r) => r.key !== row.key))}
+                        className="text-red-400 hover:text-red-600 text-xs font-semibold"
+                      >
+                        Quitar
+                      </button>
+                    </div>
                   </div>
                   <input
                     name="seccion_titulo"
